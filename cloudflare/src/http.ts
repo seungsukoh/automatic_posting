@@ -18,6 +18,16 @@ export function badRequest(message: string): Response {
   return jsonResponse({ error: message }, 400);
 }
 
+export function redirectResponse(location: string, headers: HeadersInit = {}): Response {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location,
+      ...headers,
+    },
+  });
+}
+
 export async function readJson<T>(request: Request): Promise<T> {
   const text = await request.text();
   return text ? (JSON.parse(text) as T) : ({} as T);

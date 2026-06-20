@@ -6,6 +6,7 @@ const refreshJobs = document.querySelector("#refreshJobs");
 const runScheduler = document.querySelector("#runScheduler");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
+const accountConnections = document.querySelector("#accountConnections");
 let previewUrl = "";
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
@@ -165,6 +166,72 @@ async function request(path, options = {}) {
   return data;
 }
 
+function platformLabel(platform) {
+  return {
+    instagram: "Instagram Business",
+    threads: "Threads",
+    kakao: "Kakao",
+  }[platform] || platform;
+}
+
+function missingLabel(key) {
+  return {
+    client_id: "App ID",
+    client_secret: "App Secret",
+    oauth_state_secret: "OAuth state secret",
+    token_encryption_key: "Token encryption key",
+  }[key] || key;
+}
+
+function renderConnectionCard(platform, readiness, account) {
+  const configured = Boolean(readiness?.configured);
+  const missing = readiness?.missing || [];
+  const connected = account?.status === "connected";
+  const statusText = connected
+    ? `연결됨: ${escapeHtml(account.username || account.account_id)}`
+    : configured
+      ? "연결 준비 완료"
+      : `설정 필요: ${missing.map(missingLabel).join(", ")}`;
+  const action = connected
+    ? `<button type="button" data-disconnect="${platform}">연결 해제</button>`
+    : configured
+      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">연결하기</a>`
+      : `<button type="button" disabled>설정값 필요</button>`;
+
+  return `
+    <article class="connectionCard">
+      <div>
+        <h3>${platformLabel(platform)}</h3>
+        <p>${statusText}</p>
+      </div>
+      ${action}
+    </article>
+  `;
+}
+
+async function loadConnections() {
+  if (!accountConnections) return;
+  const [readiness, accountsData] = await Promise.all([
+    request("/api/oauth/meta/readiness"),
+    request("/api/social-accounts"),
+  ]);
+  const accounts = accountsData.accounts || [];
+  accountConnections.innerHTML = `
+    <div class="connectionHint">
+      <strong>OAuth Redirect URI</strong>
+      <code>${escapeHtml(readiness.redirect_uri)}</code>
+      <span>Meta Developer App에 이 주소가 등록되어 있어야 합니다.</span>
+    </div>
+    <div class="connectionGrid">
+      ${["instagram", "threads"].map((platform) => renderConnectionCard(
+        platform,
+        readiness.platforms?.[platform],
+        accounts.find((account) => account.platform === platform && account.status !== "disconnected"),
+      )).join("")}
+    </div>
+  `;
+}
+
 function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
@@ -272,10 +339,33 @@ jobsEl.addEventListener("click", async (event) => {
   await loadJobs();
 });
 
+accountConnections?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-disconnect]");
+  if (!button) return;
+  await request("/api/social-accounts/disconnect", {
+    method: "POST",
+    body: JSON.stringify({ platform: button.dataset.disconnect }),
+  });
+  await loadConnections();
+});
+
 refreshJobs.addEventListener("click", loadJobs);
 runScheduler.addEventListener("click", async () => {
   await request("/api/scheduler/run", { method: "POST", body: "{}" });
   await loadJobs();
+});
+
+const oauthResult = new URLSearchParams(window.location.search);
+if (oauthResult.get("connected")) {
+  history.replaceState({}, "", window.location.pathname);
+}
+if (oauthResult.get("oauth_error")) {
+  alert(`계정 연결 실패: ${oauthResult.get("oauth_error")}`);
+  history.replaceState({}, "", window.location.pathname);
+}
+
+loadConnections().catch((error) => {
+  if (accountConnections) accountConnections.textContent = error.message;
 });
 
 loadJobs().catch((error) => {

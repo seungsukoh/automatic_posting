@@ -4,6 +4,10 @@ export interface Env {
   DB: D1Database;
   ASSETS: R2Bucket;
   PUBLISH_QUEUE?: Queue<PublishQueueMessage>;
+  META_APP_ID?: string;
+  META_APP_SECRET?: string;
+  OAUTH_STATE_SECRET?: string;
+  TOKEN_ENCRYPTION_KEY?: string;
   INSTAGRAM_CLIENT_ID?: string;
   INSTAGRAM_CLIENT_SECRET?: string;
   THREADS_CLIENT_ID?: string;

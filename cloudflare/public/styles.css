@@ -218,6 +218,59 @@ button:disabled {
   font-weight: 700;
 }
 
+.linkButton.primary {
+  border-color: #175cd3;
+  background: #175cd3;
+  color: #ffffff;
+}
+
+.connections {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.connectionHint {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #d9e0e4;
+  border-radius: 8px;
+  background: #f8fafb;
+  color: #5b6870;
+  font-size: 13px;
+}
+
+.connectionHint code {
+  overflow-wrap: anywhere;
+  color: #172026;
+}
+
+.connectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.connectionCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d9e0e4;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.connectionCard h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.connectionCard p {
+  overflow-wrap: anywhere;
+}
+
 .imagePicker {
   display: grid;
   gap: 10px;
@@ -293,10 +346,16 @@ button:disabled {
   .topbar,
   .sectionHead,
   .grid,
-  .setupGrid {
+  .setupGrid,
+  .connectionGrid {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;
+  }
+
+  .connectionCard {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .job {

@@ -1,5 +1,6 @@
 import { audit, createPost, createPublishJobs, getPublishPayload, listPosts } from "./db";
 import { badRequest, isDue, jsonResponse, notFound, readJson, utcNow } from "./http";
+import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
 import type { CreatePostRequest, Env, PublishRequest, PublishQueueMessage } from "./types";
 
@@ -31,6 +32,26 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (request.method === "GET" && path === "/api/health") {
     return jsonResponse({ status: "ok", time: utcNow() });
+  }
+
+  if (request.method === "GET" && path === "/api/oauth/meta/readiness") {
+    return oauthReadiness(request, env);
+  }
+
+  if (request.method === "GET" && path === "/api/social-accounts") {
+    return listConnectedAccounts(env);
+  }
+
+  if (request.method === "POST" && path === "/api/social-accounts/disconnect") {
+    return disconnectConnectedAccount(request, env);
+  }
+
+  if (request.method === "GET" && path === "/api/auth/meta/start") {
+    return startMetaOAuth(request, env);
+  }
+
+  if (request.method === "GET" && path === "/api/auth/meta/callback") {
+    return handleMetaCallback(request, env);
   }
 
   if (request.method === "GET" && path === "/api/posts") {

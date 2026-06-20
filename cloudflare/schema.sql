@@ -40,8 +40,13 @@ create table if not exists social_accounts (
   id integer primary key autoincrement,
   platform text not null,
   account_id text not null,
+  provider_user_id text,
   username text,
   token_ref text,
+  access_token_ciphertext text,
+  scopes text,
+  token_expires_at text,
+  last_error text,
   status text not null,
   created_at text not null,
   updated_at text not null
