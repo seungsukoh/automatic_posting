@@ -1,0 +1,8 @@
+name = "automatic-posting"
+compatibility_date = "2026-06-20"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "automatic-posting"
+database_id = "80c8d65a-96fa-4e6a-ba89-ebe69e5221ed"
