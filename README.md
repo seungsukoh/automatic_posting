@@ -16,7 +16,7 @@
 - `docs/08-team-and-operating-model.md`: 전문가 그룹과 운영 방식
 - `docs/09-login-and-automation-boundary.md`: 로그인/OAuth 기반 자동화 가능 범위
 - `docs/10-project-execution-plan.md`: PM 관점 프로젝트 실행 계획
-- `docs/11-account-readiness-checklist.md`: Instagram Creator 전환과 플랫폼 계정 준비 체크리스트
+- `docs/11-account-readiness-checklist.md`: Instagram Business 계정과 플랫폼 계정 준비 체크리스트
 - `app/`: Python 표준 라이브러리 기반 로컬 MVP 앱
 - `cloudflare/`: TypeScript + Cloudflare Workers/Pages/D1/R2 기반 운영형 MVP 뼈대
 
