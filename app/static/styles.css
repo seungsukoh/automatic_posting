@@ -129,6 +129,37 @@ legend {
   gap: 14px;
 }
 
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.setup-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.setup-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.link-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .image-picker {
   display: grid;
   gap: 10px;
@@ -262,6 +293,7 @@ button.secondary {
   }
 
   .grid.two,
+  .setup-grid,
   .job {
     grid-template-columns: 1fr;
   }

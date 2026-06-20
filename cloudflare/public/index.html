@@ -11,10 +11,40 @@
       <header class="topbar">
         <div>
           <h1>Automatic Posting</h1>
-          <p>Instagram Creator, Threads, Kakao 공식 채널용 발행 도구</p>
+          <p>Instagram Business, Threads, Kakao 공식 채널용 발행 도구</p>
         </div>
         <button id="refreshJobs" type="button">작업 새로고침</button>
       </header>
+
+      <section class="panel">
+        <div class="sectionHead">
+          <h2>계정 연결 준비</h2>
+          <span class="muted">외부 설정이 필요한 단계는 새 창으로 안내합니다.</span>
+        </div>
+        <div class="setupGrid">
+          <article class="setupCard">
+            <h3>Instagram Business</h3>
+            <label><input type="checkbox" data-setup="ig-business" /> Business 계정 전환 완료</label>
+            <label><input type="checkbox" data-setup="ig-page" /> Facebook Page 연결 완료</label>
+            <label><input type="checkbox" data-setup="ig-meta-app" /> Meta Developer App 생성 완료</label>
+            <a class="linkButton" href="https://business.facebook.com/" target="_blank" rel="noreferrer">Meta Business Suite 열기</a>
+          </article>
+          <article class="setupCard">
+            <h3>Threads</h3>
+            <label><input type="checkbox" data-setup="threads-basic" /> threads_basic 권한 확인</label>
+            <label><input type="checkbox" data-setup="threads-publish" /> threads_content_publish 권한 확인</label>
+            <label><input type="checkbox" data-setup="threads-test" /> 계정 조회 테스트 준비</label>
+            <a class="linkButton" href="https://developers.facebook.com/" target="_blank" rel="noreferrer">Meta for Developers 열기</a>
+          </article>
+          <article class="setupCard">
+            <h3>Kakao</h3>
+            <label><input type="checkbox" data-setup="kakao-channel" /> 카카오톡 채널/비즈메시지 후보 선택</label>
+            <label><input type="checkbox" data-setup="kakao-ad" /> 광고성 메시지 여부 결정</label>
+            <label><input type="checkbox" data-setup="kakao-consent" /> 수신 동의/거부 방식 확인</label>
+            <a class="linkButton" href="https://business.kakao.com/" target="_blank" rel="noreferrer">Kakao Business 열기</a>
+          </article>
+        </div>
+      </section>
 
       <section class="panel">
         <h2>게시글 작성</h2>

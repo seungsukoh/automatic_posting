@@ -46,6 +46,11 @@ p {
   margin-top: 6px;
 }
 
+.muted {
+  color: #5b6870;
+  font-size: 13px;
+}
+
 .panel {
   margin-top: 20px;
   padding: 20px;
@@ -115,6 +120,50 @@ button:hover {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.setupGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.setupCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #d9e0e4;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.setupCard h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.setupCard label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  font-weight: 500;
+}
+
+.setupCard input {
+  width: 18px;
+  height: 18px;
+}
+
+.linkButton {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 38px;
+  border: 1px solid #c8d1d6;
+  border-radius: 6px;
+  color: #172026;
+  text-decoration: none;
+  font-weight: 700;
 }
 
 .imagePicker {
@@ -191,7 +240,8 @@ button:hover {
 @media (max-width: 720px) {
   .topbar,
   .sectionHead,
-  .grid {
+  .grid,
+  .setupGrid {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;

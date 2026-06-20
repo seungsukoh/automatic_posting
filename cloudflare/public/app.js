@@ -7,6 +7,26 @@ const runScheduler = document.querySelector("#runScheduler");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 let previewUrl = "";
+const setupInputs = document.querySelectorAll("[data-setup]");
+const setupStateKey = "automatic-posting.setup";
+
+function loadSetupState() {
+  const saved = JSON.parse(localStorage.getItem(setupStateKey) || "{}");
+  setupInputs.forEach((input) => {
+    input.checked = Boolean(saved[input.dataset.setup]);
+  });
+}
+
+function saveSetupState() {
+  const state = {};
+  setupInputs.forEach((input) => {
+    state[input.dataset.setup] = input.checked;
+  });
+  localStorage.setItem(setupStateKey, JSON.stringify(state));
+}
+
+setupInputs.forEach((input) => input.addEventListener("change", saveSetupState));
+loadSetupState();
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
