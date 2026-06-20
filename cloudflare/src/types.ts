@@ -8,6 +8,7 @@ export interface Env {
   META_APP_SECRET?: string;
   OAUTH_STATE_SECRET?: string;
   TOKEN_ENCRYPTION_KEY?: string;
+  ADMIN_SETUP_KEY?: string;
   INSTAGRAM_CLIENT_ID?: string;
   INSTAGRAM_CLIENT_SECRET?: string;
   THREADS_CLIENT_ID?: string;

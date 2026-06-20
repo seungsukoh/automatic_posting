@@ -255,6 +255,36 @@ button:disabled {
   font-size: 13px;
 }
 
+.adminSettings {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.settingsStatus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #5b6870;
+  font-size: 13px;
+}
+
+.settingsStatus span {
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #eef2f6;
+}
+
+.settingsStatus .ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.settingsStatus .missing {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .connectionGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

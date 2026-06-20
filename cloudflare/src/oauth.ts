@@ -1,5 +1,6 @@
 import { audit, disconnectSocialAccount, listSocialAccounts, upsertSocialAccount } from "./db";
 import { badRequest, jsonResponse, redirectResponse, utcNow } from "./http";
+import { getRuntimeSettings } from "./settings";
 import type { Env, Platform } from "./types";
 
 type OAuthPlatform = Extract<Platform, "instagram" | "threads">;
@@ -118,9 +119,10 @@ function platformFromUrl(url: URL): OAuthPlatform | null {
   return platform === "instagram" || platform === "threads" ? platform : null;
 }
 
-function providerConfig(env: Env, platform: OAuthPlatform): ProviderConfig | null {
-  const metaClientId = env.META_APP_ID ?? env.INSTAGRAM_CLIENT_ID ?? "";
-  const metaClientSecret = env.META_APP_SECRET ?? env.INSTAGRAM_CLIENT_SECRET ?? "";
+async function providerConfig(env: Env, platform: OAuthPlatform): Promise<ProviderConfig | null> {
+  const settings = await getRuntimeSettings(env);
+  const metaClientId = settings.metaAppId;
+  const metaClientSecret = settings.metaAppSecret;
   if (platform === "instagram") {
     return {
       platform,
@@ -134,8 +136,8 @@ function providerConfig(env: Env, platform: OAuthPlatform): ProviderConfig | nul
 
   return {
     platform,
-    clientId: env.THREADS_CLIENT_ID ?? env.META_APP_ID ?? "",
-    clientSecret: env.THREADS_CLIENT_SECRET ?? env.META_APP_SECRET ?? "",
+    clientId: env.THREADS_CLIENT_ID ?? settings.metaAppId,
+    clientSecret: env.THREADS_CLIENT_SECRET ?? settings.metaAppSecret,
     scopes: ["threads_basic", "threads_content_publish"],
     authUrl: "https://threads.net/oauth/authorize",
     tokenUrl: "https://graph.threads.net/oauth/access_token",
@@ -217,8 +219,8 @@ function getCookie(request: Request, name: string): string {
 }
 
 export async function oauthReadiness(request: Request, env: Env): Promise<Response> {
-  const instagram = providerConfig(env, "instagram");
-  const threads = providerConfig(env, "threads");
+  const instagram = await providerConfig(env, "instagram");
+  const threads = await providerConfig(env, "threads");
   return jsonResponse({
     redirect_uri: redirectUri(request),
     platforms: {
@@ -237,7 +239,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   const platform = platformFromUrl(url);
   if (!platform) return badRequest("platform must be instagram or threads");
 
-  const config = providerConfig(env, platform);
+  const config = await providerConfig(env, platform);
   const missing = missingConfig(config, env);
   if (!config || missing.length > 0) {
     return jsonResponse({ error: "OAuth is not configured.", missing, redirect_uri: redirectUri(request) }, 409);
@@ -267,7 +269,7 @@ export async function handleMetaCallback(request: Request, env: Env): Promise<Re
   try {
     if (getCookie(request, stateCookieName) !== state) throw new Error("OAuth browser state cookie did not match.");
     const verified = await verifyState(env, state);
-    const config = providerConfig(env, verified.platform);
+    const config = await providerConfig(env, verified.platform);
     if (!config) throw new Error("OAuth provider is not configured.");
 
     const token = await exchangeCode(config, code, request);

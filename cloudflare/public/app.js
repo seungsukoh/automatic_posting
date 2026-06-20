@@ -7,6 +7,8 @@ const runScheduler = document.querySelector("#runScheduler");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 const accountConnections = document.querySelector("#accountConnections");
+const adminSettingsForm = document.querySelector("#adminSettingsForm");
+const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
 let previewUrl = "";
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
@@ -262,6 +264,34 @@ async function loadConnections() {
   `;
 }
 
+function renderAdminSettingsStatus(status) {
+  if (!adminSettingsStatus) return;
+  const rows = [
+    ["관리자 설정 키", status.admin_setup_key_configured],
+    ["토큰 암호화 키", status.token_encryption_key_configured],
+    ["Meta App ID", status.meta_app_id_configured],
+    ["Meta App Secret", status.meta_app_secret_configured],
+  ];
+  adminSettingsStatus.innerHTML = rows.map(([label, ok]) => `
+    <span class="${ok ? "ok" : "missing"}">${label}: ${ok ? "설정됨" : "필요"}</span>
+  `).join("");
+}
+
+async function loadAdminSettingsStatus() {
+  if (!adminSettingsStatus) return;
+  const status = await request("/api/admin/settings").catch((error) => ({
+    admin_setup_key_configured: false,
+    token_encryption_key_configured: false,
+    meta_app_id_configured: false,
+    meta_app_secret_configured: false,
+    error: error.message,
+  }));
+  renderAdminSettingsStatus(status);
+  if (status.error) {
+    adminSettingsStatus.insertAdjacentHTML("beforeend", `<span class="missing">저장소 확인 필요: ${escapeHtml(status.error)}</span>`);
+  }
+}
+
 function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
@@ -404,6 +434,32 @@ accountConnections?.addEventListener("click", async (event) => {
   await loadConnections();
 });
 
+adminSettingsForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(adminSettingsForm);
+  const payload = {
+    admin_key: data.get("admin_key"),
+    meta_app_id: data.get("meta_app_id"),
+    meta_app_secret: data.get("meta_app_secret"),
+  };
+  try {
+    const result = await request("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    adminSettingsForm.reset();
+    renderAdminSettingsStatus({
+      admin_setup_key_configured: true,
+      token_encryption_key_configured: true,
+      meta_app_id_configured: result.meta_app_id_configured,
+      meta_app_secret_configured: result.meta_app_secret_configured,
+    });
+    await loadConnections();
+  } catch (error) {
+    adminSettingsStatus.innerHTML = `<span class="missing">설정 저장 실패: ${escapeHtml(error.message)}</span>`;
+  }
+});
+
 refreshJobs.addEventListener("click", loadJobs);
 runScheduler.addEventListener("click", async () => {
   await request("/api/scheduler/run", { method: "POST", body: "{}" });
@@ -422,6 +478,8 @@ if (oauthResult.get("oauth_error")) {
 loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
+
+loadAdminSettingsStatus();
 
 loadJobs().catch((error) => {
   jobsEl.textContent = error.message;

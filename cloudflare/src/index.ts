@@ -3,6 +3,7 @@ import { audit, createPost, createPublishJobs, getPublishPayload, listPosts } fr
 import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, serviceUnavailable, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
+import { getAdminSettingsStatus, saveAdminSettings } from "./settings";
 import type { CreatePostRequest, Env, PublishRequest, PublishQueueMessage } from "./types";
 
 function hasD1(env: Env): boolean {
@@ -56,6 +57,16 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (request.method === "GET" && path === "/api/oauth/meta/readiness") {
     return oauthReadiness(request, env);
+  }
+
+  if (request.method === "GET" && path === "/api/admin/settings") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+    return getAdminSettingsStatus(env);
+  }
+
+  if (request.method === "POST" && path === "/api/admin/settings") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+    return saveAdminSettings(request, env);
   }
 
   if (request.method === "GET" && path === "/api/social-accounts") {

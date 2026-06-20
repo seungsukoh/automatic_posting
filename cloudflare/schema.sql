@@ -53,6 +53,13 @@ create table if not exists social_accounts (
   updated_at text not null
 );
 
+create table if not exists app_settings (
+  name text primary key,
+  value text not null,
+  encrypted integer not null default 0,
+  updated_at text not null
+);
+
 create table if not exists audit_logs (
   id integer primary key autoincrement,
   action text not null,
