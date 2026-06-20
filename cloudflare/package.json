@@ -4,14 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "vite --host 127.0.0.1",
+    "worker:dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "d1:init": "wrangler d1 execute automatic-posting --local --file=./schema.sql"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "latest",
     "typescript": "^5.5.0",
+    "vite": "^7.0.0",
     "wrangler": "^4.0.0"
   }
 }

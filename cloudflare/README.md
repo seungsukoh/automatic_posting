@@ -26,8 +26,18 @@ Node.js 설치 후:
 ```powershell
 cd cloudflare
 npm install
+npm run build
 npm run typecheck
 npx wrangler d1 create automatic-posting
+```
+
+Cloudflare Pages build configuration:
+
+```text
+Framework preset: Vite
+Root directory: empty
+Build command: npm run build
+Build output directory: cloudflare/dist
 ```
 
 생성된 D1 database id를 `wrangler.toml`의 `database_id`에 넣습니다.
@@ -41,7 +51,7 @@ npm run d1:init
 Workers API 실행:
 
 ```powershell
-npm run dev
+npm run worker:dev
 ```
 
 ## 다음 구현

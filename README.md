@@ -20,6 +20,18 @@
 - `app/`: Python 표준 라이브러리 기반 로컬 MVP 앱
 - `cloudflare/`: TypeScript + Cloudflare Workers/Pages/D1/R2 기반 운영형 MVP 뼈대
 
+## Cloudflare Pages 배포
+
+Vite 기반 Pages 빌드를 사용합니다.
+
+```text
+Framework preset: Vite
+Root directory: 비워둠
+Build command: npm run build
+Build output directory: cloudflare/dist
+Deploy command: 비워둠
+```
+
 ## 로컬 MVP 실행
 
 ```powershell

@@ -1,0 +1,9 @@
+{
+  "name": "automatic-posting",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix cloudflare install --registry=https://registry.npmjs.org/ --no-audit --no-fund && npm --prefix cloudflare run build",
+    "typecheck": "npm --prefix cloudflare run typecheck"
+  }
+}
