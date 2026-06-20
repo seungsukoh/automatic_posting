@@ -1,6 +1,9 @@
 const form = document.querySelector("#postForm");
 const jobsEl = document.querySelector("#jobs");
 const toast = document.querySelector("#toast");
+const imageFile = document.querySelector("#imageFile");
+const imagePreview = document.querySelector("#imagePreview");
+let previewUrl = "";
 
 function showToast(message) {
   toast.textContent = message;
@@ -20,6 +23,34 @@ function formData() {
     platforms
   };
 }
+
+function clearImagePreview() {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = "";
+  imagePreview.textContent = "선택된 이미지가 없습니다.";
+  form.elements.image_name.value = "";
+}
+
+imageFile.addEventListener("change", () => {
+  const file = imageFile.files?.[0];
+  clearImagePreview();
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("이미지 파일만 선택할 수 있습니다.");
+    imageFile.value = "";
+    return;
+  }
+
+  previewUrl = URL.createObjectURL(file);
+  form.elements.image_name.value = file.name;
+  imagePreview.innerHTML = `
+    <img src="${previewUrl}" alt="선택한 이미지 미리보기">
+    <div>
+      <strong>${escapeHtml(file.name)}</strong>
+      <span>${Math.ceil(file.size / 1024)} KB</span>
+    </div>
+  `;
+});
 
 async function request(path, options = {}) {
   const response = await fetch(path, {
@@ -91,6 +122,7 @@ form.addEventListener("submit", async (event) => {
     });
 
     showToast(mode === "scheduled" ? "예약 발행 작업을 만들었습니다." : "즉시 발행 작업을 실행했습니다.");
+    clearImagePreview();
     await loadJobs();
   } catch (error) {
     showToast(error.message);

@@ -36,10 +36,14 @@
           해시태그
           <input name="hashtags" value="#신상품 #이벤트 #브랜드소식">
         </label>
-        <label>
-          이미지 파일명
-          <input name="image_name" placeholder="sample.jpg">
-        </label>
+        <div class="image-picker">
+          <label>
+            이미지
+            <input id="imageFile" name="image_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+          </label>
+          <input name="image_name" type="hidden">
+          <div id="imagePreview" class="image-preview">선택된 이미지가 없습니다.</div>
+        </div>
 
         <fieldset>
           <legend>플랫폼</legend>

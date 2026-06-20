@@ -129,6 +129,40 @@ legend {
   gap: 14px;
 }
 
+.image-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.image-preview {
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #f9fbff;
+  overflow: hidden;
+}
+
+.image-preview:has(img) {
+  grid-template-columns: 170px 1fr;
+  place-items: stretch;
+  align-items: center;
+}
+
+.image-preview img {
+  width: 170px;
+  height: 130px;
+  object-fit: cover;
+}
+
+.image-preview div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
 .actions {
   display: flex;
   gap: 8px;

@@ -4,6 +4,9 @@ const form = document.querySelector("#postForm");
 const jobsEl = document.querySelector("#jobs");
 const refreshJobs = document.querySelector("#refreshJobs");
 const runScheduler = document.querySelector("#runScheduler");
+const imageFile = document.querySelector("#imageFile");
+const imagePreview = document.querySelector("#imagePreview");
+let previewUrl = "";
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -21,6 +24,48 @@ async function request(path, options = {}) {
 function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeImageKey(file) {
+  const cleaned = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  return `uploads/${Date.now()}-${cleaned}`;
+}
+
+function clearImagePreview() {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = "";
+  imagePreview.textContent = "선택된 이미지가 없습니다.";
+  form.elements.image_key.value = "";
+}
+
+imageFile.addEventListener("change", () => {
+  const file = imageFile.files?.[0];
+  clearImagePreview();
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    alert("이미지 파일만 선택할 수 있습니다.");
+    imageFile.value = "";
+    return;
+  }
+
+  previewUrl = URL.createObjectURL(file);
+  form.elements.image_key.value = safeImageKey(file);
+  imagePreview.innerHTML = `
+    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
+    <div>
+      <strong>${escapeHtml(file.name)}</strong>
+      <span>${Math.ceil(file.size / 1024)} KB</span>
+    </div>
+  `;
+});
 
 async function loadJobs() {
   const data = await request("/api/jobs");
@@ -72,6 +117,7 @@ form.addEventListener("submit", async (event) => {
   });
 
   form.reset();
+  clearImagePreview();
   await loadJobs();
 });
 

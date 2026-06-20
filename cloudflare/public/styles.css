@@ -117,6 +117,41 @@ button:hover {
   gap: 14px;
 }
 
+.imagePicker {
+  display: grid;
+  gap: 10px;
+}
+
+.imagePreview {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  border: 1px dashed #aebbc3;
+  border-radius: 8px;
+  color: #5b6870;
+  background: #f8fafb;
+  overflow: hidden;
+}
+
+.imagePreview:has(img) {
+  grid-template-columns: 160px 1fr;
+  place-items: stretch;
+  align-items: center;
+  text-align: left;
+}
+
+.imagePreview img {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+}
+
+.imagePreview div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
 .jobs {
   display: grid;
   gap: 10px;

@@ -37,10 +37,14 @@
               <input name="hashtags" placeholder="#campaign #update" />
             </label>
           </div>
-          <label>
-            이미지 키
-            <input name="image_key" placeholder="R2 object key, example: uploads/sample.jpg" />
-          </label>
+          <div class="imagePicker">
+            <label>
+              이미지
+              <input id="imageFile" name="image_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+            </label>
+            <input name="image_key" type="hidden" />
+            <div id="imagePreview" class="imagePreview">선택된 이미지가 없습니다.</div>
+          </div>
           <fieldset>
             <legend>플랫폼</legend>
             <label><input type="checkbox" name="platforms" value="instagram" checked /> Instagram</label>
