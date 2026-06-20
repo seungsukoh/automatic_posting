@@ -135,6 +135,57 @@ legend {
   gap: 14px;
 }
 
+.setup-wizard {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbff;
+}
+
+.wizard-meta,
+.wizard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.wizard-meta {
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.wizard-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8edf5;
+}
+
+.wizard-bar span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.setup-wizard h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.setup-wizard p {
+  margin: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .setup-card {
   display: grid;
   gap: 10px;
@@ -153,6 +204,7 @@ legend {
   justify-content: center;
   align-items: center;
   min-height: 38px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--text);

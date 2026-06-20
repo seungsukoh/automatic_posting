@@ -9,6 +9,66 @@ const imagePreview = document.querySelector("#imagePreview");
 let previewUrl = "";
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
+const wizardEl = document.querySelector("#setupWizard");
+const wizardStepKey = "automatic-posting.setup.step";
+const wizardSteps = [
+  {
+    key: "ig-business",
+    platform: "Instagram",
+    title: "Business 계정 전환 확인",
+    body: "Instagram 앱에서 계정 유형이 Business 계정으로 전환되어 있는지 확인합니다.",
+    action: "Instagram 앱에서 확인",
+    url: "https://help.instagram.com/502981923235522",
+  },
+  {
+    key: "ig-page",
+    platform: "Instagram",
+    title: "Facebook Page 연결",
+    body: "Instagram Business 계정이 Facebook Page와 연결되어 있어야 Graph API 게시가 가능합니다.",
+    action: "Meta Business Suite 열기",
+    url: "https://business.facebook.com/",
+  },
+  {
+    key: "ig-meta-app",
+    platform: "Instagram",
+    title: "Meta Developer App 생성",
+    body: "Meta for Developers에서 앱을 만들고 Instagram Graph API와 OAuth redirect URI를 설정합니다.",
+    action: "Meta for Developers 열기",
+    url: "https://developers.facebook.com/apps/",
+  },
+  {
+    key: "threads-basic",
+    platform: "Threads",
+    title: "Threads 기본 권한 확인",
+    body: "Meta 앱 권한 목록에서 threads_basic 권한을 사용할 수 있는지 확인합니다.",
+    action: "권한 문서 열기",
+    url: "https://developers.facebook.com/docs/threads/",
+  },
+  {
+    key: "threads-publish",
+    platform: "Threads",
+    title: "Threads 게시 권한 확인",
+    body: "threads_content_publish 권한을 확인합니다. 이 권한이 있어야 앱에서 Threads 게시를 실행할 수 있습니다.",
+    action: "Threads API 열기",
+    url: "https://developers.facebook.com/docs/threads/",
+  },
+  {
+    key: "kakao-channel",
+    platform: "Kakao",
+    title: "공식 발송 경로 선택",
+    body: "일반 채팅방 자동 발송은 제외하고 카카오톡 채널, 비즈메시지, 알림톡, 친구톡 중 하나를 선택합니다.",
+    action: "Kakao Business 열기",
+    url: "https://business.kakao.com/",
+  },
+  {
+    key: "kakao-ad",
+    platform: "Kakao",
+    title: "광고성 메시지 여부 결정",
+    body: "홍보성 메시지라면 광고 표기, 수신 동의, 수신 거부, 야간 발송 제한을 고려해야 합니다.",
+    action: "Kakao Business 열기",
+    url: "https://business.kakao.com/",
+  },
+];
 
 function loadSetupState() {
   const saved = JSON.parse(localStorage.getItem(setupStateKey) || "{}");
@@ -25,8 +85,72 @@ function saveSetupState() {
   localStorage.setItem(setupStateKey, JSON.stringify(state));
 }
 
-setupInputs.forEach((input) => input.addEventListener("change", saveSetupState));
+function setupState() {
+  return JSON.parse(localStorage.getItem(setupStateKey) || "{}");
+}
+
+function currentWizardIndex() {
+  const index = Number(localStorage.getItem(wizardStepKey) || "0");
+  return Number.isFinite(index) ? Math.min(Math.max(index, 0), wizardSteps.length - 1) : 0;
+}
+
+function setSetupDone(key, done) {
+  const state = setupState();
+  state[key] = done;
+  localStorage.setItem(setupStateKey, JSON.stringify(state));
+  loadSetupState();
+  renderWizard();
+}
+
+function renderWizard() {
+  if (!wizardEl) return;
+  const index = currentWizardIndex();
+  const step = wizardSteps[index];
+  const state = setupState();
+  const doneCount = wizardSteps.filter((item) => state[item.key]).length;
+  const done = Boolean(state[step.key]);
+  wizardEl.innerHTML = `
+    <div class="wizardMeta">
+      <strong>${step.platform}</strong>
+      <span>${index + 1} / ${wizardSteps.length}</span>
+      <span>${doneCount}개 완료</span>
+    </div>
+    <div class="wizardBar"><span style="width: ${Math.round((doneCount / wizardSteps.length) * 100)}%"></span></div>
+    <h3>${step.title}</h3>
+    <p>${step.body}</p>
+    <div class="wizardActions">
+      <button type="button" data-wizard-prev ${index === 0 ? "disabled" : ""}>이전</button>
+      <a class="linkButton" href="${step.url}" target="_blank" rel="noreferrer">${step.action}</a>
+      <button type="button" data-wizard-done>${done ? "완료 취소" : "완료 체크"}</button>
+      <button type="button" data-wizard-next ${index === wizardSteps.length - 1 ? "disabled" : ""}>다음</button>
+    </div>
+  `;
+}
+
+setupInputs.forEach((input) => input.addEventListener("change", () => {
+  saveSetupState();
+  renderWizard();
+}));
 loadSetupState();
+renderWizard();
+
+wizardEl?.addEventListener("click", (event) => {
+  const target = event.target.closest("button");
+  if (!target) return;
+  const index = currentWizardIndex();
+  if (target.matches("[data-wizard-prev]")) {
+    localStorage.setItem(wizardStepKey, String(Math.max(index - 1, 0)));
+    renderWizard();
+  }
+  if (target.matches("[data-wizard-next]")) {
+    localStorage.setItem(wizardStepKey, String(Math.min(index + 1, wizardSteps.length - 1)));
+    renderWizard();
+  }
+  if (target.matches("[data-wizard-done]")) {
+    const step = wizardSteps[index];
+    setSetupDone(step.key, !setupState()[step.key]);
+  }
+});
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
