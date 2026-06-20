@@ -5,6 +5,11 @@
   "scripts": {
     "build": "npm --prefix cloudflare install --registry=https://registry.npmjs.org/ --no-audit --no-fund && npm --prefix cloudflare run build",
     "typecheck": "npm --prefix cloudflare run typecheck",
-    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=automatic-posting"
+    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=automatic-posting",
+    "cf:d1:create": "npx wrangler d1 create automatic-posting",
+    "cf:d1:schema": "npx wrangler d1 execute automatic-posting --remote --file=cloudflare/schema.sql",
+    "cf:r2:create": "npx wrangler r2 bucket create automatic-posting-assets",
+    "cf:secret:admin": "npx wrangler pages secret put ADMIN_SETUP_KEY --project-name=automatic-posting",
+    "cf:secret:token": "npx wrangler pages secret put TOKEN_ENCRYPTION_KEY --project-name=automatic-posting"
   }
 }

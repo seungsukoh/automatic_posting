@@ -7,6 +7,7 @@ const runScheduler = document.querySelector("#runScheduler");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 const accountConnections = document.querySelector("#accountConnections");
+const systemReadiness = document.querySelector("#systemReadiness");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
 let previewUrl = "";
@@ -292,6 +293,35 @@ async function loadAdminSettingsStatus() {
   }
 }
 
+function readinessItem(label, ok, detail = "") {
+  return `
+    <article class="readinessItem ${ok ? "ready" : "missing"}">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${ok ? "준비됨" : "필요"}</span>
+      ${detail ? `<small>${escapeHtml(detail)}</small>` : ""}
+    </article>
+  `;
+}
+
+async function loadSystemReadiness() {
+  if (!systemReadiness) return;
+  const status = await request("/api/system/readiness").catch((error) => ({ error: error.message }));
+  if (status.error) {
+    systemReadiness.innerHTML = readinessItem("시스템 상태", false, status.error);
+    return;
+  }
+  const missingTables = Object.entries(status.d1?.tables || {})
+    .filter(([, ok]) => !ok)
+    .map(([name]) => name);
+  systemReadiness.innerHTML = [
+    readinessItem("D1 DB 바인딩", Boolean(status.d1?.bound), "Binding name: DB"),
+    readinessItem("D1 스키마", Boolean(status.d1?.schema_ready), missingTables.length ? `누락 테이블: ${missingTables.join(", ")}` : "schema.sql 적용 완료"),
+    readinessItem("R2 이미지 저장소", Boolean(status.r2?.bound), "Binding name: ASSETS"),
+    readinessItem("관리자 설정 키", Boolean(status.secrets?.admin_setup_key), "ADMIN_SETUP_KEY"),
+    readinessItem("토큰 암호화 키", Boolean(status.secrets?.token_encryption_key), "TOKEN_ENCRYPTION_KEY"),
+  ].join("");
+}
+
 function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
@@ -479,6 +509,7 @@ loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
 
+loadSystemReadiness();
 loadAdminSettingsStatus();
 
 loadJobs().catch((error) => {

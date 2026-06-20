@@ -14,6 +14,32 @@ function hasR2(env: Env): boolean {
   return typeof (env as Partial<Env>).ASSETS?.put === "function";
 }
 
+async function systemReadiness(env: Env): Promise<Response> {
+  const requiredTables = ["posts", "post_targets", "publish_jobs", "social_accounts", "app_settings", "audit_logs"];
+  let tables: Record<string, boolean> = Object.fromEntries(requiredTables.map((name) => [name, false]));
+  let databaseReady = false;
+
+  if (hasD1(env)) {
+    const rows = await env.DB.prepare(
+      `select name from sqlite_master where type = 'table' and name in (${requiredTables.map(() => "?").join(",")})`,
+    )
+      .bind(...requiredTables)
+      .all<{ name: string }>();
+    const existing = new Set((rows.results ?? []).map((row) => row.name));
+    tables = Object.fromEntries(requiredTables.map((name) => [name, existing.has(name)]));
+    databaseReady = requiredTables.every((name) => existing.has(name));
+  }
+
+  return jsonResponse({
+    d1: { bound: hasD1(env), schema_ready: databaseReady, tables },
+    r2: { bound: hasR2(env) },
+    secrets: {
+      admin_setup_key: Boolean(env.ADMIN_SETUP_KEY),
+      token_encryption_key: Boolean(env.TOKEN_ENCRYPTION_KEY),
+    },
+  });
+}
+
 async function executeJob(env: Env, jobId: number): Promise<Record<string, unknown>> {
   const job = await getPublishPayload(env, jobId);
   if (!job) return { job_id: jobId, status: "missing" };
@@ -42,6 +68,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (request.method === "GET" && path === "/api/health") {
     return jsonResponse({ status: "ok", time: utcNow() });
+  }
+
+  if (request.method === "GET" && path === "/api/system/readiness") {
+    return systemReadiness(env);
   }
 
   if (request.method === "POST" && path === "/api/assets/upload") {
