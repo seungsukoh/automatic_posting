@@ -1,3 +1,4 @@
+import { serveAsset, uploadAsset } from "./assets";
 import { audit, createPost, createPublishJobs, getPublishPayload, listPosts } from "./db";
 import { badRequest, isDue, jsonResponse, notFound, readJson, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
@@ -32,6 +33,15 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (request.method === "GET" && path === "/api/health") {
     return jsonResponse({ status: "ok", time: utcNow() });
+  }
+
+  if (request.method === "POST" && path === "/api/assets/upload") {
+    return uploadAsset(request, env);
+  }
+
+  const assetMatch = path.match(/^\/api\/assets\/(.+)$/);
+  if ((request.method === "GET" || request.method === "HEAD") && assetMatch) {
+    return serveAsset(request, env, decodeURIComponent(assetMatch[1]));
   }
 
   if (request.method === "GET" && path === "/api/oauth/meta/readiness") {

@@ -287,6 +287,10 @@ button:disabled {
   overflow: hidden;
 }
 
+.imagePreview.uploading {
+  opacity: 0.7;
+}
+
 .imagePreview:has(img) {
   grid-template-columns: 160px 1fr;
   place-items: stretch;

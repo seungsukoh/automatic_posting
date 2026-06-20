@@ -154,14 +154,18 @@ wizardEl?.addEventListener("click", (event) => {
 });
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
+  const headers = options.body instanceof FormData
+    ? { ...(options.headers || {}) }
+    : {
       "content-type": "application/json; charset=utf-8",
       ...(options.headers || {}),
-    },
+    };
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
   });
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   if (!response.ok) throw new Error(data.error || "request failed");
   return data;
 }
@@ -245,16 +249,12 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function safeImageKey(file) {
-  const cleaned = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  return `uploads/${Date.now()}-${cleaned}`;
-}
-
 function clearImagePreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = "";
   imagePreview.textContent = "선택된 이미지가 없습니다.";
   form.elements.image_key.value = "";
+  form.elements.image_url.value = "";
 }
 
 imageFile.addEventListener("change", () => {
@@ -268,15 +268,42 @@ imageFile.addEventListener("change", () => {
   }
 
   previewUrl = URL.createObjectURL(file);
-  form.elements.image_key.value = safeImageKey(file);
   imagePreview.innerHTML = `
     <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
     <div>
       <strong>${escapeHtml(file.name)}</strong>
-      <span>${Math.ceil(file.size / 1024)} KB</span>
+      <span>${Math.ceil(file.size / 1024)} KB - 저장 전</span>
     </div>
   `;
 });
+
+async function uploadSelectedImage() {
+  const file = imageFile.files?.[0];
+  if (!file) return { image_key: "", image_url: "" };
+
+  const uploadBody = new FormData();
+  uploadBody.set("image", file);
+  imagePreview.classList.add("uploading");
+  let result;
+  try {
+    result = await request("/api/assets/upload", {
+      method: "POST",
+      body: uploadBody,
+    });
+  } finally {
+    imagePreview.classList.remove("uploading");
+  }
+  form.elements.image_key.value = result.image_key;
+  form.elements.image_url.value = result.image_url;
+  imagePreview.innerHTML = `
+    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
+    <div>
+      <strong>${escapeHtml(file.name)}</strong>
+      <span>업로드 완료</span>
+    </div>
+  `;
+  return result;
+}
 
 async function loadJobs() {
   const data = await request("/api/jobs");
@@ -306,6 +333,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  const uploadedImage = await uploadSelectedImage();
   const post = await request("/api/posts", {
     method: "POST",
     body: JSON.stringify({
@@ -313,7 +341,8 @@ form.addEventListener("submit", async (event) => {
       body: data.get("body"),
       link_url: data.get("link_url"),
       hashtags: data.get("hashtags"),
-      image_key: data.get("image_key"),
+      image_key: uploadedImage.image_key,
+      image_url: uploadedImage.image_url,
       platforms,
     }),
   });

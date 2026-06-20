@@ -14,6 +14,7 @@ export interface Env {
   THREADS_CLIENT_SECRET?: string;
   KAKAO_CLIENT_ID?: string;
   KAKAO_CLIENT_SECRET?: string;
+  PUBLIC_BASE_URL?: string;
 }
 
 export interface CreatePostRequest {
@@ -22,6 +23,7 @@ export interface CreatePostRequest {
   link_url?: string;
   hashtags?: string;
   image_key?: string;
+  image_url?: string;
   platforms: Platform[];
   platform_bodies?: Partial<Record<Platform, string>>;
 }
@@ -37,6 +39,7 @@ export interface PublishPayload {
   linkUrl: string;
   hashtags: string;
   imageKey: string;
+  imageUrl: string;
   platformBody: string;
 }
 

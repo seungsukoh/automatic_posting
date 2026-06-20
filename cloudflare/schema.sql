@@ -5,6 +5,7 @@ create table if not exists posts (
   link_url text,
   hashtags text,
   image_key text,
+  image_url text,
   created_at text not null,
   updated_at text not null
 );

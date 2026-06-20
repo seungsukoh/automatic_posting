@@ -9,12 +9,25 @@ export async function audit(env: Env, action: string, targetType: string, target
     .run();
 }
 
+let postColumnsReady = false;
+
+export async function ensurePostSchema(env: Env): Promise<void> {
+  if (postColumnsReady) return;
+  try {
+    await env.DB.prepare("alter table posts add column image_url text").run();
+  } catch {
+    // Existing deployments may already have the column.
+  }
+  postColumnsReady = true;
+}
+
 export async function createPost(env: Env, input: CreatePostRequest): Promise<number> {
+  await ensurePostSchema(env);
   const now = utcNow();
   const result = await env.DB.prepare(
-    "insert into posts (title, body, link_url, hashtags, image_key, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)",
+    "insert into posts (title, body, link_url, hashtags, image_key, image_url, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?)",
   )
-    .bind(input.title.trim(), input.body.trim(), input.link_url ?? "", input.hashtags ?? "", input.image_key ?? "", now, now)
+    .bind(input.title.trim(), input.body.trim(), input.link_url ?? "", input.hashtags ?? "", input.image_key ?? "", input.image_url ?? "", now, now)
     .run();
 
   const postId = Number(result.meta.last_row_id);
@@ -30,6 +43,7 @@ export async function createPost(env: Env, input: CreatePostRequest): Promise<nu
 }
 
 export async function listPosts(env: Env): Promise<unknown[]> {
+  await ensurePostSchema(env);
   const posts = await env.DB.prepare("select * from posts order by id desc").all<Record<string, unknown>>();
   const rows = posts.results ?? [];
   for (const post of rows) {
@@ -62,9 +76,10 @@ export async function createPublishJobs(env: Env, postId: number, request: Publi
 }
 
 export async function getPublishPayload(env: Env, jobId: number): Promise<{ platform: string; payload: PublishPayload } | null> {
+  await ensurePostSchema(env);
   const row = await env.DB.prepare(
     `
-    select j.platform, p.title, p.body, p.link_url, p.hashtags, p.image_key, t.body_override
+    select j.platform, p.title, p.body, p.link_url, p.hashtags, p.image_key, p.image_url, t.body_override
     from publish_jobs j
     join post_targets t on t.id = j.post_target_id
     join posts p on p.id = t.post_id
@@ -83,6 +98,7 @@ export async function getPublishPayload(env: Env, jobId: number): Promise<{ plat
       linkUrl: row.link_url ?? "",
       hashtags: row.hashtags ?? "",
       imageKey: row.image_key ?? "",
+      imageUrl: row.image_url ?? "",
       platformBody: row.body_override ?? "",
     },
   };
