@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix cloudflare install --registry=https://registry.npmjs.org/ --no-audit --no-fund && npm --prefix cloudflare run build",
-    "typecheck": "npm --prefix cloudflare run typecheck"
+    "typecheck": "npm --prefix cloudflare run typecheck",
+    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=automatic-posting"
   }
 }
