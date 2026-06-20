@@ -14,7 +14,7 @@ async function executeJob(env: Env, jobId: number): Promise<Record<string, unkno
     .bind(started, started, jobId)
     .run();
 
-  const result = await publishToPlatform(job.platform, job.payload);
+  const result = await publishToPlatform(env, job.platform, job.payload);
   const finished = utcNow();
   await env.DB.prepare(
     "update publish_jobs set status = ?, finished_at = ?, error_message = ?, external_post_url = ?, updated_at = ? where id = ?",

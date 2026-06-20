@@ -225,3 +225,33 @@ export async function disconnectSocialAccount(env: Env, platform: Platform): Pro
   await audit(env, "social_account.disconnected", "social_account", null, { platform });
   return (result.meta.changes ?? 0) > 0;
 }
+
+export interface PublishingSocialAccount {
+  platform: Platform;
+  accountId: string;
+  username: string;
+  accessTokenCiphertext: string;
+}
+
+export async function getPublishingSocialAccount(env: Env, platform: Platform): Promise<PublishingSocialAccount | null> {
+  await ensureSocialAccountSchema(env);
+  const row = await env.DB.prepare(
+    `
+    select platform, account_id, username, access_token_ciphertext
+    from social_accounts
+    where platform = ? and status = 'connected' and access_token_ciphertext is not null and access_token_ciphertext != ''
+    order by updated_at desc
+    limit 1
+    `,
+  )
+    .bind(platform)
+    .first<Record<string, string | null>>();
+
+  if (!row?.account_id || !row.access_token_ciphertext) return null;
+  return {
+    platform,
+    accountId: row.account_id,
+    username: row.username ?? "",
+    accessTokenCiphertext: row.access_token_ciphertext,
+  };
+}
