@@ -102,6 +102,7 @@ npm run cf:secret:token
 ## 문서
 
 - [현재 시스템 운영 가이드](docs/12-current-system-guide.md)
+- [전문가 그룹 검토 및 다음 실행 계획](docs/13-expert-group-review-next-plan.md)
 - [제품 요구사항 정의서](docs/01-prd.md)
 - [플랫폼 가능성 검토](docs/02-platform-feasibility.md)
 - [아키텍처](docs/03-architecture.md)
