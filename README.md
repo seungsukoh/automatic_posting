@@ -28,7 +28,7 @@ Vite 기반 Pages 빌드를 사용합니다.
 Framework preset: Vite
 Root directory: 비워둠
 Build command: npm run build
-Build output directory: cloudflare/dist
+Build output directory: dist
 Deploy command: 비워둠
 ```
 

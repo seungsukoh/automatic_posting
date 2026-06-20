@@ -37,7 +37,7 @@ Cloudflare Pages build configuration:
 Framework preset: Vite
 Root directory: empty
 Build command: npm run build
-Build output directory: cloudflare/dist
+Build output directory: dist
 ```
 
 생성된 D1 database id를 `wrangler.toml`의 `database_id`에 넣습니다.
