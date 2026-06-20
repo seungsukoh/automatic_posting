@@ -122,87 +122,9 @@ button:hover {
   gap: 14px;
 }
 
-.setupGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.setupWizard {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 16px;
-  border: 1px solid #c8d1d6;
-  border-radius: 8px;
-  background: #f8fafb;
-}
-
-.wizardMeta,
-.wizardActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.wizardMeta {
-  justify-content: space-between;
-  color: #5b6870;
-  font-size: 13px;
-}
-
-.wizardBar {
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e7ecef;
-}
-
-.wizardBar span {
-  display: block;
-  height: 100%;
-  background: #175cd3;
-}
-
-.setupWizard h3 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.setupWizard p {
-  margin: 0;
-}
-
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
-}
-
-.setupCard {
-  display: grid;
-  gap: 10px;
-  border: 1px solid #d9e0e4;
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.setupCard h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.setupCard label {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  font-weight: 500;
-}
-
-.setupCard input {
-  width: 18px;
-  height: 18px;
 }
 
 .linkButton {
@@ -228,42 +150,6 @@ button:disabled {
   display: grid;
   gap: 14px;
   margin-top: 16px;
-}
-
-.connectionHint {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 6px;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #d9e0e4;
-  border-radius: 8px;
-  background: #f8fafb;
-  color: #5b6870;
-  font-size: 13px;
-}
-
-.connectionHint code {
-  overflow-wrap: anywhere;
-  color: #172026;
-}
-
-.connectionHint span {
-  grid-column: 1 / -1;
-}
-
-.connectionHint button {
-  padding: 7px 10px;
-}
-
-.metaSetup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-top: 16px;
-  color: #5b6870;
-  font-size: 13px;
 }
 
 .connectionWarning {
@@ -449,7 +335,6 @@ button:disabled {
   .topbar,
   .sectionHead,
   .grid,
-  .setupGrid,
   .readinessGrid,
   .connectionGrid {
     grid-template-columns: 1fr;
@@ -461,11 +346,6 @@ button:disabled {
     align-items: stretch;
     flex-direction: column;
   }
-
-  .connectionHint {
-    grid-template-columns: 1fr;
-  }
-
   .job {
     grid-template-columns: 1fr;
   }
