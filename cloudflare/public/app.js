@@ -215,17 +215,36 @@ function renderConnectionCard(platform, readiness, account) {
 
 async function loadConnections() {
   if (!accountConnections) return;
-  const [readiness, accountsData] = await Promise.all([
-    request("/api/oauth/meta/readiness"),
-    request("/api/social-accounts"),
-  ]);
+  const fallbackRedirectUri = `${window.location.origin}/api/auth/meta/callback`;
+  accountConnections.innerHTML = `
+    <div class="connectionHint">
+      <strong>OAuth Redirect URI</strong>
+      <code>${escapeHtml(fallbackRedirectUri)}</code>
+      <span>연결 상태를 확인하고 있습니다.</span>
+    </div>
+  `;
+  const readiness = await request("/api/oauth/meta/readiness").catch(() => ({
+    redirect_uri: fallbackRedirectUri,
+    platforms: {
+      instagram: { configured: false, missing: ["client_id", "client_secret", "oauth_state_secret", "token_encryption_key"] },
+      threads: { configured: false, missing: ["client_id", "client_secret", "oauth_state_secret", "token_encryption_key"] },
+    },
+  }));
+  const accountsData = await request("/api/social-accounts").catch((error) => ({
+    accounts: [],
+    error: error.message,
+  }));
   const accounts = accountsData.accounts || [];
+  const accountError = accountsData.error
+    ? `<div class="connectionWarning">계정 상태 저장소 확인 필요: ${escapeHtml(accountsData.error)}</div>`
+    : "";
   accountConnections.innerHTML = `
     <div class="connectionHint">
       <strong>OAuth Redirect URI</strong>
       <code>${escapeHtml(readiness.redirect_uri)}</code>
       <span>Meta Developer App에 이 주소가 등록되어 있어야 합니다.</span>
     </div>
+    ${accountError}
     <div class="connectionGrid">
       ${["instagram", "threads"].map((platform) => renderConnectionCard(
         platform,
