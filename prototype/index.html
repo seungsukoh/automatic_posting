@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Automatic Posting Prototype</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --line: #d9dee7;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #1769e0;
+      --primary-dark: #1255b5;
+      --success: #12805c;
+      --warning: #a15c00;
+      --danger: #c23b3b;
+      --kakao: #fee500;
+      --threads: #111111;
+      --instagram: #d62976;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Malgun Gothic", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+    }
+
+    .sidebar {
+      background: #172033;
+      color: #f7f9fc;
+      padding: 20px 16px;
+    }
+
+    .brand {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 28px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav button {
+      width: 100%;
+      height: 40px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #d8deea;
+      text-align: left;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: #263248;
+      color: #ffffff;
+    }
+
+    main {
+      min-width: 0;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .notice {
+      border: 1px solid #b8c7e6;
+      border-radius: 8px;
+      background: #eef4ff;
+      color: #244071;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .section h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      color: #344054;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      padding: 10px 12px;
+    }
+
+    .field textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .platform {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 104px;
+      display: grid;
+      gap: 8px;
+      background: #ffffff;
+    }
+
+    .platform input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    .platform-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .platform-name {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .dot.instagram {
+      background: var(--instagram);
+    }
+
+    .dot.threads {
+      background: var(--threads);
+    }
+
+    .dot.kakao {
+      background: var(--kakao);
+      border: 1px solid #d7c200;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #f8fafc;
+    }
+
+    .badge.ready {
+      color: var(--success);
+      border-color: #b8dfd1;
+      background: #eefaf5;
+    }
+
+    .badge.warning {
+      color: var(--warning);
+      border-color: #efd4a3;
+      background: #fff8e8;
+    }
+
+    .preview {
+      display: grid;
+      gap: 12px;
+    }
+
+    .preview-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+    }
+
+    .preview-body {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .image-placeholder {
+      aspect-ratio: 4 / 3;
+      width: 100%;
+      border: 1px dashed #aeb7c6;
+      border-radius: 6px;
+      background:
+        linear-gradient(135deg, rgba(23, 105, 224, .08), rgba(18, 128, 92, .08)),
+        #f8fafc;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .preview-text {
+      min-height: 54px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .result-table th,
+    .result-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .result-table th {
+      color: #344054;
+      font-size: 12px;
+    }
+
+    .status {
+      font-weight: 700;
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .status.pending {
+      color: var(--warning);
+    }
+
+    .status.failed {
+      color: var(--danger);
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      min-width: 260px;
+      max-width: 420px;
+      border: 1px solid #b8dfd1;
+      border-radius: 8px;
+      background: #eefaf5;
+      color: #0f5f45;
+      padding: 12px 14px;
+      box-shadow: 0 12px 30px rgba(16, 24, 40, .14);
+      display: none;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .platform-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        width: 100%;
+      }
+
+      .btn {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">Automatic Posting</div>
+      <nav class="nav" aria-label="주 메뉴">
+        <button class="active">작성</button>
+        <button>예약</button>
+        <button>발행 이력</button>
+        <button>계정</button>
+        <button>설정</button>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <h1>게시글 작성</h1>
+        <div class="actions">
+          <button class="btn" id="saveDraft">임시 저장</button>
+          <button class="btn" id="schedulePost">예약 등록</button>
+          <button class="btn primary" id="publishNow">즉시 발행</button>
+        </div>
+      </div>
+
+      <div class="notice">
+        <strong>1차 범위: 본인 운영 계정 전용</strong>
+        Instagram, Threads, Kakao 공식 계정 중 본인이 소유하거나 운영 권한을 가진 계정만 연결합니다.
+      </div>
+
+      <div class="workspace">
+        <div>
+          <section class="section">
+            <h2>콘텐츠</h2>
+            <div class="field">
+              <label for="postTitle">제목</label>
+              <input id="postTitle" type="text" value="6월 신상품 입고 안내">
+            </div>
+            <div class="field">
+              <label for="postBody">본문</label>
+              <textarea id="postBody">오늘 오후 2시부터 신상품 판매를 시작합니다.
+
+한정 수량으로 준비되어 조기 품절될 수 있습니다.</textarea>
+              <div class="meta-row">
+                <span id="bodyCount">0자</span>
+                <span>원본 콘텐츠</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="linkUrl">링크</label>
+              <input id="linkUrl" type="url" value="https://example.com/campaign">
+            </div>
+            <div class="field">
+              <label for="hashtags">해시태그</label>
+              <input id="hashtags" type="text" value="#신상품 #이벤트 #브랜드소식">
+            </div>
+            <div class="field">
+              <label for="assetName">이미지</label>
+              <input id="assetName" type="file" accept="image/*">
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>플랫폼</h2>
+            <div class="platform-grid">
+              <label class="platform">
+                <div class="platform-header">
+                  <span class="platform-name"><span class="dot instagram"></span>Instagram</span>
+                  <input type="checkbox" data-platform="Instagram" checked>
+                </div>
+                <span class="badge ready">연결됨</span>
+                <span class="meta-row">Business 계정</span>
+              </label>
+              <label class="platform">
+                <div class="platform-header">
+                  <span class="platform-name"><span class="dot threads"></span>Threads</span>
+                  <input type="checkbox" data-platform="Threads" checked>
+                </div>
+                <span class="badge ready">연결됨</span>
+                <span class="meta-row">API 검증 필요</span>
+              </label>
+              <label class="platform">
+                <div class="platform-header">
+                  <span class="platform-name"><span class="dot kakao"></span>Kakao</span>
+                  <input type="checkbox" data-platform="Kakao">
+                </div>
+                <span class="badge warning">방식 확정 필요</span>
+                <span class="meta-row">Channel/Business</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>발행 설정</h2>
+            <div class="field">
+              <label for="publishMode">방식</label>
+              <select id="publishMode">
+                <option value="now">즉시 발행</option>
+                <option value="scheduled">예약 발행</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="scheduledAt">예약 시간</label>
+              <input id="scheduledAt" type="datetime-local">
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>발행 결과</h2>
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>플랫폼</th>
+                  <th>상태</th>
+                  <th>메시지</th>
+                </tr>
+              </thead>
+              <tbody id="resultBody">
+                <tr>
+                  <td colspan="3">발행 전</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <aside>
+          <section class="section">
+            <h2>미리보기</h2>
+            <div class="preview" id="preview"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const postBody = document.querySelector("#postBody");
+    const postTitle = document.querySelector("#postTitle");
+    const linkUrl = document.querySelector("#linkUrl");
+    const hashtags = document.querySelector("#hashtags");
+    const bodyCount = document.querySelector("#bodyCount");
+    const preview = document.querySelector("#preview");
+    const resultBody = document.querySelector("#resultBody");
+    const toast = document.querySelector("#toast");
+    const platformInputs = Array.from(document.querySelectorAll("[data-platform]"));
+
+    const state = {
+      imageName: ""
+    };
+
+    function selectedPlatforms() {
+      return platformInputs.filter((input) => input.checked).map((input) => input.dataset.platform);
+    }
+
+    function contentFor(platform) {
+      const body = postBody.value.trim();
+      const link = linkUrl.value.trim();
+      const tags = hashtags.value.trim();
+
+      if (platform === "Instagram") {
+        return [body, "", tags].filter(Boolean).join("\n");
+      }
+
+      if (platform === "Threads") {
+        return [body, tags].filter(Boolean).join("\n");
+      }
+
+      return [postTitle.value.trim(), body, link].filter(Boolean).join("\n");
+    }
+
+    function renderPreview() {
+      bodyCount.textContent = `${postBody.value.length}자`;
+      const platforms = selectedPlatforms();
+
+      if (platforms.length === 0) {
+        preview.innerHTML = '<div class="meta-row">선택된 플랫폼 없음</div>';
+        return;
+      }
+
+      preview.innerHTML = platforms.map((platform) => `
+        <article class="preview-item">
+          <div class="preview-head">
+            <span>${platform}</span>
+            <span class="badge">${platform === "Kakao" ? "정책 확인" : "게시 가능"}</span>
+          </div>
+          <div class="preview-body">
+            <div class="image-placeholder">${state.imageName || "이미지 미리보기"}</div>
+            <div class="preview-text">${escapeHtml(contentFor(platform))}</div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function renderResults(mode) {
+      const rows = selectedPlatforms().map((platform) => {
+        if (platform === "Kakao") {
+          return `
+            <tr>
+              <td>${platform}</td>
+              <td><span class="status failed">보류</span></td>
+              <td>Kakao 공식 발송 방식 확정 후 실행</td>
+            </tr>
+          `;
+        }
+
+        return `
+          <tr>
+            <td>${platform}</td>
+            <td><span class="status ${mode === "scheduled" ? "pending" : "success"}">${mode === "scheduled" ? "예약됨" : "성공"}</span></td>
+            <td>${mode === "scheduled" ? "예약 작업 생성" : "테스트 어댑터 결과"}</td>
+          </tr>
+        `;
+      });
+
+      resultBody.innerHTML = rows.length ? rows.join("") : '<tr><td colspan="3">선택된 플랫폼 없음</td></tr>';
+    }
+
+    document.querySelector("#assetName").addEventListener("change", (event) => {
+      state.imageName = event.target.files[0]?.name || "";
+      renderPreview();
+    });
+
+    document.querySelector("#saveDraft").addEventListener("click", () => {
+      showToast("초안이 저장되었습니다.");
+    });
+
+    document.querySelector("#schedulePost").addEventListener("click", () => {
+      document.querySelector("#publishMode").value = "scheduled";
+      renderResults("scheduled");
+      showToast("예약 작업이 생성되었습니다.");
+    });
+
+    document.querySelector("#publishNow").addEventListener("click", () => {
+      document.querySelector("#publishMode").value = "now";
+      renderResults("now");
+      showToast("발행 작업이 실행되었습니다.");
+    });
+
+    [postBody, postTitle, linkUrl, hashtags, ...platformInputs].forEach((element) => {
+      element.addEventListener("input", renderPreview);
+      element.addEventListener("change", renderPreview);
+    });
+
+    renderPreview();
+  </script>
+</body>
+</html>

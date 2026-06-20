@@ -1,0 +1,17 @@
+{
+  "name": "automatic-posting-cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "d1:init": "wrangler d1 execute automatic-posting --local --file=./schema.sql"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.0.0"
+  }
+}

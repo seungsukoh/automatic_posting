@@ -1,0 +1,24 @@
+name = "automatic-posting-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "automatic-posting"
+database_id = "replace-with-cloudflare-d1-database-id"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "automatic-posting-assets"
+
+[[queues.producers]]
+binding = "PUBLISH_QUEUE"
+queue = "automatic-posting-publish"
+
+[[queues.consumers]]
+queue = "automatic-posting-publish"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[triggers]
+crons = ["*/5 * * * *"]
