@@ -18,6 +18,14 @@ export function badRequest(message: string): Response {
   return jsonResponse({ error: message }, 400);
 }
 
+export function serviceUnavailable(message: string): Response {
+  return jsonResponse({ error: message }, 503);
+}
+
+export function internalError(message: string): Response {
+  return jsonResponse({ error: message }, 500);
+}
+
 export function redirectResponse(location: string, headers: HeadersInit = {}): Response {
   return new Response(null, {
     status: 302,

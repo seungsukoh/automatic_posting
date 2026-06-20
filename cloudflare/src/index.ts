@@ -1,9 +1,17 @@
 import { serveAsset, uploadAsset } from "./assets";
 import { audit, createPost, createPublishJobs, getPublishPayload, listPosts } from "./db";
-import { badRequest, isDue, jsonResponse, notFound, readJson, utcNow } from "./http";
+import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, serviceUnavailable, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
 import type { CreatePostRequest, Env, PublishRequest, PublishQueueMessage } from "./types";
+
+function hasD1(env: Env): boolean {
+  return typeof (env as Partial<Env>).DB?.prepare === "function";
+}
+
+function hasR2(env: Env): boolean {
+  return typeof (env as Partial<Env>).ASSETS?.put === "function";
+}
 
 async function executeJob(env: Env, jobId: number): Promise<Record<string, unknown>> {
   const job = await getPublishPayload(env, jobId);
@@ -36,11 +44,13 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "POST" && path === "/api/assets/upload") {
+    if (!hasR2(env)) return serviceUnavailable("Cloudflare R2 binding ASSETS is not configured.");
     return uploadAsset(request, env);
   }
 
   const assetMatch = path.match(/^\/api\/assets\/(.+)$/);
   if ((request.method === "GET" || request.method === "HEAD") && assetMatch) {
+    if (!hasR2(env)) return serviceUnavailable("Cloudflare R2 binding ASSETS is not configured.");
     return serveAsset(request, env, decodeURIComponent(assetMatch[1]));
   }
 
@@ -49,10 +59,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "GET" && path === "/api/social-accounts") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     return listConnectedAccounts(env);
   }
 
   if (request.method === "POST" && path === "/api/social-accounts/disconnect") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     return disconnectConnectedAccount(request, env);
   }
 
@@ -65,10 +77,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "GET" && path === "/api/posts") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     return jsonResponse({ posts: await listPosts(env) });
   }
 
   if (request.method === "GET" && path === "/api/jobs") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const jobs = await env.DB.prepare(
       `
       select j.*, p.title
@@ -82,6 +96,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "POST" && path === "/api/posts") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const input = await readJson<CreatePostRequest>(request);
     if (!input.title?.trim() || !input.body?.trim()) return badRequest("title and body are required");
     if (!Array.isArray(input.platforms) || input.platforms.length === 0) return badRequest("at least one platform is required");
@@ -91,6 +106,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   const publishMatch = path.match(/^\/api\/posts\/(\d+)\/publish$/);
   if (request.method === "POST" && publishMatch) {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const postId = Number(publishMatch[1]);
     const input = await readJson<PublishRequest>(request);
     if (input.mode === "scheduled" && !input.scheduled_at) return badRequest("scheduled_at is required for scheduled mode");
@@ -110,6 +126,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   const retryMatch = path.match(/^\/api\/jobs\/(\d+)\/retry$/);
   if (request.method === "POST" && retryMatch) {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const jobId = Number(retryMatch[1]);
     await env.DB.prepare("update publish_jobs set status = 'queued', retry_count = retry_count + 1, error_message = null, updated_at = ? where id = ?")
       .bind(utcNow(), jobId)
@@ -118,6 +135,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "POST" && path === "/api/scheduler/run") {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const rows = await env.DB.prepare("select id, scheduled_at from publish_jobs where status = 'scheduled'").all<Record<string, string | number | null>>();
     const processed = [];
     for (const row of rows.results ?? []) {
@@ -130,7 +148,14 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-  fetch: handleRequest,
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      return await handleRequest(request, env);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unexpected server error.";
+      return internalError(message);
+    }
+  },
   async queue(batch: MessageBatch<PublishQueueMessage>, env: Env): Promise<void> {
     for (const message of batch.messages) {
       await executeJob(env, message.body.jobId);

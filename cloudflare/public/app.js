@@ -165,7 +165,14 @@ async function request(path, options = {}) {
     headers,
   });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    const contentType = response.headers.get("content-type") || "";
+    const looksLikeHtml = contentType.includes("text/html") || text.trim().startsWith("<");
+    throw new Error(looksLikeHtml ? "Cloudflare function is not returning JSON. Check deployment functions and bindings." : "Invalid API response.");
+  }
   if (!response.ok) throw new Error(data.error || "request failed");
   return data;
 }
