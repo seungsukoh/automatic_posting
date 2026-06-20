@@ -12,6 +12,12 @@ const accountConnections = document.querySelector("#accountConnections");
 const systemReadiness = document.querySelector("#systemReadiness");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
+const adminSettingsSummary = document.querySelector("#adminSettingsSummary");
+const adminSettingsDialog = document.querySelector("#adminSettingsDialog");
+const openAdminSettings = document.querySelector("#openAdminSettings");
+const openAdminSettingsSide = document.querySelector("#openAdminSettingsSide");
+const closeAdminSettings = document.querySelector("#closeAdminSettings");
+const cancelAdminSettings = document.querySelector("#cancelAdminSettings");
 const workspaceSummary = document.querySelector("#workspaceSummary");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
@@ -75,6 +81,24 @@ function setBusy(button, busy, label) {
   if (!button) return;
   button.disabled = busy;
   if (label) button.textContent = label;
+}
+
+function openSettingsDialog() {
+  if (!adminSettingsDialog) return;
+  if (typeof adminSettingsDialog.showModal === "function") {
+    adminSettingsDialog.showModal();
+  } else {
+    adminSettingsDialog.setAttribute("open", "");
+  }
+}
+
+function closeSettingsDialog() {
+  if (!adminSettingsDialog) return;
+  if (typeof adminSettingsDialog.close === "function") {
+    adminSettingsDialog.close();
+  } else {
+    adminSettingsDialog.removeAttribute("open");
+  }
 }
 
 function platformLabel(platform) {
@@ -185,7 +209,7 @@ function renderConnectionCard(platform, readiness, account) {
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">연결하기</a>`
-      : `<button type="button" disabled>설정값 필요</button>`;
+      : `<button class="secondaryButton" type="button" data-open-admin>설정 열기</button>`;
 
   return `
     <article class="connectionCard ${connected ? "connected" : ""}">
@@ -248,6 +272,16 @@ function renderAdminSettingsStatus(status) {
   `).join("");
 }
 
+function renderAdminSettingsSummary(status) {
+  if (!adminSettingsSummary) return;
+  const metaReady = Boolean(status.meta_app_id_configured && status.meta_app_secret_configured);
+  const secureReady = Boolean(status.admin_setup_key_configured && status.token_encryption_key_configured);
+  adminSettingsSummary.innerHTML = `
+    <span class="${secureReady ? "ok" : "missing"}">보안 키: ${secureReady ? "정상" : "확인 필요"}</span>
+    <span class="${metaReady ? "ok" : "missing"}">Meta App: ${metaReady ? "설정됨" : "입력 필요"}</span>
+  `;
+}
+
 async function loadAdminSettingsStatus() {
   if (!adminSettingsStatus) return;
   const status = await request("/api/admin/settings").catch((error) => ({
@@ -258,8 +292,10 @@ async function loadAdminSettingsStatus() {
     error: error.message,
   }));
   renderAdminSettingsStatus(status);
+  renderAdminSettingsSummary(status);
   if (status.error) {
     adminSettingsStatus.insertAdjacentHTML("beforeend", `<span class="missing">저장소 확인 필요: ${escapeHtml(status.error)}</span>`);
+    adminSettingsSummary?.insertAdjacentHTML("beforeend", `<span class="missing">확인 실패</span>`);
   }
 }
 
@@ -488,6 +524,12 @@ jobsEl.addEventListener("click", async (event) => {
 });
 
 accountConnections?.addEventListener("click", async (event) => {
+  const setupButton = event.target.closest("[data-open-admin]");
+  if (setupButton) {
+    openSettingsDialog();
+    return;
+  }
+
   const button = event.target.closest("[data-disconnect]");
   if (!button) return;
   setBusy(button, true, "해제 중");
@@ -526,7 +568,14 @@ adminSettingsForm?.addEventListener("submit", async (event) => {
       meta_app_id_configured: result.meta_app_id_configured,
       meta_app_secret_configured: result.meta_app_secret_configured,
     });
+    renderAdminSettingsSummary({
+      admin_setup_key_configured: true,
+      token_encryption_key_configured: true,
+      meta_app_id_configured: result.meta_app_id_configured,
+      meta_app_secret_configured: result.meta_app_secret_configured,
+    });
     showToast("관리자 설정을 저장했습니다.");
+    closeSettingsDialog();
     await loadConnections();
   } catch (error) {
     adminSettingsStatus.innerHTML = `<span class="missing">설정 저장 실패: ${escapeHtml(error.message)}</span>`;
@@ -559,6 +608,14 @@ runScheduler.addEventListener("click", async () => {
   } finally {
     setBusy(runScheduler, false, "예약 작업 실행");
   }
+});
+
+openAdminSettings?.addEventListener("click", openSettingsDialog);
+openAdminSettingsSide?.addEventListener("click", openSettingsDialog);
+closeAdminSettings?.addEventListener("click", closeSettingsDialog);
+cancelAdminSettings?.addEventListener("click", closeSettingsDialog);
+adminSettingsDialog?.addEventListener("click", (event) => {
+  if (event.target === adminSettingsDialog) closeSettingsDialog();
 });
 
 const oauthResult = new URLSearchParams(window.location.search);
