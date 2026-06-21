@@ -17,7 +17,7 @@
         <div class="topActions">
           <button id="openAdminSettings" class="secondaryButton" type="button">
             <span aria-hidden="true">C</span>
-            연결 설정
+            관리자 설정
           </button>
           <button id="refreshJobs" class="secondaryButton" type="button">
             <span aria-hidden="true">R</span>
@@ -51,6 +51,16 @@
       </section>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+      <section class="panel customerStartPanel" aria-labelledby="customerStartTitle">
+        <div class="sectionHead">
+          <div>
+            <h2 id="customerStartTitle">자동 예약 시작</h2>
+            <span class="muted">계정 연결과 예약 가능 상태를 확인한 뒤 날짜별 폴더를 올립니다.</span>
+          </div>
+        </div>
+        <div id="customerReadiness" class="customerReadiness" aria-live="polite"></div>
+      </section>
 
       <section class="appLayout">
         <div class="mainColumn">
@@ -99,10 +109,11 @@
               </div>
               <fieldset class="platformPicker">
                 <legend>플랫폼</legend>
-                <label><input type="checkbox" name="platforms" value="instagram" checked /> <span>Instagram</span></label>
-                <label><input type="checkbox" name="platforms" value="threads" checked /> <span>Threads</span></label>
+                <label><input type="checkbox" name="platforms" value="instagram" /> <span>Instagram</span></label>
+                <label><input type="checkbox" name="platforms" value="threads" /> <span>Threads</span></label>
                 <label><input type="checkbox" name="platforms" value="kakao" /> <span>Kakao</span></label>
               </fieldset>
+              <div id="platformReadiness" class="platformReadiness" aria-live="polite"></div>
               <div class="publishPreviewPanel">
                 <div class="fieldLabelRow">
                   <strong>게시 미리보기</strong>
@@ -217,16 +228,16 @@
           <section class="panel setupOverview">
             <div class="sectionHead">
               <div>
-                <h2>연결 설정</h2>
-                <span class="muted">Instagram과 Threads 연결에 필요한 앱 값을 관리합니다.</span>
+                <h2>관리자 설정</h2>
+                <span class="muted">일반 사용자는 계정 연결만 진행하고, 이 영역은 운영자가 관리합니다.</span>
               </div>
             </div>
             <div class="setupCallout">
-              <strong>Meta App 설정이 준비되면 연결 버튼이 활성화됩니다.</strong>
-              <span>값은 앱에 저장되고, 계정 승인은 Instagram/Threads 연결하기 버튼에서 진행합니다.</span>
+              <strong>서비스 설정이 끝나면 사용자에게 연결 버튼만 표시됩니다.</strong>
+              <span>Meta App ID, Secret, 암호화 키는 운영자가 한 번만 설정합니다. 사용자는 이 값을 알 필요가 없습니다.</span>
             </div>
             <div id="adminSettingsSummary" class="settingsStatus">설정 상태를 확인하고 있습니다.</div>
-            <button id="openAdminSettingsSide" type="button">연결 설정 열기</button>
+            <button id="openAdminSettingsSide" type="button">관리자 설정 열기</button>
           </section>
         </aside>
       </section>
@@ -237,8 +248,8 @@
         <div class="dialogHeader">
           <div>
             <p class="eyebrow">Connection setup</p>
-            <h2>Instagram / Threads 연결 설정</h2>
-            <p>관리자 키와 Meta App 값을 저장한 뒤 계정 연결에서 사용자 승인을 진행합니다.</p>
+            <h2>관리자 연결 설정</h2>
+            <p>이 설정은 운영자가 한 번만 저장합니다. 일반 사용자는 설정값을 입력하지 않고 계정 연결 버튼만 사용합니다.</p>
           </div>
           <button id="closeAdminSettings" class="iconButton" type="button" aria-label="닫기">X</button>
         </div>

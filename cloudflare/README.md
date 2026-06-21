@@ -70,6 +70,29 @@ npm run dev
 Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` Worker로 프록시합니다.
 다른 Worker 주소를 쓰려면 `VITE_WORKER_API_ORIGIN`을 설정하고, 배포된 Pages가 별도 Worker API를 호출해야 하면 `VITE_API_BASE`를 설정합니다.
 
+## 일반 사용자 사용 흐름
+
+운영자가 Cloudflare와 Meta App 설정을 먼저 끝낸 뒤, 일반 사용자는 앱 안에서 아래 순서만 진행합니다.
+
+1. 상단의 자동 예약 시작 영역에서 서비스 준비 상태를 확인합니다.
+2. `Instagram 연결하기`를 눌러 게시할 Instagram Business 계정을 승인합니다.
+3. 플랫폼 상태가 `예약 가능`으로 바뀌면 날짜별 폴더를 선택합니다.
+4. 예약 미리보기에서 이미지 수, 날짜, 시간, 제외 파일, 경고를 확인합니다.
+5. `예약 작업 만들기`를 눌러 예약을 확정합니다.
+
+일반 사용자는 Meta App ID, Meta App Secret, Cloudflare secret 값을 입력하지 않습니다. 해당 값은 관리자 설정에서 운영자가 한 번만 관리합니다.
+
+## 관리자 설정 범위
+
+운영자는 다음 값이 준비되어야 사용자가 계정을 연결할 수 있습니다.
+
+- Cloudflare D1, R2, Pages Functions, Cron
+- `TOKEN_ENCRYPTION_KEY`
+- `ADMIN_SETUP_KEY`
+- Meta App ID
+- Meta App Secret
+- Meta OAuth Redirect URI: 배포 도메인의 `/api/auth/meta/callback`
+
 ## 다음 구현
 
 1. Instagram OAuth callback endpoint 추가

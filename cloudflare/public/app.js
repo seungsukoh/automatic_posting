@@ -27,6 +27,8 @@ const openAdminSettingsSide = document.querySelector("#openAdminSettingsSide");
 const closeAdminSettings = document.querySelector("#closeAdminSettings");
 const cancelAdminSettings = document.querySelector("#cancelAdminSettings");
 const workspaceSummary = document.querySelector("#workspaceSummary");
+const customerReadiness = document.querySelector("#customerReadiness");
+const platformReadiness = document.querySelector("#platformReadiness");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
 const formStatus = document.querySelector("#formStatus");
@@ -56,6 +58,7 @@ const appState = {
   batchSkipped: [],
   batchResults: {},
   batchSubmitting: false,
+  platformSelectionInitialized: false,
 };
 
 async function request(path, options = {}) {
@@ -285,6 +288,155 @@ function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
 
+function accountForPlatform(platform) {
+  return appState.accounts.find((account) => account.platform === platform && account.status !== "disconnected") || null;
+}
+
+function systemReadyForUsers() {
+  return Boolean(
+    appState.system?.d1?.bound
+    && appState.system?.d1?.schema_ready
+    && appState.system?.r2?.bound
+    && appState.system?.secrets?.token_encryption_key,
+  );
+}
+
+function platformStatus(platform) {
+  const account = accountForPlatform(platform);
+  const readiness = appState.readiness?.platforms?.[platform];
+  const configured = Boolean(readiness?.configured);
+  const connected = account?.status === "connected";
+  const serviceReady = systemReadyForUsers() && configured;
+
+  if (platform === "threads") {
+    return {
+      selectable: false,
+      connected,
+      label: "준비 중",
+      detail: connected ? "계정은 연결됐지만 현재 테스트 발행만 가능합니다." : "Threads 실제 발행은 운영자가 API 권한을 완료한 뒤 사용할 수 있습니다.",
+      tone: "pending",
+    };
+  }
+  if (platform === "kakao") {
+    return {
+      selectable: false,
+      connected: false,
+      label: "준비 중",
+      detail: "Kakao 공식 발송 경로는 아직 운영 설정에 포함되지 않았습니다.",
+      tone: "missing",
+    };
+  }
+  if (!serviceReady) {
+    return {
+      selectable: false,
+      connected: false,
+      label: "서비스 설정 필요",
+      detail: "운영자가 Meta App과 보안 키를 먼저 설정해야 합니다.",
+      tone: "missing",
+    };
+  }
+  if (!connected) {
+    return {
+      selectable: false,
+      connected: false,
+      label: "계정 연결 필요",
+      detail: "Instagram 연결하기를 눌러 게시할 계정을 승인하세요.",
+      tone: "pending",
+    };
+  }
+  return {
+    selectable: true,
+    connected: true,
+    label: "예약 가능",
+    detail: account.username || account.account_id || "연결된 계정",
+    tone: "ok",
+  };
+}
+
+function validatePublishablePlatforms(platforms) {
+  if (platforms.length === 0) return "먼저 게시할 계정을 연결하고 플랫폼을 선택하세요.";
+  const blocked = platforms
+    .map((platform) => ({ platform, status: platformStatus(platform) }))
+    .filter(({ status }) => !status.selectable);
+  if (blocked.length === 0) return "";
+  const first = blocked[0];
+  return `${platformLabel(first.platform)}: ${first.status.detail}`;
+}
+
+function renderPlatformReadiness() {
+  const inputs = [...form.querySelectorAll("input[name='platforms']")];
+  const readyInputs = [];
+
+  inputs.forEach((input) => {
+    const status = platformStatus(input.value);
+    const label = input.closest("label");
+    input.disabled = !status.selectable;
+    if (!status.selectable) input.checked = false;
+    label?.classList.toggle("disabled", !status.selectable);
+    label?.setAttribute("title", status.detail);
+    if (status.selectable) readyInputs.push(input);
+  });
+
+  if (!appState.platformSelectionInitialized && selectedPlatforms().length === 0 && readyInputs.length === 1) {
+    readyInputs[0].checked = true;
+    appState.platformSelectionInitialized = true;
+  }
+
+  if (platformReadiness) {
+    platformReadiness.innerHTML = inputs.map((input) => {
+      const status = platformStatus(input.value);
+      return `
+        <article class="platformStatusItem ${status.tone}">
+          <strong>${platformLabel(input.value)}</strong>
+          <span>${escapeHtml(status.label)}</span>
+          <p>${escapeHtml(status.detail)}</p>
+        </article>
+      `;
+    }).join("");
+  }
+
+  renderPublishPreview();
+  renderBatchQueue();
+}
+
+function readinessStep(label, ok, detail) {
+  return `
+    <article class="startStep ${ok ? "ready" : "missing"}">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${ok ? "완료" : "필요"}</span>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `;
+}
+
+function renderCustomerReadiness() {
+  if (!customerReadiness) return;
+  const instagram = platformStatus("instagram");
+  const serviceReady = systemReadyForUsers() && Boolean(appState.readiness?.platforms?.instagram?.configured);
+  const instagramConnected = instagram.connected;
+  const readyToSchedule = instagram.selectable;
+  const action = !serviceReady
+    ? `<button class="secondaryButton" type="button" data-open-admin>관리자 설정 확인</button>`
+    : !instagramConnected
+      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=instagram">Instagram 연결하기</a>`
+      : `<button type="button" data-scroll-batch>날짜 폴더 예약하기</button>`;
+
+  customerReadiness.innerHTML = `
+    <div class="startSteps">
+      ${readinessStep("서비스 준비", serviceReady, serviceReady ? "저장소와 Meta App 설정이 준비됐습니다." : "운영자가 Meta App, 보안 키, 저장소 설정을 완료해야 합니다.")}
+      ${readinessStep("Instagram 연결", instagramConnected, instagramConnected ? instagram.detail : "게시할 Instagram Business 계정을 승인하세요.")}
+      ${readinessStep("예약 가능", readyToSchedule, readyToSchedule ? "날짜별 폴더를 선택하면 예약 작업을 만들 수 있습니다." : "연결이 끝나면 예약 버튼이 활성화됩니다.")}
+    </div>
+    <div class="startActions">
+      <div>
+        <strong>${readyToSchedule ? "자동 예약을 사용할 수 있습니다." : "예약 전 준비가 필요합니다."}</strong>
+        <p>${readyToSchedule ? "이미지 폴더를 날짜별로 정리한 뒤 아래 예약 영역에서 확인하세요." : "일반 사용자는 관리자 설정값을 입력하지 않고 계정 연결만 진행합니다."}</p>
+      </div>
+      ${action}
+    </div>
+  `;
+}
+
 function formatPublishTextFromForm() {
   return [
     form.elements.title.value || "",
@@ -298,6 +450,13 @@ function formatPublishTextFromForm() {
 }
 
 function previewStatusFor(platform) {
+  const readiness = platformStatus(platform);
+  if (!readiness.selectable) {
+    return {
+      label: readiness.label,
+      tone: readiness.tone === "ok" ? "ok" : readiness.tone,
+    };
+  }
   if (platform === "instagram") {
     const file = imageFile.files?.[0];
     const hasImage = Boolean(file || form.elements.image_url.value);
@@ -395,19 +554,25 @@ function renderConnectionCard(platform, readiness, account) {
   const connected = account?.status === "connected";
   const badge = connected
     ? `<span class="statusBadge ok">연결됨</span>`
+    : platform === "threads"
+      ? `<span class="statusBadge pending">준비 중</span>`
     : configured
       ? `<span class="statusBadge pending">승인 가능</span>`
       : `<span class="statusBadge missing">설정 필요</span>`;
   const statusText = connected
     ? escapeHtml(account.username || account.account_id)
+    : platform === "threads"
+      ? "실제 발행 준비 중"
     : configured
       ? "계정 승인 대기"
       : missing.map(missingLabel).join(", ");
-  const action = connected
+  const action = platform === "threads" && !connected
+    ? `<button class="secondaryButton" type="button" disabled>준비 중</button>`
+    : connected
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">연결하기</a>`
-      : `<button class="secondaryButton" type="button" data-open-admin>설정 열기</button>`;
+      : `<button class="secondaryButton" type="button" disabled>운영자 설정 필요</button>`;
 
   return `
     <article class="connectionCard ${connected ? "connected" : ""}">
@@ -441,6 +606,8 @@ async function loadConnections() {
   appState.accounts = accounts;
   appState.readiness = readiness;
   updateSummary();
+  renderCustomerReadiness();
+  renderPlatformReadiness();
 
   const accountError = accountsData.error
     ? `<div class="connectionWarning">계정 상태 확인 필요: ${escapeHtml(accountsData.error)}</div>`
@@ -455,6 +622,8 @@ async function loadConnections() {
       )).join("")}
     </div>
   `;
+  renderCustomerReadiness();
+  renderPlatformReadiness();
 }
 
 function renderAdminSettingsStatus(status) {
@@ -515,10 +684,14 @@ async function loadSystemReadiness() {
     systemReadiness.innerHTML = readinessItem("시스템 상태", false, status.error);
     appState.system = null;
     updateSummary();
+    renderCustomerReadiness();
+    renderPlatformReadiness();
     return;
   }
   appState.system = status;
   updateSummary();
+  renderCustomerReadiness();
+  renderPlatformReadiness();
   const missingTables = Object.entries(status.d1?.tables || {})
     .filter(([, ok]) => !ok)
     .map(([name]) => name);
@@ -975,7 +1148,8 @@ form.addEventListener("input", () => {
   resetBatchResultsForPlanChange();
   renderBatchQueue();
 });
-form.addEventListener("change", () => {
+form.addEventListener("change", (event) => {
+  if (event.target?.name === "platforms") appState.platformSelectionInitialized = true;
   updateFormMeta();
   resetBatchResultsForPlanChange();
   renderBatchQueue();
@@ -986,7 +1160,13 @@ form.addEventListener("submit", async (event) => {
   const data = new FormData(form);
   const platforms = selectedPlatforms();
   if (platforms.length === 0) {
-    showToast("플랫폼을 하나 이상 선택하세요.", "error");
+    showToast(validatePublishablePlatforms(platforms), "error");
+    return;
+  }
+  const platformError = validatePublishablePlatforms(platforms);
+  if (platformError) {
+    showToast(platformError, "error");
+    renderPlatformReadiness();
     return;
   }
   const selectedImage = imageFile.files?.[0];
@@ -1068,7 +1248,13 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
     return;
   }
   if (platforms.length === 0) {
-    showToast("플랫폼을 하나 이상 선택하세요.", "error");
+    showToast(validatePublishablePlatforms(platforms), "error");
+    return;
+  }
+  const platformError = validatePublishablePlatforms(platforms);
+  if (platformError) {
+    showToast(platformError, "error");
+    renderPlatformReadiness();
     return;
   }
   if (state.hasKakao) {
@@ -1151,6 +1337,16 @@ jobsEl.addEventListener("click", async (event) => {
   } catch (error) {
     showToast(error.message, "error");
     setBusy(button, false, "재시도");
+  }
+});
+
+customerReadiness?.addEventListener("click", (event) => {
+  if (event.target.closest("[data-open-admin]")) {
+    openSettingsDialog();
+    return;
+  }
+  if (event.target.closest("[data-scroll-batch]")) {
+    batchScheduleForm?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 });
 
@@ -1260,7 +1456,8 @@ if (oauthResult.get("oauth_error")) {
 }
 
 updateFormMeta();
-renderBatchQueue();
+renderCustomerReadiness();
+renderPlatformReadiness();
 const redirectUri = `${window.location.origin}/api/auth/meta/callback`;
 if (redirectUriValue) redirectUriValue.textContent = redirectUri;
 redirectUriMirrors.forEach((element) => {

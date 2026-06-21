@@ -173,6 +173,80 @@ p {
   color: var(--text);
 }
 
+.customerStartPanel {
+  margin-bottom: 18px;
+}
+
+.customerReadiness {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.startSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.startStep {
+  display: grid;
+  gap: 7px;
+  min-height: 116px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.startStep span,
+.platformStatusItem span {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.startStep.ready {
+  border-color: #94d7bc;
+}
+
+.startStep.ready span,
+.platformStatusItem.ok span {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.startStep.missing span,
+.platformStatusItem.missing span {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.platformStatusItem.pending span {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.startStep p,
+.platformStatusItem p,
+.startActions p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.startActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
 .appLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 390px;
@@ -765,6 +839,28 @@ button:disabled {
   color: var(--primary-dark);
 }
 
+.platformPicker label.disabled span {
+  cursor: not-allowed;
+  background: #f1f4f6;
+  color: #8a969e;
+  border-color: #d8e0e5;
+}
+
+.platformReadiness {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.platformStatusItem {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .connections,
 .readinessGrid,
 .settingsStatus,
@@ -1192,6 +1288,11 @@ button:disabled {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .startSteps,
+  .platformReadiness {
+    grid-template-columns: 1fr;
+  }
+
   .setupGuide,
   .setupValueMap {
     grid-template-columns: 1fr;
@@ -1206,6 +1307,7 @@ button:disabled {
 
   .topbar,
   .sectionHead,
+  .startActions,
   .batchGuide,
   .batchMetricGrid,
   .batchRuleSummary,
