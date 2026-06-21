@@ -1,6 +1,8 @@
 const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const TEXT_CAPTION_EXTENSIONS = new Set(["txt", "md"]);
+const CSV_CAPTION_EXTENSIONS = new Set(["csv"]);
 const IMAGE_TYPE_BY_EXTENSION = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -42,9 +44,12 @@ const batchStartTime = document.querySelector("#batchStartTime");
 const batchInterval = document.querySelector("#batchInterval");
 const batchPlan = document.querySelector("#batchPlan");
 const batchQueue = document.querySelector("#batchQueue");
+const scheduleCalendar = document.querySelector("#scheduleCalendar");
 const batchStatus = document.querySelector("#batchStatus");
 const submitBatch = document.querySelector("#submitBatch");
 const clearBatch = document.querySelector("#clearBatch");
+const utmAuto = document.querySelector("#utmAuto");
+const utmPreview = document.querySelector("#utmPreview");
 const redirectUriValue = document.querySelector("#redirectUriValue");
 const redirectUriMirrors = document.querySelectorAll(".redirectUriMirror");
 
@@ -197,6 +202,15 @@ function localTimezoneLabel() {
     .find((part) => part.type === "timeZoneName")?.value || "브라우저 시간";
 }
 
+function dateKeyFromDate(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function fileExtension(name) {
   return String(name || "").split(".").pop()?.toLowerCase() || "";
 }
@@ -219,6 +233,260 @@ function normalizedImageFile(file) {
   const type = imageTypeForFile(file);
   if (!type || file.type === type) return file;
   return new File([file], file.name, { type });
+}
+
+function formValue(name) {
+  return String(form.elements[name]?.value || "").trim();
+}
+
+function campaignMetadata(sourceFile = "") {
+  return {
+    campaign_name: formValue("campaign_name"),
+    campaign_tags: formValue("campaign_tags"),
+    campaign_goal: formValue("campaign_goal"),
+    source_file: sourceFile,
+  };
+}
+
+function slugifyCampaign(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\p{Letter}\p{Number}_-]+/gu, "")
+    .replace(/-+/g, "-")
+    .slice(0, 80) || "automatic-posting";
+}
+
+function applyAutoUtm(rawUrl, platforms, contentKey = "") {
+  const cleanUrl = String(rawUrl || "").trim();
+  if (!cleanUrl || !utmAuto?.checked) return cleanUrl;
+  let url;
+  try {
+    url = new URL(cleanUrl);
+  } catch {
+    return cleanUrl;
+  }
+  const source = platforms.length === 1 ? platforms[0] : "social";
+  const campaign = slugifyCampaign(formValue("campaign_name") || "automatic-posting");
+  if (!url.searchParams.has("utm_source")) url.searchParams.set("utm_source", source);
+  if (!url.searchParams.has("utm_medium")) url.searchParams.set("utm_medium", "social");
+  if (!url.searchParams.has("utm_campaign")) url.searchParams.set("utm_campaign", campaign);
+  if (contentKey && !url.searchParams.has("utm_content")) {
+    url.searchParams.set("utm_content", slugifyCampaign(contentKey));
+  }
+  return url.toString();
+}
+
+function renderUtmPreview() {
+  if (!utmPreview) return;
+  const link = formValue("link_url");
+  if (!link) {
+    utmPreview.className = "utmPreview";
+    utmPreview.textContent = "링크를 입력하면 UTM 미리보기가 표시됩니다.";
+    return;
+  }
+  try {
+    new URL(link);
+  } catch {
+    utmPreview.className = "utmPreview";
+    utmPreview.textContent = "https://로 시작하는 올바른 링크를 입력하면 UTM을 붙일 수 있습니다.";
+    return;
+  }
+  if (!utmAuto?.checked) {
+    utmPreview.className = "utmPreview";
+    utmPreview.textContent = "UTM 자동 추가가 꺼져 있습니다.";
+    return;
+  }
+  utmPreview.className = "utmPreview ready";
+  utmPreview.textContent = applyAutoUtm(link, selectedPlatforms(), "preview");
+}
+
+function normalizeCaptionPath(value) {
+  return String(value || "")
+    .replaceAll("\\", "/")
+    .split("/")
+    .filter(Boolean)
+    .join("/")
+    .toLowerCase();
+}
+
+function normalizeCaptionFileName(value) {
+  const parts = normalizeCaptionPath(value).split("/");
+  return parts[parts.length - 1] || "";
+}
+
+function captionSidecarKey(dateKey, segments, fileName) {
+  const parent = segments.slice(0, -1).join("/").toLowerCase();
+  return `${dateKey}::${parent}::${fileStem(fileName).toLowerCase()}`;
+}
+
+function csvCaptionKeys(dateKey, reference) {
+  const path = normalizeCaptionPath(reference);
+  const fileName = normalizeCaptionFileName(reference);
+  const stem = fileStem(fileName).toLowerCase();
+  const keys = [];
+  if (dateKey) {
+    keys.push(`date:${dateKey}:path:${path}`);
+    keys.push(`date:${dateKey}:file:${fileName}`);
+    keys.push(`date:${dateKey}:stem:${stem}`);
+  } else {
+    keys.push(`global:path:${path}`);
+    keys.push(`global:file:${fileName}`);
+    keys.push(`global:stem:${stem}`);
+  }
+  return keys;
+}
+
+function csvLookupKeys(item) {
+  const path = normalizeCaptionPath(item.relativePath);
+  const fileName = normalizeCaptionFileName(item.fileName);
+  const stem = fileStem(fileName).toLowerCase();
+  return [
+    `date:${item.dateKey}:path:${path}`,
+    `date:${item.dateKey}:file:${fileName}`,
+    `date:${item.dateKey}:stem:${stem}`,
+    `global:path:${path}`,
+    `global:file:${fileName}`,
+    `global:stem:${stem}`,
+  ];
+}
+
+function normalizeCsvHeader(value) {
+  return String(value || "")
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function parseCsvRows(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  const input = String(text || "").replace(/^\uFEFF/, "");
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (quoted) {
+      if (char === '"' && input[index + 1] === '"') {
+        field += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else if (char !== "\r") {
+      field += char;
+    }
+  }
+  row.push(field);
+  if (row.some((cell) => String(cell).trim())) rows.push(row);
+  return rows;
+}
+
+function parseCaptionCsv(text) {
+  const rows = parseCsvRows(text);
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(normalizeCsvHeader);
+  return rows.slice(1)
+    .filter((row) => row.some((cell) => String(cell).trim()))
+    .map((row) => Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""])));
+}
+
+function firstRowValue(row, names) {
+  for (const name of names) {
+    const value = String(row[name] || "").trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function captionData(fields, source) {
+  const data = {
+    title: String(fields.title || "").trim(),
+    body: String(fields.body || "").trim(),
+    hashtags: String(fields.hashtags || "").trim(),
+    link: String(fields.link || "").trim(),
+    source,
+  };
+  return data.title || data.body || data.hashtags || data.link ? data : null;
+}
+
+function captionFromCsvRow(row, source) {
+  return captionData({
+    title: firstRowValue(row, ["title", "post_title", "제목"]),
+    body: firstRowValue(row, ["body", "caption", "content", "copy", "본문", "문구", "캡션"]),
+    hashtags: firstRowValue(row, ["hashtags", "hashtag", "tags", "tag", "해시태그", "태그"]),
+    link: firstRowValue(row, ["link_url", "link", "url", "landing_url", "링크", "랜딩"]),
+  }, source);
+}
+
+function parseTextCaption(text, source) {
+  const clean = String(text || "").replace(/^\uFEFF/, "").trim();
+  if (!clean) return null;
+  const fields = {};
+  const bodyLines = [];
+  let structured = false;
+
+  for (const line of clean.split(/\r?\n/)) {
+    const match = line.match(/^\s*(title|제목|body|본문|caption|캡션|hashtags|해시태그|link|url|링크)\s*[:=]\s*(.*)$/i);
+    if (match) {
+      structured = true;
+      const key = match[1].toLowerCase();
+      if (key === "title" || key === "제목") fields.title = match[2];
+      else if (key === "hashtags" || key === "해시태그") fields.hashtags = match[2];
+      else if (key === "link" || key === "url" || key === "링크") fields.link = match[2];
+      else fields.body = [fields.body, match[2]].filter(Boolean).join("\n");
+    } else {
+      bodyLines.push(line);
+    }
+  }
+
+  if (structured) {
+    return captionData({
+      ...fields,
+      body: fields.body || bodyLines.join("\n").trim(),
+    }, source);
+  }
+
+  const lines = clean.split(/\r?\n/);
+  const firstLine = lines[0]?.trim() || "";
+  if (firstLine.startsWith("# ")) {
+    return captionData({
+      title: firstLine.replace(/^#\s+/, ""),
+      body: lines.slice(1).join("\n").trim(),
+    }, source);
+  }
+
+  return captionData({ body: clean }, source);
+}
+
+function mergeCaptionData(...captions) {
+  const merged = { title: "", body: "", hashtags: "", link: "", source: "" };
+  const sources = [];
+  for (const caption of captions.filter(Boolean)) {
+    if (caption.title) merged.title = caption.title;
+    if (caption.body) merged.body = caption.body;
+    if (caption.hashtags) merged.hashtags = caption.hashtags;
+    if (caption.link) merged.link = caption.link;
+    if (caption.source) sources.push(caption.source);
+  }
+  merged.source = [...new Set(sources)].join(" + ");
+  return merged.title || merged.body || merged.hashtags || merged.link ? merged : null;
 }
 
 function parseDateFolderName(segment) {
@@ -282,6 +550,75 @@ function batchItemTypeLabel(item) {
 
 function batchResultFor(item) {
   return appState.batchResults[item.relativePath] || null;
+}
+
+function addBatchWarning(warnings, item, message) {
+  const existing = warnings.get(item.relativePath) || [];
+  if (!existing.includes(message)) existing.push(message);
+  warnings.set(item.relativePath, existing);
+}
+
+function batchDuplicateState(items, platforms) {
+  const itemWarnings = new Map();
+  const fileGroups = new Map();
+  const planSlots = new Map();
+  const existingSlots = new Set();
+  let fileConflictCount = 0;
+  let planConflictCount = 0;
+  let existingConflictCount = 0;
+
+  for (const item of items) {
+    const key = `${item.dateKey}::${normalizeCaptionFileName(item.fileName)}`;
+    const group = fileGroups.get(key) || [];
+    group.push(item);
+    fileGroups.set(key, group);
+  }
+  for (const group of fileGroups.values()) {
+    if (group.length < 2) continue;
+    fileConflictCount += group.length;
+    group.forEach((item) => addBatchWarning(itemWarnings, item, "같은 날짜에 같은 파일명이 있습니다."));
+  }
+
+  for (const item of items) {
+    const scheduledTime = scheduledDateForBatchItem(item).getTime();
+    if (!Number.isFinite(scheduledTime)) continue;
+    for (const platform of platforms) {
+      const key = `${platform}::${scheduledTime}`;
+      const group = planSlots.get(key) || [];
+      group.push(item);
+      planSlots.set(key, group);
+    }
+  }
+  for (const [key, group] of planSlots.entries()) {
+    if (group.length < 2) continue;
+    planConflictCount += group.length;
+    const platform = key.split("::")[0];
+    group.forEach((item) => addBatchWarning(itemWarnings, item, `${platformLabel(platform)} 같은 시간 예약 후보가 있습니다.`));
+  }
+
+  for (const job of appState.jobs) {
+    if (job.status !== "scheduled" || !job.scheduled_at || !job.platform) continue;
+    const date = new Date(job.scheduled_at);
+    if (!Number.isFinite(date.getTime())) continue;
+    existingSlots.add(`${job.platform}::${date.getTime()}`);
+  }
+  for (const item of items) {
+    const scheduledTime = scheduledDateForBatchItem(item).getTime();
+    if (!Number.isFinite(scheduledTime)) continue;
+    for (const platform of platforms) {
+      if (!existingSlots.has(`${platform}::${scheduledTime}`)) continue;
+      existingConflictCount += 1;
+      addBatchWarning(itemWarnings, item, `${platformLabel(platform)}에 이미 같은 시간 예약이 있습니다.`);
+    }
+  }
+
+  return {
+    itemWarnings,
+    fileConflictCount,
+    planConflictCount,
+    existingConflictCount,
+    warningCount: [...itemWarnings.values()].reduce((total, messages) => total + messages.length, 0),
+  };
 }
 
 function selectedPlatforms() {
@@ -723,17 +1060,38 @@ function updateFormMeta() {
   scheduledAtGroup.classList.toggle("isHidden", mode !== "scheduled");
   form.elements.scheduled_at.required = mode === "scheduled";
   renderPublishPreview();
+  renderUtmPreview();
 }
 
-function buildBatchItems(fileList) {
+async function buildBatchItems(fileList) {
   const groups = new Map();
   const skipped = [];
+  const textCaptions = new Map();
+  const csvFiles = [];
+  const imageFiles = [];
 
   for (const file of [...(fileList || [])]) {
     const relativePath = file.webkitRelativePath || file.name;
     const segments = relativePath.split("/").filter(Boolean);
     const dateFolder = findDateFolder(segments);
+    const extension = fileExtension(file.name);
     const detectedType = imageTypeForFile(file);
+
+    if (TEXT_CAPTION_EXTENSIONS.has(extension)) {
+      if (!dateFolder) continue;
+      try {
+        const caption = parseTextCaption(await file.text(), relativePath);
+        if (caption) textCaptions.set(captionSidecarKey(dateFolder.key, segments, file.name), caption);
+      } catch {
+        skipped.push({ name: relativePath, reason: "캡션 파일 읽기 실패" });
+      }
+      continue;
+    }
+
+    if (CSV_CAPTION_EXTENSIONS.has(extension)) {
+      csvFiles.push({ file, relativePath, dateKey: dateFolder?.key || "" });
+      continue;
+    }
 
     if (!dateFolder) {
       skipped.push({ name: relativePath, reason: "날짜 폴더 없음" });
@@ -752,6 +1110,36 @@ function buildBatchItems(fileList) {
       continue;
     }
 
+    imageFiles.push({ file, relativePath, segments, dateFolder, detectedType });
+  }
+
+  const csvCaptions = new Map();
+  for (const csv of csvFiles) {
+    try {
+      const rows = parseCaptionCsv(await csv.file.text());
+      for (const row of rows) {
+        const reference = firstRowValue(row, ["file", "filename", "file_name", "image", "image_file", "path", "파일", "파일명", "이미지"]);
+        if (!reference) continue;
+        const caption = captionFromCsvRow(row, csv.relativePath);
+        if (!caption) continue;
+        const rowDate = firstRowValue(row, ["date", "folder", "date_folder", "scheduled_date", "날짜", "폴더"]);
+        const dateKey = parseDateFolderName(rowDate)?.key || csv.dateKey;
+        for (const key of csvCaptionKeys(dateKey, reference)) csvCaptions.set(key, caption);
+      }
+    } catch {
+      skipped.push({ name: csv.relativePath, reason: "CSV 읽기 실패" });
+    }
+  }
+
+  for (const entry of imageFiles) {
+    const { file, relativePath, segments, dateFolder, detectedType } = entry;
+    const sidecarCaption = textCaptions.get(captionSidecarKey(dateFolder.key, segments, file.name));
+    const csvCaption = csvLookupKeys({
+      dateKey: dateFolder.key,
+      fileName: file.name,
+      relativePath,
+    }).map((key) => csvCaptions.get(key)).find(Boolean);
+    const caption = mergeCaptionData(csvCaption, sidecarCaption);
     const group = groups.get(dateFolder.key) || [];
     group.push({
       file,
@@ -760,6 +1148,11 @@ function buildBatchItems(fileList) {
       dateKey: dateFolder.key,
       dateLabel: dateFolder.label,
       detectedType,
+      captionTitle: caption?.title || "",
+      captionBody: caption?.body || "",
+      captionHashtags: caption?.hashtags || "",
+      captionLink: caption?.link || "",
+      captionSource: caption?.source || "",
     });
     groups.set(dateFolder.key, group);
   }
@@ -781,11 +1174,13 @@ function batchValidationState(items, platforms) {
     .filter((date) => Number.isFinite(date.getTime()))
     .sort((a, b) => a.getTime() - b.getTime());
   const issues = items.map((item) => batchItemScheduleIssue(item));
+  const duplicate = batchDuplicateState(items, platforms);
   const jpgBlockCount = platforms.includes("instagram")
     ? items.filter((item) => item.detectedType !== "image/jpeg").length
     : 0;
   return {
     dateCount: new Set(items.map((item) => item.dateKey)).size,
+    captionCount: items.filter((item) => item.captionSource).length,
     taskCount: items.length * platforms.length,
     firstDate: scheduledDates[0] || null,
     lastDate: scheduledDates[scheduledDates.length - 1] || null,
@@ -795,6 +1190,7 @@ function batchValidationState(items, platforms) {
     jpgBlockCount,
     pastCount: issues.filter((issue) => issue === "past").length,
     overflowCount: issues.filter((issue) => issue === "overflow").length,
+    duplicate,
   };
 }
 
@@ -804,6 +1200,8 @@ function skippedFixFor(reason) {
     "이미지 형식 제외": "JPG, PNG, WEBP로 저장",
     "빈 파일": "파일을 다시 저장",
     "8MB 초과": "8MB 이하로 압축",
+    "캡션 파일 읽기 실패": "TXT/MD 인코딩 확인",
+    "CSV 읽기 실패": "UTF-8 CSV 형식 확인",
   }[reason] || "파일 확인";
 }
 
@@ -837,7 +1235,7 @@ function renderBatchPlan() {
       <div class="batchPlanEmpty">
         <strong>폴더 구조</strong>
         <span>상위폴더 / 2026-06-21 / 001.jpg</span>
-        <span>날짜 폴더별 파일명 숫자순으로 예약됩니다.</span>
+        <span>날짜 폴더별 파일명 숫자순으로 예약됩니다. 001.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
       </div>
     `;
     return;
@@ -849,6 +1247,9 @@ function renderBatchPlan() {
     state.jpgBlockCount ? `Instagram 선택 시 JPG가 아닌 이미지 ${state.jpgBlockCount}개를 교체해야 합니다.` : "",
     state.pastCount ? `이미 지난 예약 시간 ${state.pastCount}개가 있습니다.` : "",
     state.overflowCount ? `간격 때문에 날짜 폴더 다음 날로 넘어가는 이미지 ${state.overflowCount}개가 있습니다.` : "",
+    state.duplicate.fileConflictCount ? `같은 날짜의 같은 파일명 ${state.duplicate.fileConflictCount}개를 확인하세요.` : "",
+    state.duplicate.planConflictCount ? `이번 예약 목록 안에 같은 시간 중복 후보 ${state.duplicate.planConflictCount}개가 있습니다.` : "",
+    state.duplicate.existingConflictCount ? `기존 예약과 시간이 겹치는 후보 ${state.duplicate.existingConflictCount}개가 있습니다.` : "",
     state.hasThreads ? "Threads는 현재 mock 게시 상태입니다." : "",
   ].filter(Boolean);
 
@@ -881,6 +1282,8 @@ function renderBatchPlan() {
       <span>마지막 예약: <strong>${state.lastDate ? escapeHtml(formatFullDateTime(state.lastDate)) : "-"}</strong></span>
       <span>채널: <strong>${platforms.length ? platforms.map(platformLabel).join(", ") : "선택 필요"}</strong></span>
       <span>문구: <strong>${titleTemplate ? "작성 제목 사용" : "파일명 제목 사용"}</strong>${body || link || hashtags ? " · 본문/링크/해시태그 적용" : ""}</span>
+      <span>캠페인: <strong>${formValue("campaign_name") || "미지정"}</strong>${utmAuto?.checked ? " · UTM 자동" : ""}</span>
+      <span>캡션: <strong>${state.captionCount ? `${state.captionCount}개 파일 매칭` : "공통 문구 사용"}</strong></span>
     </div>
     ${warnings.length ? `
       <div class="batchChecks">
@@ -891,6 +1294,89 @@ function renderBatchPlan() {
         <span>${state.taskCount}개 예약 작업을 만들 준비가 됐습니다.</span>
       </div>
     `}
+  `;
+}
+
+function renderScheduleCalendar() {
+  if (!scheduleCalendar) return;
+  const items = appState.batchItems;
+  const platforms = selectedPlatforms();
+  const duplicate = batchDuplicateState(items, platforms);
+  const batchCounts = new Map();
+  const existingCounts = new Map();
+  const conflictDates = new Set();
+
+  for (const item of items) {
+    const key = dateKeyFromDate(scheduledDateForBatchItem(item));
+    if (!key) continue;
+    batchCounts.set(key, (batchCounts.get(key) || 0) + 1);
+    if (duplicate.itemWarnings.has(item.relativePath)) conflictDates.add(key);
+  }
+
+  for (const job of appState.jobs) {
+    if (job.status !== "scheduled" || !job.scheduled_at) continue;
+    const key = dateKeyFromDate(job.scheduled_at);
+    if (!key) continue;
+    existingCounts.set(key, (existingCounts.get(key) || 0) + 1);
+  }
+
+  const keys = [...new Set([...batchCounts.keys(), ...existingCounts.keys()])].sort();
+  if (keys.length === 0) {
+    scheduleCalendar.innerHTML = `
+      <div class="scheduleCalendarHeader">
+        <strong>예약 캘린더</strong>
+        <span>폴더를 선택하면 날짜별 예약량이 표시됩니다.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const [year, month] = keys[0].split("-").map(Number);
+  const monthStart = new Date(year, month - 1, 1);
+  const gridStart = new Date(monthStart);
+  gridStart.setDate(monthStart.getDate() - monthStart.getDay());
+  const monthLabel = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(monthStart);
+  const todayKey = dateKeyFromDate(new Date());
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const days = Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(gridStart);
+    day.setDate(gridStart.getDate() + index);
+    const key = dateKeyFromDate(day);
+    const batchCount = batchCounts.get(key) || 0;
+    const existingCount = existingCounts.get(key) || 0;
+    const hasConflict = conflictDates.has(key);
+    const className = [
+      "calendarDay",
+      day.getMonth() !== monthStart.getMonth() ? "outside" : "",
+      key === todayKey ? "today" : "",
+      batchCount ? "hasBatch" : "",
+      existingCount ? "hasExisting" : "",
+      hasConflict ? "conflict" : "",
+    ].filter(Boolean).join(" ");
+    return `
+      <div class="${className}">
+        <strong>${day.getDate()}</strong>
+        ${batchCount ? `<span>신규 ${batchCount}개</span>` : ""}
+        ${existingCount ? `<span>기존 ${existingCount}개</span>` : ""}
+        ${hasConflict ? "<span>중복 확인</span>" : ""}
+      </div>
+    `;
+  }).join("");
+
+  scheduleCalendar.innerHTML = `
+    <div class="scheduleCalendarHeader">
+      <strong>${escapeHtml(monthLabel)} 예약 캘린더</strong>
+      <span>신규 ${items.length}개 · 기존 ${[...existingCounts.values()].reduce((sum, count) => sum + count, 0)}개</span>
+    </div>
+    <div class="calendarLegend">
+      <span>신규 예약</span>
+      <span class="existing">기존 예약</span>
+      <span class="conflict">중복 확인</span>
+    </div>
+    <div class="calendarGrid">
+      ${weekdays.map((day) => `<div class="calendarWeekday">${day}</div>`).join("")}
+      ${days}
+    </div>
   `;
 }
 
@@ -908,6 +1394,7 @@ function renderBatchQueue() {
   const remainingTaskCount = remainingItems.length * platforms.length;
 
   renderBatchPlan();
+  renderScheduleCalendar();
 
   if (submitBatch) {
     submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || needsInstagramJpeg || hasPastItems || hasKakao;
@@ -943,6 +1430,9 @@ function renderBatchQueue() {
   const pastNotice = hasPastItems
     ? `<div class="batchWarning">이미 지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.</div>`
     : "";
+  const duplicateNotice = state.duplicate.warningCount
+    ? `<div class="batchWarning">중복 가능성이 있는 예약 ${state.duplicate.warningCount}건이 있습니다. 같은 시간에 같은 채널로 나가는지 확인하세요.</div>`
+    : "";
 
   batchQueue.className = "batchQueue";
   batchQueue.innerHTML = `
@@ -953,6 +1443,7 @@ function renderBatchQueue() {
     ${skippedNotice}
     ${instagramNotice}
     ${pastNotice}
+    ${duplicateNotice}
     <div class="batchDateGroups">
       ${[...groups.entries()].map(([dateKey, group]) => `
         <section class="batchDateGroup">
@@ -963,17 +1454,32 @@ function renderBatchQueue() {
           ${group.map((item) => {
             const needsJpeg = platforms.includes("instagram") && item.detectedType !== "image/jpeg";
             const result = batchResultFor(item);
+            const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
+            const scheduleIssue = batchItemScheduleIssue(item);
+            const badgeLabel = needsJpeg
+              ? "JPG 필요"
+              : scheduleIssue === "past"
+              ? "지난 시간"
+              : scheduleIssue === "overflow"
+              ? "다음날"
+              : itemWarnings.length
+              ? "중복 확인"
+              : batchItemTypeLabel(item);
+            const captionPreview = truncateText(item.captionBody || item.captionTitle || item.captionHashtags || "", 96);
             return `
               <div class="batchFile">
                 <span class="batchSequence">${item.indexWithinDate + 1}</span>
                 <div class="batchFileMeta">
                   <strong>${escapeHtml(item.fileName)}</strong>
                   <small>${escapeHtml(item.relativePath)}</small>
+                  ${item.captionSource ? `<span class="captionBadge">캡션 매칭: ${escapeHtml(item.captionSource)}</span>` : ""}
+                  ${captionPreview ? `<span class="batchCaptionPreview">${escapeHtml(captionPreview)}</span>` : ""}
+                  ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
                 </div>
                 <div class="batchFileSchedule">
                   <strong>${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</strong>
-                  <span class="batchBadge ${needsJpeg || batchItemScheduleIssue(item) ? "warning" : ""}">
-                    ${needsJpeg ? "JPG 필요" : batchItemScheduleIssue(item) === "past" ? "지난 시간" : batchItemScheduleIssue(item) === "overflow" ? "다음날" : batchItemTypeLabel(item)}
+                  <span class="batchBadge ${needsJpeg || scheduleIssue || itemWarnings.length ? "warning" : ""}">
+                    ${badgeLabel}
                   </span>
                   ${result ? `<span class="batchProgress ${result.status}">${escapeHtml(result.label)}</span>` : ""}
                 </div>
@@ -1082,6 +1588,7 @@ async function loadJobs() {
   const jobs = data.jobs || [];
   appState.jobs = jobs;
   updateSummary();
+  renderScheduleCalendar();
   if (jobs.length === 0) {
     renderEmptyJobs();
     return;
@@ -1099,6 +1606,7 @@ async function loadJobs() {
         <div>
           <strong>${platformLabel(job.platform)}</strong>
           <p>${escapeHtml(job.title || "제목 없음")}</p>
+          ${job.campaign_name ? `<span class="jobCampaign">${escapeHtml(job.campaign_name)}</span>` : ""}
         </div>
         <span class="status ${escapeHtml(job.status)}">${statusLabel(job.status)}</span>
         <div class="jobMeta">
@@ -1115,20 +1623,23 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
   onStage("uploading", "업로드 중");
   const uploadedImage = await uploadImageFileToAssets(item.file);
   const fallbackTitle = fileStem(item.fileName);
-  const titleTemplate = String(form.elements.title.value || "").trim();
+  const titleTemplate = item.captionTitle || formValue("title");
   const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
-  const body = String(form.elements.body.value || "").trim();
+  const body = item.captionBody || formValue("body");
+  const linkUrl = applyAutoUtm(item.captionLink || formValue("link_url"), platforms, fallbackTitle);
+  const hashtags = item.captionHashtags || formValue("hashtags");
   onStage("creating", "게시글 생성 중");
   const post = await request("/api/posts", {
     method: "POST",
     body: JSON.stringify({
       title,
       body,
-      link_url: form.elements.link_url.value,
-      hashtags: form.elements.hashtags.value,
+      link_url: linkUrl,
+      hashtags,
       image_key: uploadedImage.image_key,
       image_url: uploadedImage.image_url,
       platforms,
+      ...campaignMetadata(item.relativePath),
     }),
   });
 
@@ -1188,11 +1699,12 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({
         title: data.get("title"),
         body: data.get("body"),
-        link_url: data.get("link_url"),
+        link_url: applyAutoUtm(data.get("link_url"), platforms, data.get("title")),
         hashtags: data.get("hashtags"),
         image_key: uploadedImage.image_key,
         image_url: uploadedImage.image_url,
         platforms,
+        ...campaignMetadata(imageFile.files?.[0]?.name || ""),
       }),
     });
 
@@ -1219,8 +1731,9 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-batchFolderInput?.addEventListener("change", () => {
-  const { items, skipped } = buildBatchItems(batchFolderInput.files);
+batchFolderInput?.addEventListener("change", async () => {
+  if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
+  const { items, skipped } = await buildBatchItems(batchFolderInput.files);
   appState.batchItems = items;
   appState.batchSkipped = skipped;
   appState.batchResults = {};

@@ -10,13 +10,22 @@ export async function audit(env: Env, action: string, targetType: string, target
 }
 
 let postColumnsReady = false;
+const postColumns = [
+  "image_url text",
+  "campaign_name text",
+  "campaign_tags text",
+  "campaign_goal text",
+  "source_file text",
+];
 
 export async function ensurePostSchema(env: Env): Promise<void> {
   if (postColumnsReady) return;
-  try {
-    await env.DB.prepare("alter table posts add column image_url text").run();
-  } catch {
-    // Existing deployments may already have the column.
+  for (const column of postColumns) {
+    try {
+      await env.DB.prepare(`alter table posts add column ${column}`).run();
+    } catch {
+      // Existing deployments may already have the column.
+    }
   }
   postColumnsReady = true;
 }
@@ -25,9 +34,22 @@ export async function createPost(env: Env, input: CreatePostRequest): Promise<nu
   await ensurePostSchema(env);
   const now = utcNow();
   const result = await env.DB.prepare(
-    "insert into posts (title, body, link_url, hashtags, image_key, image_url, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?)",
+    "insert into posts (title, body, link_url, hashtags, image_key, image_url, campaign_name, campaign_tags, campaign_goal, source_file, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
   )
-    .bind(input.title.trim(), input.body?.trim() ?? "", input.link_url ?? "", input.hashtags ?? "", input.image_key ?? "", input.image_url ?? "", now, now)
+    .bind(
+      input.title.trim(),
+      input.body?.trim() ?? "",
+      input.link_url ?? "",
+      input.hashtags ?? "",
+      input.image_key ?? "",
+      input.image_url ?? "",
+      input.campaign_name?.trim() ?? "",
+      input.campaign_tags?.trim() ?? "",
+      input.campaign_goal?.trim() ?? "",
+      input.source_file?.trim() ?? "",
+      now,
+      now,
+    )
     .run();
 
   const postId = Number(result.meta.last_row_id);

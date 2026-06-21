@@ -25,6 +25,10 @@ export interface CreatePostRequest {
   hashtags?: string;
   image_key?: string;
   image_url?: string;
+  campaign_name?: string;
+  campaign_tags?: string;
+  campaign_goal?: string;
+  source_file?: string;
   platforms: Platform[];
   platform_bodies?: Partial<Record<Platform, string>>;
 }

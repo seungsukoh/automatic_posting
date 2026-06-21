@@ -93,6 +93,31 @@
                   <input name="hashtags" placeholder="#campaign #update" />
                 </label>
               </div>
+              <div class="marketingTools">
+                <div class="fieldLabelRow">
+                  <strong>캠페인 도구</strong>
+                  <span class="fieldHint">성과 추적과 반복 예약에 사용하는 값</span>
+                </div>
+                <div class="grid">
+                  <label>
+                    캠페인명
+                    <input name="campaign_name" maxlength="80" placeholder="summer_launch" />
+                  </label>
+                  <label>
+                    캠페인 태그
+                    <input name="campaign_tags" placeholder="신제품, 리타겟팅, 카드뉴스" />
+                  </label>
+                </div>
+                <label>
+                  캠페인 목표
+                  <input name="campaign_goal" maxlength="140" placeholder="방문 유도, 사전 예약, 구매 전환" />
+                </label>
+                <label class="toggleRow">
+                  <input id="utmAuto" name="utm_auto" type="checkbox" checked />
+                  <span>링크에 UTM 자동 추가</span>
+                </label>
+                <div id="utmPreview" class="utmPreview" aria-live="polite"></div>
+              </div>
               <div class="imagePicker">
                 <div class="fieldLabelRow">
                   <strong>이미지</strong>
@@ -151,9 +176,9 @@
             <form id="batchScheduleForm">
               <div class="batchControls">
                 <label class="fileDrop folderDrop">
-                  <input id="batchFolderInput" type="file" accept="image/png,image/jpeg,image/webp" webkitdirectory directory multiple />
+                  <input id="batchFolderInput" type="file" accept="image/png,image/jpeg,image/webp,text/plain,text/markdown,.txt,.md,.csv" webkitdirectory directory multiple />
                   <span>상위 폴더 선택</span>
-                  <small>YYYY-MM-DD / PNG, JPG, WEBP</small>
+                  <small>YYYY-MM-DD / 이미지 + 같은 이름 TXT/MD 또는 captions.csv</small>
                 </label>
                 <div class="batchGuide" aria-label="폴더 예약 규칙">
                   <article>
@@ -181,6 +206,7 @@
                 </div>
               </div>
               <div id="batchPlan" class="batchPlan" aria-live="polite"></div>
+              <div id="scheduleCalendar" class="scheduleCalendar" aria-live="polite"></div>
               <div id="batchQueue" class="batchQueue emptyState compact">선택된 폴더가 없습니다.</div>
               <div class="formActions">
                 <button id="clearBatch" class="secondaryButton" type="button" disabled>목록 비우기</button>

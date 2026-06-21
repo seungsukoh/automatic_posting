@@ -439,10 +439,49 @@ button:disabled {
   gap: 10px;
 }
 
+.marketingTools {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.toggleRow input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.utmPreview {
+  min-height: 38px;
+  border: 1px dashed #c5d0d7;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.utmPreview.ready {
+  border-style: solid;
+  color: var(--primary-dark);
+}
+
 .batchControls,
 .batchPlan,
 .batchQueue,
-.batchDateGroups {
+.batchDateGroups,
+.scheduleCalendar {
   display: grid;
   gap: 12px;
 }
@@ -683,6 +722,124 @@ button:disabled {
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
+}
+
+.captionBadge {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #eef2f6;
+  color: #40515c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.batchCaptionPreview {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.scheduleCalendar {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.scheduleCalendarHeader,
+.calendarLegend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scheduleCalendarHeader span,
+.calendarLegend span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.calendarLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendarLegend span::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #e9f0ff;
+}
+
+.calendarLegend .existing::before {
+  background: var(--warning-bg);
+}
+
+.calendarLegend .conflict::before {
+  background: var(--danger-bg);
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.calendarWeekday {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.calendarDay {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 76px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px;
+  background: #f8fafb;
+}
+
+.calendarDay.outside {
+  opacity: 0.45;
+}
+
+.calendarDay.today {
+  border-color: var(--primary);
+}
+
+.calendarDay.hasBatch {
+  background: #eef5ff;
+}
+
+.calendarDay.hasExisting {
+  background: var(--warning-bg);
+}
+
+.calendarDay.conflict {
+  border-color: #f3b3ac;
+  background: var(--danger-bg);
+}
+
+.calendarDay strong {
+  font-size: 12px;
+}
+
+.calendarDay span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .imagePreview {
@@ -1199,6 +1356,12 @@ button:disabled {
 
 .jobMeta small {
   color: var(--danger);
+}
+
+.jobCampaign {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .jobLink {

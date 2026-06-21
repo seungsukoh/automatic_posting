@@ -1,5 +1,5 @@
 import { serveAsset, uploadAsset } from "./assets";
-import { audit, createPost, createPublishJobs, getPublishPayload, listPosts } from "./db";
+import { audit, createPost, createPublishJobs, ensurePostSchema, getPublishPayload, listPosts } from "./db";
 import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, serviceUnavailable, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
@@ -124,9 +124,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (request.method === "GET" && path === "/api/jobs") {
     if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+    await ensurePostSchema(env);
     const jobs = await env.DB.prepare(
       `
-      select j.*, p.title
+      select j.*, p.title, p.image_key, p.image_url, p.link_url, p.campaign_name, p.campaign_tags, p.source_file
       from publish_jobs j
       join post_targets t on t.id = j.post_target_id
       join posts p on p.id = t.post_id
