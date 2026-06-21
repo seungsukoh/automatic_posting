@@ -20,7 +20,7 @@ export interface Env {
 
 export interface CreatePostRequest {
   title: string;
-  body: string;
+  body?: string;
   link_url?: string;
   hashtags?: string;
   image_key?: string;

@@ -2,7 +2,7 @@ import { badRequest, jsonResponse, notFound } from "./http";
 import type { Env } from "./types";
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageBytes = 10 * 1024 * 1024;
+const maxImageBytes = 8 * 1024 * 1024;
 
 function extensionForType(contentType: string): string {
   return {
@@ -31,7 +31,7 @@ export async function uploadAsset(request: Request, env: Env): Promise<Response>
   const image = entry as File;
   if (!allowedImageTypes.has(image.type)) return badRequest("image must be jpeg, png, or webp");
   if (image.size <= 0) return badRequest("image file is empty");
-  if (image.size > maxImageBytes) return badRequest("image must be 10 MB or smaller");
+  if (image.size > maxImageBytes) return badRequest("image must be 8 MB or smaller");
 
   const extension = extensionForType(image.type);
   const originalName = cleanFileName(image.name);

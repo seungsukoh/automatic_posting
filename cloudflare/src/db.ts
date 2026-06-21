@@ -27,7 +27,7 @@ export async function createPost(env: Env, input: CreatePostRequest): Promise<nu
   const result = await env.DB.prepare(
     "insert into posts (title, body, link_url, hashtags, image_key, image_url, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?)",
   )
-    .bind(input.title.trim(), input.body.trim(), input.link_url ?? "", input.hashtags ?? "", input.image_key ?? "", input.image_url ?? "", now, now)
+    .bind(input.title.trim(), input.body?.trim() ?? "", input.link_url ?? "", input.hashtags ?? "", input.image_key ?? "", input.image_url ?? "", now, now)
     .run();
 
   const postId = Number(result.meta.last_row_id);

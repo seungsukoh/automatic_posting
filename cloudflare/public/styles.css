@@ -365,6 +365,252 @@ button:disabled {
   gap: 10px;
 }
 
+.batchControls,
+.batchPlan,
+.batchQueue,
+.batchDateGroups {
+  display: grid;
+  gap: 12px;
+}
+
+.folderDrop {
+  min-height: 118px;
+}
+
+.batchGuide,
+.batchMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.batchGuide article,
+.batchMetricGrid article,
+.batchPlanEmpty,
+.batchRuleSummary,
+.batchChecks,
+.batchSkipped {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px 14px;
+}
+
+.batchGuide article,
+.batchPlanEmpty,
+.batchMetricGrid article {
+  display: grid;
+  gap: 4px;
+}
+
+.batchGuide article,
+.batchRuleSummary {
+  background: #f8fafb;
+}
+
+.batchGuide span,
+.batchPlanEmpty span,
+.batchRuleSummary span,
+.batchSkipped span {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.batchMetricGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.batchMetricGrid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.batchMetricGrid strong {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.batchRuleSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.batchChecks {
+  display: grid;
+  gap: 6px;
+  border-color: #f2d36b;
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.batchChecks.ok {
+  border-color: #94d7bc;
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.batchSkipped {
+  border-color: #f2d36b;
+  background: #fffaf0;
+}
+
+.batchSkipped summary {
+  cursor: pointer;
+  color: var(--warning);
+  font-weight: 900;
+}
+
+.batchSkipped div {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.batchSkipped article {
+  display: grid;
+  gap: 3px;
+}
+
+.batchSummary,
+.batchDateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.batchSummary {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.batchSummary span,
+.batchFile small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.batchDateGroup {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.batchDateHeader {
+  padding: 12px 14px;
+  background: #f8fafb;
+}
+
+.batchDateHeader span,
+.batchBadge,
+.batchProgress {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.batchDateHeader span {
+  background: #e9f0ff;
+  color: var(--primary-dark);
+}
+
+.batchFile {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(190px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.batchSequence {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.batchFile strong {
+  overflow-wrap: anywhere;
+}
+
+.batchFileMeta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.batchFileSchedule {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  text-align: right;
+}
+
+.batchFileSchedule strong {
+  font-size: 13px;
+}
+
+.batchBadge {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.batchProgress {
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.batchProgress.success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.batchProgress.failed {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.batchProgress.running,
+.batchProgress.uploading,
+.batchProgress.creating,
+.batchProgress.scheduling {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.batchBadge.warning,
+.batchWarning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.batchWarning {
+  padding: 10px 12px;
+  border: 1px solid #f2d36b;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .imagePreview {
   display: grid;
   min-height: 128px;
@@ -397,6 +643,87 @@ button:disabled {
   display: grid;
   gap: 5px;
   padding: 14px;
+}
+
+.publishPreviewPanel {
+  display: grid;
+  gap: 10px;
+}
+
+.publishPreview {
+  display: grid;
+  gap: 10px;
+}
+
+.publishPreviewCard {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.previewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.previewHeader div {
+  display: grid;
+  gap: 3px;
+}
+
+.previewHeader span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.previewStatus {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.previewStatus.ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.previewStatus.pending {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.previewStatus.missing {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.previewText {
+  min-height: 112px;
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  padding: 14px;
+  background: #f8fafb;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.previewEmpty {
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .platformPicker {
@@ -595,7 +922,8 @@ button:disabled {
 }
 
 .dialogSurface {
-  overflow: hidden;
+  overflow: auto;
+  max-height: min(92vh, 960px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   background: #ffffff;
@@ -664,6 +992,94 @@ button:disabled {
   line-height: 1.45;
 }
 
+.setupValueMap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 24px 0;
+}
+
+.setupValueMap article {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.setupValueMap p {
+  margin-top: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.setupValueMap span {
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.setupGuide code,
+.setupValueMap code,
+.setupSteps code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border-radius: 6px;
+  padding: 3px 6px;
+  background: #eef2f6;
+  color: var(--ink);
+  font: 12px Consolas, "Cascadia Mono", monospace;
+}
+
+.setupSteps {
+  display: grid;
+  gap: 10px;
+  margin: 16px 24px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: setup-step;
+}
+
+.setupSteps li {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  min-height: 74px;
+  padding: 13px 14px 13px 54px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  counter-increment: setup-step;
+}
+
+.setupSteps li::before {
+  content: counter(setup-step);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e9f0ff;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.setupSteps p {
+  margin-top: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .settingsDialog .adminSettings {
   padding: 18px 24px 24px;
 }
@@ -703,6 +1119,10 @@ button:disabled {
   border-radius: 8px;
   color: var(--muted);
   background: #f8fafb;
+}
+
+.emptyState.compact {
+  padding: 14px;
 }
 
 .emptyState strong {
@@ -772,7 +1192,8 @@ button:disabled {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .setupGuide {
+  .setupGuide,
+  .setupValueMap {
     grid-template-columns: 1fr;
   }
 }
@@ -785,6 +1206,12 @@ button:disabled {
 
   .topbar,
   .sectionHead,
+  .batchGuide,
+  .batchMetricGrid,
+  .batchRuleSummary,
+  .batchSummary,
+  .batchDateHeader,
+  .batchFile,
   .grid,
   .summaryGrid,
   .readinessGrid,
@@ -814,10 +1241,16 @@ button:disabled {
     height: 190px;
   }
 
+  .batchFileSchedule {
+    justify-items: start;
+    text-align: left;
+  }
+
   .jobActions,
   .formActions,
   .topActions,
-  .dialogActions {
+  .dialogActions,
+  .previewHeader {
     justify-content: stretch;
     display: grid;
   }
@@ -841,5 +1274,15 @@ button:disabled {
   .settingsDialog .adminSettings {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .setupSteps {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .setupValueMap {
+    margin-left: 18px;
+    margin-right: 18px;
   }
 }

@@ -139,7 +139,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && path === "/api/posts") {
     if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     const input = await readJson<CreatePostRequest>(request);
-    if (!input.title?.trim() || !input.body?.trim()) return badRequest("title and body are required");
+    if (!input.title?.trim()) return badRequest("title is required");
     if (!Array.isArray(input.platforms) || input.platforms.length === 0) return badRequest("at least one platform is required");
     const postId = await createPost(env, input);
     return jsonResponse({ post_id: postId }, 201);

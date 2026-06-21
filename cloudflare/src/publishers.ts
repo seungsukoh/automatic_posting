@@ -1,4 +1,5 @@
 import { getPublishingSocialAccount } from "./db";
+import { formatPublishText } from "./publishText";
 import type { Env, Platform, PublishPayload, PublishResult } from "./types";
 
 export interface Publisher {
@@ -53,11 +54,8 @@ async function decryptToken(env: Env, ciphertext: string): Promise<string> {
   return new TextDecoder().decode(decrypted);
 }
 
-function captionFor(payload: PublishPayload): string {
-  return [payload.platformBody || payload.body, payload.linkUrl, payload.hashtags]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join("\n\n");
+function hasJpegImage(payload: PublishPayload): boolean {
+  return /\.(jpe?g)(?:$|[?#\s])/i.test(`${payload.imageKey} ${payload.imageUrl}`);
 }
 
 function graphError(data: GraphError, fallback: string): string {
@@ -84,6 +82,13 @@ class InstagramPublisher implements Publisher {
           external_post_url: "",
         };
       }
+      if (!hasJpegImage(payload)) {
+        return {
+          status: "failed",
+          error_message: "Instagram publishing requires a JPG image.",
+          external_post_url: "",
+        };
+      }
 
       const account = await getPublishingSocialAccount(env, "instagram");
       if (!account) {
@@ -97,7 +102,7 @@ class InstagramPublisher implements Publisher {
       const accessToken = await decryptToken(env, account.accessTokenCiphertext);
       const createUrl = new URL(`https://graph.facebook.com/v20.0/${account.accountId}/media`);
       createUrl.searchParams.set("image_url", payload.imageUrl);
-      createUrl.searchParams.set("caption", captionFor(payload));
+      createUrl.searchParams.set("caption", formatPublishText(payload));
       createUrl.searchParams.set("access_token", accessToken);
 
       const container = await readJsonResponse<InstagramContainerResponse>(
