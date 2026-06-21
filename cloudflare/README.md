@@ -54,6 +54,22 @@ Workers API 실행:
 npm run worker:dev
 ```
 
+로컬 UI에서 API까지 확인할 때는 터미널 두 개를 사용합니다.
+
+```powershell
+# terminal 1: Worker API
+cd cloudflare
+npm run d1:init
+npm run worker:dev
+
+# terminal 2: Vite UI
+cd cloudflare
+npm run dev
+```
+
+Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` Worker로 프록시합니다.
+다른 Worker 주소를 쓰려면 `VITE_WORKER_API_ORIGIN`을 설정하고, 배포된 Pages가 별도 Worker API를 호출해야 하면 `VITE_API_BASE`를 설정합니다.
+
 ## 다음 구현
 
 1. Instagram OAuth callback endpoint 추가

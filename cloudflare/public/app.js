@@ -1,4 +1,4 @@
-const API_BASE = window.API_BASE || "";
+const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const IMAGE_TYPE_BY_EXTENSION = {
