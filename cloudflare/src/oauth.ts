@@ -263,6 +263,9 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   authUrl.searchParams.set("scope", config.scopes.join(","));
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);
+  if (platform === "instagram") {
+    authUrl.searchParams.set("auth_type", "rerequest");
+  }
 
   return redirectResponse(authUrl.toString(), {
     "set-cookie": `${stateCookieName}=${encodeURIComponent(state)}; Path=/api/auth/meta; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
