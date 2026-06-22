@@ -1202,30 +1202,19 @@ button:disabled {
   border-color: #d8e0e5;
 }
 
+.nativePlatformPicker {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .platformQuickPicker {
   display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.quickPickerHead {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: baseline;
-}
-
-.quickPickerHead strong {
-  font-size: 14px;
-}
-
-.quickPickerHead span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  gap: 8px;
 }
 
 .quickPickerButtons {
@@ -1235,27 +1224,52 @@ button:disabled {
 }
 
 .quickPlatformButton {
-  min-height: 48px;
+  min-height: 86px;
   display: grid;
-  gap: 2px;
-  align-content: center;
-  justify-items: center;
+  gap: 6px;
+  align-content: start;
+  justify-items: start;
+  text-align: left;
   border: 1px solid #c5d0d7;
   border-radius: 6px;
-  background: #f8fafb;
+  background: #ffffff;
   color: var(--text);
   cursor: pointer;
+  padding: 12px;
 }
 
-.quickPlatformButton span {
+.quickPlatformName {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.quickPlatformState {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef3f6;
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
 }
 
+.quickPlatformButton small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .quickPlatformButton.selected {
   border-color: var(--primary);
   background: #e9f0ff;
+  color: var(--primary-dark);
+  box-shadow: 0 0 0 2px rgba(122, 167, 255, 0.16);
+}
+
+.quickPlatformButton.selected .quickPlatformState {
+  background: #d8e6ff;
   color: var(--primary-dark);
 }
 
@@ -1266,19 +1280,27 @@ button:disabled {
   border-color: #d8e0e5;
 }
 
+.quickPlatformButton:disabled .quickPlatformName,
+.quickPlatformButton:disabled .quickPlatformState,
+.quickPlatformButton:disabled small {
+  color: #8a969e;
+}
+
 .platformReadiness {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .platformStatusItem {
   display: grid;
-  gap: 5px;
-  padding: 10px;
+  grid-template-columns: minmax(90px, auto) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: 6px;
+  background: #f8fafb;
 }
 
 .connections,

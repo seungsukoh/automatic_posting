@@ -6,3 +6,7 @@ pages_build_output_dir = "dist"
 binding = "DB"
 database_name = "automatic-posting"
 database_id = "80c8d65a-96fa-4e6a-ba89-ebe69e5221ed"
+
+[[kv_namespaces]]
+binding = "MEDIA_KV"
+id = "3dcead354de346ea909cc4e3523a85c7"

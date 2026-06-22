@@ -7,9 +7,9 @@ binding = "DB"
 database_name = "automatic-posting"
 database_id = "replace-with-cloudflare-d1-database-id"
 
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "automatic-posting-assets"
+[[kv_namespaces]]
+binding = "MEDIA_KV"
+id = "3dcead354de346ea909cc4e3523a85c7"
 
 [[queues.producers]]
 binding = "PUBLISH_QUEUE"

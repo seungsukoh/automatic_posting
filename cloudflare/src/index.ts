@@ -1,4 +1,4 @@
-import { serveAsset, uploadAsset } from "./assets";
+import { hasConfiguredMediaStore, serveAsset, uploadAsset } from "./assets";
 import { audit, createPost, createPublishJobs, ensurePostSchema, getPublishPayload, listPosts } from "./db";
 import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, serviceUnavailable, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
@@ -11,7 +11,7 @@ function hasD1(env: Env): boolean {
 }
 
 function hasR2(env: Env): boolean {
-  return typeof (env as Partial<Env>).ASSETS?.put === "function";
+  return typeof (env as Partial<Env>).MEDIA_BUCKET?.put === "function";
 }
 
 async function systemReadiness(env: Env): Promise<Response> {
@@ -33,6 +33,7 @@ async function systemReadiness(env: Env): Promise<Response> {
   return jsonResponse({
     d1: { bound: hasD1(env), schema_ready: databaseReady, tables },
     r2: { bound: hasR2(env) },
+    media: { bound: hasConfiguredMediaStore(env), storage: env.MEDIA_BUCKET ? "r2" : env.MEDIA_KV ? "kv" : "none" },
     secrets: {
       admin_setup_key: Boolean(env.ADMIN_SETUP_KEY),
       token_encryption_key: Boolean(env.TOKEN_ENCRYPTION_KEY),
@@ -75,13 +76,13 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (request.method === "POST" && path === "/api/assets/upload") {
-    if (!hasR2(env)) return serviceUnavailable("Cloudflare R2 binding ASSETS is not configured.");
+    if (!hasConfiguredMediaStore(env)) return serviceUnavailable("Media storage binding MEDIA_KV or MEDIA_BUCKET is not configured.");
     return uploadAsset(request, env);
   }
 
   const assetMatch = path.match(/^\/api\/assets\/(.+)$/);
   if ((request.method === "GET" || request.method === "HEAD") && assetMatch) {
-    if (!hasR2(env)) return serviceUnavailable("Cloudflare R2 binding ASSETS is not configured.");
+    if (!hasConfiguredMediaStore(env)) return serviceUnavailable("Media storage binding MEDIA_KV or MEDIA_BUCKET is not configured.");
     return serveAsset(request, env, decodeURIComponent(assetMatch[1]));
   }
 

@@ -670,7 +670,7 @@ function systemReadyForUsers() {
   return Boolean(
     appState.system?.d1?.bound
     && appState.system?.d1?.schema_ready
-    && appState.system?.r2?.bound
+    && (appState.system?.media?.bound || appState.system?.r2?.bound)
     && appState.system?.secrets?.token_encryption_key,
   );
 }
@@ -771,10 +771,6 @@ function renderPlatformReadiness() {
 
   if (platformQuickPicker) {
     platformQuickPicker.innerHTML = `
-      <div class="quickPickerHead">
-        <strong>게시 채널 선택</strong>
-        <span>예약할 채널을 직접 선택하세요.</span>
-      </div>
       <div class="quickPickerButtons">
         ${inputs.map((input) => {
           const status = platformStatus(input.value);
@@ -786,8 +782,9 @@ function renderPlatformReadiness() {
               ${status.selectable ? "" : "disabled"}
               title="${escapeHtml(status.detail)}"
             >
-              <strong>${platformLabel(input.value)}</strong>
-              <span>${escapeHtml(status.label)}</span>
+              <span class="quickPlatformName">${platformLabel(input.value)}</span>
+              <span class="quickPlatformState">${escapeHtml(status.label)}</span>
+              <small>${escapeHtml(status.detail)}</small>
             </button>
           `;
         }).join("")}
@@ -946,8 +943,11 @@ function renderConnectionCard(platform, readiness, account) {
   const configured = Boolean(readiness?.configured);
   const missing = readiness?.missing || [];
   const connected = account?.status === "connected";
+  const disconnected = account?.status === "disconnected";
   const badge = connected
     ? `<span class="statusBadge ok">연결됨</span>`
+    : disconnected
+      ? `<span class="statusBadge missing">재연결 필요</span>`
     : platform === "threads"
       ? `<span class="statusBadge pending">준비 중</span>`
     : configured
@@ -955,6 +955,8 @@ function renderConnectionCard(platform, readiness, account) {
       : `<span class="statusBadge missing">설정 필요</span>`;
   const statusText = connected
     ? escapeHtml(account.username || account.account_id)
+    : disconnected
+      ? `${escapeHtml(account.username || account.account_id || platformLabel(platform))} 계정 토큰이 해제됐습니다. 다시 승인하세요.`
     : platform === "threads"
       ? "실제 발행 준비 중"
     : configured
@@ -965,7 +967,7 @@ function renderConnectionCard(platform, readiness, account) {
     : connected
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
-      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">연결하기</a>`
+      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
       : `<button class="secondaryButton" type="button" disabled>운영자 설정 필요</button>`;
 
   return `
@@ -1012,7 +1014,7 @@ async function loadConnections() {
       ${["instagram", "threads"].map((platform) => renderConnectionCard(
         platform,
         readiness.platforms?.[platform],
-        accounts.find((account) => account.platform === platform && account.status !== "disconnected"),
+        accounts.find((account) => account.platform === platform),
       )).join("")}
     </div>
   `;
@@ -1107,7 +1109,7 @@ async function loadSystemReadiness() {
   systemReadiness.innerHTML = [
     readinessItem("D1 DB", Boolean(status.d1?.bound), "DB"),
     readinessItem("스키마", Boolean(status.d1?.schema_ready), missingTables.length ? `누락: ${missingTables.join(", ")}` : "적용 완료"),
-    readinessItem("R2 이미지", Boolean(status.r2?.bound), "ASSETS"),
+    readinessItem("이미지 저장소", Boolean(status.media?.bound || status.r2?.bound), status.media?.storage === "kv" ? "MEDIA_KV" : "MEDIA_BUCKET"),
     readinessItem("관리자 키", Boolean(status.secrets?.admin_setup_key), "ADMIN_SETUP_KEY"),
     readinessItem("암호화 키", Boolean(status.secrets?.token_encryption_key), "TOKEN_ENCRYPTION_KEY"),
   ].join("");

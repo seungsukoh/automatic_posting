@@ -2,7 +2,9 @@ export type Platform = "instagram" | "threads" | "kakao";
 
 export interface Env {
   DB: D1Database;
-  ASSETS: R2Bucket;
+  MEDIA_BUCKET?: R2Bucket;
+  MEDIA_KV?: KVNamespace;
+  ASSETS?: Fetcher;
   PUBLISH_QUEUE?: Queue<PublishQueueMessage>;
   META_APP_ID?: string;
   META_APP_SECRET?: string;
