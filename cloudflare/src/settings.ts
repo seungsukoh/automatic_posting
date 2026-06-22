@@ -125,7 +125,7 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     meta_app_secret?: string;
   };
 
-  if (input.admin_key !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
+  if (input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   if (!metaAppId && !metaAppSecret) return badRequest("At least one setting value is required.");
