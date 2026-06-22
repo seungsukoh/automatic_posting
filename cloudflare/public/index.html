@@ -298,7 +298,7 @@
             </div>
             <div class="setupCallout">
               <strong>서비스 설정이 끝나면 사용자에게 연결 버튼만 표시됩니다.</strong>
-              <span>운영자는 Meta의 <b>AutoPosting-IG</b> 화면에 있는 <b>Instagram 앱 ID 1007896135177748</b>와 같은 화면의 <b>Instagram app secret</b>을 한 번만 저장합니다.</span>
+              <span>운영자는 Meta Developers의 <b>AutoPosting</b> 앱 ID와 앱 Secret을 한 번만 저장합니다.</span>
             </div>
             <div id="adminSettingsSummary" class="settingsStatus">설정 상태를 확인하고 있습니다.</div>
             <button id="openAdminSettingsSide" class="secondaryButton" type="button">관리자 설정 열기</button>
@@ -322,7 +322,7 @@
           <article>
             <span>1</span>
             <strong>필요한 값</strong>
-            <p>관리자 설정 키, AutoPosting-IG의 Instagram 앱 ID 1007896135177748, 같은 화면의 Instagram app secret을 준비합니다.</p>
+            <p>관리자 설정 키, AutoPosting의 Meta 앱 ID 1505779147711821, 같은 앱의 App Secret을 준비합니다.</p>
           </article>
           <article>
             <span>2</span>
@@ -338,19 +338,19 @@
 
         <div class="setupValueMap" aria-label="연결 값 확인표">
           <article>
-            <strong>Instagram App ID</strong>
-            <p>Meta for Developers &gt; Instagram &gt; API setup with Instagram login &gt; Business login settings &gt; AutoPosting-IG &gt; Instagram 앱 ID</p>
-            <span>아래 <b>Instagram App ID</b> 칸에는 <b>1007896135177748</b>을 넣습니다. Basic 화면의 앱 ID 1505779147711821은 넣지 않습니다.</span>
+            <strong>Meta App ID</strong>
+            <p>Meta for Developers &gt; My Apps &gt; AutoPosting &gt; App settings &gt; Basic &gt; App ID</p>
+            <span>아래 <b>Meta App ID</b> 칸에는 <b>1505779147711821</b>을 넣습니다.</span>
           </article>
           <article>
-            <strong>Instagram app secret</strong>
-            <p>Meta for Developers &gt; Instagram &gt; API setup with Instagram login &gt; Business login settings &gt; AutoPosting-IG &gt; Instagram app secret</p>
-            <span>아래 <b>Instagram app secret</b> 칸에는 Basic 화면의 앱 시크릿이 아니라 AutoPosting-IG의 Instagram app secret을 넣습니다.</span>
+            <strong>Meta App Secret</strong>
+            <p>Meta for Developers &gt; My Apps &gt; AutoPosting &gt; App settings &gt; Basic &gt; App secret</p>
+            <span>아래 <b>Meta App Secret</b> 칸에는 AutoPosting 앱의 App Secret을 넣습니다.</span>
           </article>
           <article>
             <strong>Redirect URI</strong>
             <p><code class="redirectUriMirror">https://automatic-posting.pages.dev/api/auth/meta/callback</code></p>
-            <span>같은 Business login settings의 OAuth Redirect URIs에 등록</span>
+            <span>Facebook Login for Business 설정의 OAuth Redirect URIs에 등록</span>
           </article>
           <article>
             <strong>관리자 설정 키</strong>
@@ -365,28 +365,28 @@
             <p>이미 만든 앱이 있으면 My Apps에서 해당 앱을 엽니다. 새로 만들 경우 비즈니스 연결 목적의 앱을 생성하고 연결할 Facebook Page, Instagram Business 계정, Threads 계정이 같은 비즈니스 자산에 있는지 확인합니다.</p>
           </li>
           <li>
-            <strong>Instagram App ID를 확인합니다.</strong>
-            <p>App settings &gt; Basic 화면이 아니라 Instagram 제품의 Business login settings에서 <b>AutoPosting-IG</b>를 찾고, <b>Instagram 앱 ID 1007896135177748</b>을 복사합니다. Basic App ID 1505779147711821을 넣으면 Instagram 연결에서 <code>Invalid platform app</code> 오류가 납니다.</p>
+            <strong>Meta App ID를 확인합니다.</strong>
+            <p>App settings &gt; Basic 화면에서 <b>AutoPosting 앱 ID 1505779147711821</b>을 복사합니다. 이 앱 ID로 Facebook Login for Business를 시작합니다.</p>
           </li>
           <li>
-            <strong>Instagram app secret을 확인합니다.</strong>
-            <p>같은 AutoPosting-IG 화면에서 <b>Instagram app secret</b> 값을 표시하고 복사합니다. Basic 화면의 앱 시크릿 코드는 이 입력값이 아닙니다.</p>
+            <strong>Meta App Secret을 확인합니다.</strong>
+            <p>같은 Basic 화면에서 <b>App Secret</b> 값을 표시하고 복사합니다.</p>
           </li>
           <li>
-            <strong>Instagram과 Threads 제품을 추가합니다.</strong>
-            <p>앱 대시보드에서 Instagram API 또는 Instagram Login, Threads API를 추가합니다. Instagram 게시에는 Business 계정과 <code>instagram_business_basic</code>, <code>instagram_business_content_publish</code> 권한이 필요하고, Threads 게시에는 Threads API와 <code>threads_content_publish</code> 권한이 필요합니다.</p>
+            <strong>Instagram과 Facebook Login for Business를 설정합니다.</strong>
+            <p>앱 대시보드에서 Instagram API와 Facebook Login for Business를 설정합니다. Instagram 게시에는 Business 계정과 <code>instagram_basic</code>, <code>instagram_content_publishing</code>, <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>business_management</code> 권한이 필요합니다.</p>
           </li>
           <li>
             <strong>OAuth Redirect URI를 등록합니다.</strong>
-            <p>Instagram 제품의 Business login settings에 있는 OAuth Redirect URIs에 위 Redirect URI를 그대로 추가합니다. 도메인, 경로, 끝의 <code>/callback</code>까지 일치해야 합니다.</p>
+            <p>Facebook Login for Business 설정의 OAuth Redirect URIs에 위 Redirect URI를 그대로 추가합니다. 도메인, 경로, 끝의 <code>/callback</code>까지 일치해야 합니다.</p>
           </li>
           <li>
             <strong>관리자 설정 키를 확인합니다.</strong>
-            <p>Cloudflare Pages 프로젝트의 Environment variables 또는 Secrets에서 <code>ADMIN_SETUP_KEY</code> 값을 확인합니다. 이 값은 Instagram app 값을 앱에 저장할 권한 확인용이며 Meta 콘솔 값이 아닙니다.</p>
+            <p>Cloudflare Pages 프로젝트의 Environment variables 또는 Secrets에서 <code>ADMIN_SETUP_KEY</code> 값을 확인합니다. 이 값은 Meta app 값을 앱에 저장할 권한 확인용이며 Meta 콘솔 값이 아닙니다.</p>
           </li>
           <li>
             <strong>아래 폼에 세 값을 저장합니다.</strong>
-            <p><b>관리자 설정 키</b>, <b>Instagram App ID 1007896135177748</b>, <b>AutoPosting-IG의 Instagram app secret</b>을 입력하고 설정 저장을 누릅니다. 저장 후 상태 배지에서 Instagram Login이 설정됨으로 바뀌면 계정 승인 준비가 된 상태입니다.</p>
+            <p><b>관리자 설정 키</b>, <b>Meta App ID 1505779147711821</b>, <b>AutoPosting App Secret</b>을 입력하고 설정 저장을 누릅니다. 저장 후 상태 배지에서 Facebook Login이 설정됨으로 바뀌면 계정 승인 준비가 된 상태입니다.</p>
           </li>
           <li>
             <strong>계정 연결 영역에서 Instagram 또는 Threads를 승인합니다.</strong>
@@ -401,11 +401,11 @@
           </label>
           <div class="grid">
             <label>
-              Instagram App ID (AutoPosting-IG)
-              <input name="meta_app_id" autocomplete="off" placeholder="1007896135177748" />
+              Meta App ID (AutoPosting)
+              <input name="meta_app_id" autocomplete="off" placeholder="1505779147711821" />
             </label>
             <label>
-              Instagram app secret (AutoPosting-IG)
+              Meta App Secret (AutoPosting)
               <input name="meta_app_secret" type="password" autocomplete="new-password" />
             </label>
           </div>

@@ -72,7 +72,7 @@ Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` W
 
 ## 일반 사용자 사용 흐름
 
-운영자가 Cloudflare와 Instagram Login 설정을 먼저 끝낸 뒤, 일반 사용자는 앱 안에서 아래 순서만 진행합니다.
+운영자가 Cloudflare와 Facebook Login for Business 설정을 먼저 끝낸 뒤, 일반 사용자는 앱 안에서 아래 순서만 진행합니다.
 
 1. 상단의 자동 예약 시작 영역에서 서비스 준비 상태를 확인합니다.
 2. `Instagram 연결하기`를 눌러 게시할 Instagram Business 계정을 승인합니다.
@@ -80,7 +80,7 @@ Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` W
 4. 예약 미리보기에서 이미지 수, 날짜, 시간, 제외 파일, 경고를 확인합니다.
 5. `예약 작업 만들기`를 눌러 예약을 확정합니다.
 
-일반 사용자는 Instagram App ID, Instagram app secret, Cloudflare secret 값을 입력하지 않습니다. 해당 값은 관리자 설정에서 운영자가 한 번만 관리합니다.
+일반 사용자는 Meta App ID, Meta App Secret, Cloudflare secret 값을 입력하지 않습니다. 해당 값은 관리자 설정에서 운영자가 한 번만 관리합니다.
 
 ## 관리자 설정 범위
 
@@ -89,9 +89,9 @@ Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` W
 - Cloudflare D1, R2, Pages Functions, Cron
 - `TOKEN_ENCRYPTION_KEY`
 - `ADMIN_SETUP_KEY`
-- Instagram App ID: `Meta for Developers > Instagram > API setup with Instagram login > Business login settings`
-- Instagram app secret: `Meta for Developers > Instagram > API setup with Instagram login > Business login settings`
-- Instagram OAuth Redirect URI: 배포 도메인의 `/api/auth/meta/callback`
+- Meta App ID: `Meta for Developers > My Apps > AutoPosting > App settings > Basic > App ID`
+- Meta App Secret: `Meta for Developers > My Apps > AutoPosting > App settings > Basic > App secret`
+- Facebook Login OAuth Redirect URI: 배포 도메인의 `/api/auth/meta/callback`
 
 ## 다음 구현
 

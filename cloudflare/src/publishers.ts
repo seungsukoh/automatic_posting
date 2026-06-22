@@ -28,7 +28,7 @@ interface InstagramMediaResponse extends GraphError {
   permalink?: string;
 }
 
-const instagramGraphBaseUrl = "https://graph.instagram.com/v21.0";
+const facebookGraphBaseUrl = "https://graph.facebook.com/v21.0";
 
 function base64UrlDecode(value: string): Uint8Array {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
@@ -102,7 +102,7 @@ class InstagramPublisher implements Publisher {
       }
 
       const accessToken = await decryptToken(env, account.accessTokenCiphertext);
-      const createUrl = new URL(`${instagramGraphBaseUrl}/${account.accountId}/media`);
+      const createUrl = new URL(`${facebookGraphBaseUrl}/${account.accountId}/media`);
       createUrl.searchParams.set("image_url", payload.imageUrl);
       createUrl.searchParams.set("caption", formatPublishText(payload));
       createUrl.searchParams.set("access_token", accessToken);
@@ -113,7 +113,7 @@ class InstagramPublisher implements Publisher {
       );
       if (!container.id) throw new Error("Instagram did not return a media container id.");
 
-      const publishUrl = new URL(`${instagramGraphBaseUrl}/${account.accountId}/media_publish`);
+      const publishUrl = new URL(`${facebookGraphBaseUrl}/${account.accountId}/media_publish`);
       publishUrl.searchParams.set("creation_id", container.id);
       publishUrl.searchParams.set("access_token", accessToken);
       const published = await readJsonResponse<InstagramPublishResponse>(
@@ -122,7 +122,7 @@ class InstagramPublisher implements Publisher {
       );
       if (!published.id) throw new Error("Instagram did not return a published media id.");
 
-      const mediaUrl = new URL(`${instagramGraphBaseUrl}/${published.id}`);
+      const mediaUrl = new URL(`${facebookGraphBaseUrl}/${published.id}`);
       mediaUrl.searchParams.set("fields", "id,permalink");
       mediaUrl.searchParams.set("access_token", accessToken);
       const media = await readJsonResponse<InstagramMediaResponse>(

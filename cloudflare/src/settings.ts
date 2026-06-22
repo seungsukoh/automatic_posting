@@ -146,7 +146,7 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   if (!metaAppId && !metaAppSecret) return badRequest("At least one setting value is required.");
-  if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Instagram App ID must contain digits only.");
+  if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Meta App ID must contain digits only.");
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);

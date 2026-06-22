@@ -28,15 +28,23 @@ interface ThreadsMeResponse {
   error?: { message?: string };
 }
 
-interface InstagramMeResponse {
+interface FacebookPageAccount {
   id?: string;
-  user_id?: string;
-  username?: string;
+  name?: string;
+  access_token?: string;
+  instagram_business_account?: {
+    id?: string;
+    username?: string;
+  };
+}
+
+interface FacebookAccountsResponse {
+  data?: FacebookPageAccount[];
   error?: { message?: string };
 }
 
 const stateCookieName = "ap_oauth_state";
-const instagramGraphBaseUrl = "https://graph.instagram.com/v21.0";
+const facebookGraphBaseUrl = "https://graph.facebook.com/v21.0";
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
@@ -122,9 +130,9 @@ async function providerConfig(env: Env, platform: OAuthPlatform): Promise<Provid
       platform,
       clientId: metaClientId,
       clientSecret: metaClientSecret,
-      scopes: ["instagram_business_basic", "instagram_business_content_publish"],
-      authUrl: "https://www.instagram.com/oauth/authorize",
-      tokenUrl: "https://api.instagram.com/oauth/access_token",
+      scopes: ["instagram_basic", "instagram_content_publishing", "pages_show_list", "pages_read_engagement", "business_management"],
+      authUrl: "https://www.facebook.com/v21.0/dialog/oauth",
+      tokenUrl: `${facebookGraphBaseUrl}/oauth/access_token`,
     };
   }
 
@@ -152,25 +160,6 @@ function redirectUri(request: Request): string {
 }
 
 async function exchangeCode(config: ProviderConfig, code: string, request: Request): Promise<TokenResponse> {
-  if (config.platform === "instagram") {
-    const body = new URLSearchParams();
-    body.set("client_id", config.clientId);
-    body.set("client_secret", config.clientSecret);
-    body.set("grant_type", "authorization_code");
-    body.set("redirect_uri", redirectUri(request));
-    body.set("code", code);
-    const response = await fetch(config.tokenUrl, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body,
-    });
-    const data = (await response.json()) as TokenResponse;
-    if (!response.ok || !data.access_token) {
-      throw new Error(data.error?.message ?? "Instagram OAuth token exchange failed.");
-    }
-    return data;
-  }
-
   const url = new URL(config.tokenUrl);
   url.searchParams.set("client_id", config.clientId);
   url.searchParams.set("client_secret", config.clientSecret);
@@ -184,36 +173,41 @@ async function exchangeCode(config: ProviderConfig, code: string, request: Reque
   return data;
 }
 
-async function exchangeInstagramLongLivedToken(config: ProviderConfig, shortLivedToken: string): Promise<TokenResponse> {
-  const url = new URL("https://graph.instagram.com/access_token");
-  url.searchParams.set("grant_type", "ig_exchange_token");
+async function exchangeFacebookLongLivedToken(config: ProviderConfig, shortLivedToken: string): Promise<TokenResponse> {
+  const url = new URL(`${facebookGraphBaseUrl}/oauth/access_token`);
+  url.searchParams.set("grant_type", "fb_exchange_token");
+  url.searchParams.set("client_id", config.clientId);
   url.searchParams.set("client_secret", config.clientSecret);
-  url.searchParams.set("access_token", shortLivedToken);
+  url.searchParams.set("fb_exchange_token", shortLivedToken);
   const response = await fetch(url.toString());
   const data = (await response.json()) as TokenResponse;
   if (!response.ok || !data.access_token) {
-    throw new Error(data.error?.message ?? "Instagram long-lived token exchange failed.");
+    throw new Error(data.error?.message ?? "Facebook long-lived token exchange failed.");
   }
   return data;
 }
 
-async function resolveInstagramAccount(accessToken: string, fallbackUserId: string): Promise<{ accountId: string; providerUserId: string; username: string; tokenToStore: string }> {
-  const url = new URL(`${instagramGraphBaseUrl}/me`);
-  url.searchParams.set("fields", "user_id,username");
+async function resolveInstagramAccount(accessToken: string): Promise<{ accountId: string; providerUserId: string; username: string; tokenToStore: string }> {
+  const url = new URL(`${facebookGraphBaseUrl}/me/accounts`);
+  url.searchParams.set("fields", "id,name,access_token,instagram_business_account{id,username}");
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url.toString());
-  const data = (await response.json()) as InstagramMeResponse;
-  if (!response.ok) throw new Error(data.error?.message ?? "Could not read Instagram Business profile.");
-  const accountId = data.user_id ?? data.id ?? fallbackUserId;
-  if (!accountId) {
-    throw new Error("Instagram Business Login did not return an account id.");
+  const data = (await response.json()) as FacebookAccountsResponse;
+  if (!response.ok) throw new Error(data.error?.message ?? "Could not read Facebook Pages.");
+
+  const page = (data.data ?? []).find((candidate) => candidate.instagram_business_account?.id);
+  if (!page?.instagram_business_account?.id) {
+    throw new Error("No Facebook Page connected to an Instagram professional account was found.");
+  }
+  if (!page.id || !page.access_token) {
+    throw new Error("Facebook did not return a Page access token for the connected Instagram account.");
   }
 
   return {
-    accountId,
-    providerUserId: accountId,
-    username: data.username ?? "Instagram Business",
-    tokenToStore: accessToken,
+    accountId: page.instagram_business_account.id,
+    providerUserId: page.id,
+    username: page.instagram_business_account.username ?? page.name ?? "Instagram Business",
+    tokenToStore: page.access_token,
   };
 }
 
@@ -300,8 +294,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);
   if (platform === "instagram") {
-    authUrl.searchParams.set("enable_fb_login", "1");
-    authUrl.searchParams.set("force_authentication", "1");
+    authUrl.searchParams.set("auth_type", "rerequest");
   }
 
   await safeAudit(env, "oauth.start", {
@@ -341,10 +334,10 @@ export async function handleMetaCallback(request: Request, env: Env): Promise<Re
 
     const token = await exchangeCode(config, code, request);
     const effectiveToken = verified.platform === "instagram"
-      ? await exchangeInstagramLongLivedToken(config, token.access_token ?? "")
+      ? await exchangeFacebookLongLivedToken(config, token.access_token ?? "")
       : token;
     const account = verified.platform === "instagram"
-      ? await resolveInstagramAccount(effectiveToken.access_token ?? "", String(token.user_id ?? ""))
+      ? await resolveInstagramAccount(effectiveToken.access_token ?? "")
       : await resolveThreadsAccount(effectiveToken.access_token ?? "");
 
     const accountId = await upsertSocialAccount(env, {

@@ -155,8 +155,8 @@ function platformInitial(platform) {
 
 function missingLabel(key) {
   return {
-    client_id: "Instagram App ID",
-    client_secret: "Instagram app secret",
+    client_id: "Meta App ID",
+    client_secret: "Meta App Secret",
     oauth_state_secret: "OAuth state secret",
     token_encryption_key: "Token encryption key",
   }[key] || key;
@@ -672,7 +672,7 @@ function platformStatus(platform) {
       selectable: false,
       connected: false,
       label: "서비스 설정 필요",
-      detail: "운영자가 Instagram Login app과 보안 키를 먼저 설정해야 합니다.",
+      detail: "운영자가 Meta 앱과 보안 키를 먼저 설정해야 합니다.",
       tone: "missing",
     };
   }
@@ -764,7 +764,7 @@ function renderCustomerReadiness() {
 
   customerReadiness.innerHTML = `
     <div class="startSteps">
-      ${readinessStep("서비스 준비", serviceReady, serviceReady ? "저장소와 Instagram Login 설정이 준비됐습니다." : "운영자가 Instagram Login app, 보안 키, 저장소 설정을 완료해야 합니다.")}
+      ${readinessStep("서비스 준비", serviceReady, serviceReady ? "저장소와 Facebook Login 설정이 준비됐습니다." : "운영자가 Meta 앱, 보안 키, 저장소 설정을 완료해야 합니다.")}
       ${readinessStep("Instagram 연결", instagramConnected, instagramConnected ? instagram.detail : "게시할 Instagram Business 계정을 승인하세요.")}
       ${readinessStep("예약 가능", readyToSchedule, readyToSchedule ? "날짜별 폴더를 선택하면 예약 작업을 만들 수 있습니다." : "연결이 끝나면 예약 버튼이 활성화됩니다.")}
     </div>
@@ -972,8 +972,8 @@ function renderAdminSettingsStatus(status) {
   const rows = [
     ["관리자 키", status.admin_setup_key_configured],
     ["암호화 키", status.token_encryption_key_configured],
-    ["Instagram App ID", status.meta_app_id_configured],
-    ["Instagram secret", status.meta_app_secret_configured],
+    ["Meta App ID", status.meta_app_id_configured],
+    ["Meta App Secret", status.meta_app_secret_configured],
   ];
   const badges = rows.map(([label, ok]) => `
     <span class="${ok ? "ok" : "missing"}">${label}: ${ok ? "설정됨" : "필요"}</span>
@@ -988,7 +988,7 @@ function renderAdminSettingsStatus(status) {
       <small class="settingsHint">
         현재 OAuth client_id: <b>${escapeHtml(status.meta_app_id_value)}</b>
         (${escapeHtml(sourceLabel)}${status.meta_app_id_updated_at ? `, ${formatDateTime(status.meta_app_id_updated_at)} 저장` : ""}).
-        <code>Invalid platform app</code>이면 이 값이 Basic App ID가 아니라 Instagram 제품의 Business login settings에 있는 Instagram App ID인지 확인하세요.
+        Facebook Login for Business에서 사용하는 Meta 앱 ID인지 확인하세요.
       </small>
     `
     : "";
@@ -1001,7 +1001,7 @@ function renderAdminSettingsSummary(status) {
   const secureReady = Boolean(status.admin_setup_key_configured && status.token_encryption_key_configured);
   adminSettingsSummary.innerHTML = `
     <span class="${secureReady ? "ok" : "missing"}">보안 키: ${secureReady ? "정상" : "확인 필요"}</span>
-    <span class="${metaReady ? "ok" : "missing"}">Instagram Login: ${metaReady ? "설정됨" : "입력 필요"}</span>
+    <span class="${metaReady ? "ok" : "missing"}">Facebook Login: ${metaReady ? "설정됨" : "입력 필요"}</span>
   `;
 }
 
