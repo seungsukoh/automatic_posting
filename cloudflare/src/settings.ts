@@ -99,8 +99,8 @@ export async function getRuntimeSettings(env: Env): Promise<RuntimeSettings> {
   const rows = await readSettings(env);
   const storedMetaSecret = rows.meta_app_secret?.encrypted ? await decryptValue(env, rows.meta_app_secret.value).catch(() => "") : rows.meta_app_secret?.value ?? "";
   return {
-    metaAppId: env.META_APP_ID ?? env.INSTAGRAM_CLIENT_ID ?? rows.meta_app_id?.value ?? "",
-    metaAppSecret: env.META_APP_SECRET ?? env.INSTAGRAM_CLIENT_SECRET ?? storedMetaSecret,
+    metaAppId: rows.meta_app_id?.value || env.META_APP_ID || env.INSTAGRAM_CLIENT_ID || "",
+    metaAppSecret: storedMetaSecret || env.META_APP_SECRET || env.INSTAGRAM_CLIENT_SECRET || "",
     adminSetupKeyConfigured: Boolean(env.ADMIN_SETUP_KEY),
     tokenEncryptionKeyConfigured: Boolean(env.TOKEN_ENCRYPTION_KEY),
   };
