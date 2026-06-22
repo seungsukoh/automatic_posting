@@ -1202,6 +1202,70 @@ button:disabled {
   border-color: #d8e0e5;
 }
 
+.platformQuickPicker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.quickPickerHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.quickPickerHead strong {
+  font-size: 14px;
+}
+
+.quickPickerHead span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quickPickerButtons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quickPlatformButton {
+  min-height: 48px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  justify-items: center;
+  border: 1px solid #c5d0d7;
+  border-radius: 6px;
+  background: #f8fafb;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.quickPlatformButton span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.quickPlatformButton.selected {
+  border-color: var(--primary);
+  background: #e9f0ff;
+  color: var(--primary-dark);
+}
+
+.quickPlatformButton:disabled {
+  cursor: not-allowed;
+  background: #f1f4f6;
+  color: #8a969e;
+  border-color: #d8e0e5;
+}
+
 .platformReadiness {
   display: grid;
   grid-template-columns: 1fr;

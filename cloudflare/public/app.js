@@ -31,6 +31,7 @@ const cancelAdminSettings = document.querySelector("#cancelAdminSettings");
 const workspaceSummary = document.querySelector("#workspaceSummary");
 const customerReadiness = document.querySelector("#customerReadiness");
 const platformReadiness = document.querySelector("#platformReadiness");
+const platformQuickPicker = document.querySelector("#platformQuickPicker");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
 const manualPostDetails = document.querySelector(".manualPostDetails");
@@ -734,6 +735,32 @@ function renderPlatformReadiness() {
         </article>
       `;
     }).join("");
+  }
+
+  if (platformQuickPicker) {
+    platformQuickPicker.innerHTML = `
+      <div class="quickPickerHead">
+        <strong>게시 채널 선택</strong>
+        <span>예약할 채널을 직접 선택하세요.</span>
+      </div>
+      <div class="quickPickerButtons">
+        ${inputs.map((input) => {
+          const status = platformStatus(input.value);
+          return `
+            <button
+              class="quickPlatformButton ${input.checked ? "selected" : ""}"
+              type="button"
+              data-platform-toggle="${escapeHtml(input.value)}"
+              ${status.selectable ? "" : "disabled"}
+              title="${escapeHtml(status.detail)}"
+            >
+              <strong>${platformLabel(input.value)}</strong>
+              <span>${escapeHtml(status.label)}</span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
   }
 
   renderPublishPreview();
@@ -1731,6 +1758,18 @@ form.addEventListener("change", (event) => {
   updateFormMeta();
   resetBatchResultsForPlanChange();
   renderBatchQueue();
+});
+
+platformQuickPicker?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-platform-toggle]");
+  if (!button || button.disabled) return;
+  const input = form.querySelector(`input[name="platforms"][value="${button.dataset.platformToggle}"]`);
+  if (!input || input.disabled) return;
+  input.checked = !input.checked;
+  appState.platformSelectionInitialized = true;
+  updateFormMeta();
+  resetBatchResultsForPlanChange();
+  renderPlatformReadiness();
 });
 
 form.addEventListener("submit", async (event) => {
