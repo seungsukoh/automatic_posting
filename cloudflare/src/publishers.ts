@@ -28,7 +28,7 @@ interface InstagramMediaResponse extends GraphError {
   permalink?: string;
 }
 
-const facebookGraphBaseUrl = "https://graph.facebook.com/v21.0";
+const facebookGraphBaseUrl = "https://graph.facebook.com/v25.0";
 
 function base64UrlDecode(value: string): Uint8Array {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");

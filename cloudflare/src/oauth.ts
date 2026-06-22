@@ -44,7 +44,7 @@ interface FacebookAccountsResponse {
 }
 
 const stateCookieName = "ap_oauth_state";
-const facebookGraphBaseUrl = "https://graph.facebook.com/v21.0";
+const facebookGraphBaseUrl = "https://graph.facebook.com/v25.0";
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
@@ -131,7 +131,7 @@ async function providerConfig(env: Env, platform: OAuthPlatform): Promise<Provid
       clientId: metaClientId,
       clientSecret: metaClientSecret,
       scopes: ["instagram_basic", "instagram_content_publish", "pages_show_list", "pages_read_engagement", "business_management"],
-      authUrl: "https://www.facebook.com/v21.0/dialog/oauth",
+      authUrl: "https://www.facebook.com/v25.0/dialog/oauth",
       tokenUrl: `${facebookGraphBaseUrl}/oauth/access_token`,
     };
   }

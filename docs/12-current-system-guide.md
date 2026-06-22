@@ -94,7 +94,7 @@ Meta App Secret
 현재 관리자 설정 키:
 
 ```text
-ADMIN_SETUP_KEY = BkufCHgSz286zTVZ8xQw+l2B/sDRah/u0bM6JaleK6U=
+ADMIN_SETUP_KEY = Cloudflare Pages Secret에서 관리합니다. 값은 문서나 채팅에 기록하지 않습니다.
 ```
 
 주의:
