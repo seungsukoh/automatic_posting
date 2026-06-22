@@ -1029,25 +1029,12 @@ function renderAdminSettingsStatus(status) {
     ["암호화 키", status.token_encryption_key_configured],
     ["Meta App ID", status.meta_app_id_configured],
     ["Meta App Secret", status.meta_app_secret_configured],
+    ["Login Config ID", status.meta_login_config_id_configured],
   ];
   const badges = rows.map(([label, ok]) => `
     <span class="${ok ? "ok" : "missing"}">${label}: ${ok ? "설정됨" : "필요"}</span>
   `).join("");
-  const sourceLabel = {
-    admin_settings: "관리자 설정",
-    META_APP_ID: "Cloudflare META_APP_ID",
-    INSTAGRAM_CLIENT_ID: "Cloudflare INSTAGRAM_CLIENT_ID",
-  }[status.meta_app_id_source] || "미확인";
-  const currentId = status.meta_app_id_value
-    ? `
-      <small class="settingsHint">
-        현재 OAuth client_id: <b>${escapeHtml(status.meta_app_id_value)}</b>
-        (${escapeHtml(sourceLabel)}${status.meta_app_id_updated_at ? `, ${formatDateTime(status.meta_app_id_updated_at)} 저장` : ""}).
-        Facebook Login for Business에서 사용하는 Meta 앱 ID인지 확인하세요.
-      </small>
-    `
-    : "";
-  adminSettingsStatus.innerHTML = `${badges}${currentId}`;
+  adminSettingsStatus.innerHTML = badges;
 }
 
 function renderAdminSettingsSummary(status) {
@@ -2066,6 +2053,7 @@ adminSettingsForm?.addEventListener("submit", async (event) => {
     admin_key: data.get("admin_key"),
     meta_app_id: data.get("meta_app_id"),
     meta_app_secret: data.get("meta_app_secret"),
+    meta_login_config_id: data.get("meta_login_config_id"),
   };
   setBusy(submitButton, true, "저장 중");
   try {
@@ -2079,12 +2067,14 @@ adminSettingsForm?.addEventListener("submit", async (event) => {
       token_encryption_key_configured: true,
       meta_app_id_configured: result.meta_app_id_configured,
       meta_app_secret_configured: result.meta_app_secret_configured,
+      meta_login_config_id_configured: result.meta_login_config_id_configured,
     });
     renderAdminSettingsSummary({
       admin_setup_key_configured: true,
       token_encryption_key_configured: true,
       meta_app_id_configured: result.meta_app_id_configured,
       meta_app_secret_configured: result.meta_app_secret_configured,
+      meta_login_config_id_configured: result.meta_login_config_id_configured,
     });
     showToast("관리자 설정을 저장했습니다.");
     closeSettingsDialog();

@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 01:02 KST
+Last updated: 2026-06-23 01:07 KST
 
 ## Current Status
 
@@ -15,6 +15,7 @@ Last updated: 2026-06-23 01:02 KST
 - User-reported product issues are now the active priority: weak layout/design, poor UX/UI, no actual posting, Instagram reconnect failure, and confusion after admin key rotation.
 - Meta OAuth/Graph endpoints were updated from v21.0 to v25.0 and deployed.
 - Immediate publish diagnostic reached the Instagram publisher path. With a JPG image, the current failure is `Instagram account is not connected.`
+- Facebook Login for Business `config_id` support was added and deployed. Current production settings do not yet have a config ID, so OAuth URLs do not include `config_id` yet.
 
 ## Active Issues
 
@@ -29,12 +30,13 @@ Last updated: 2026-06-23 01:02 KST
 ## Next Plan
 
 1. Stabilize Instagram OAuth first; production now emits v25.0 OAuth URLs.
-2. Resolve Facebook-side "사용할 수 없는 기능" block so the callback reaches `/api/auth/meta/callback`.
-3. Once Instagram is connected, run a real image upload and immediate Instagram publish test.
-4. Redesign the product surface around the core user flow: connect/reconnect account, choose channel, upload folder, create schedule, monitor result.
-5. Hide admin setup from the normal operating path and expose it only through an explicit admin entry.
-6. Replace admin-key memory burden with a documented reset process and later Cloudflare Access or account-based admin auth.
-7. Update docs after each significant change, and during active work at least every 10 minutes.
+2. Add the Facebook Login for Business Configuration ID to admin settings if Meta requires it; this will append `config_id` to the OAuth URL.
+3. Resolve Facebook-side "사용할 수 없는 기능" block so the callback reaches `/api/auth/meta/callback`.
+4. Once Instagram is connected, run a real image upload and immediate Instagram publish test.
+5. Redesign the product surface around the core user flow: connect/reconnect account, choose channel, upload folder, create schedule, monitor result.
+6. Hide admin setup from the normal operating path and expose it only through an explicit admin entry.
+7. Replace admin-key memory burden with a documented reset process and later Cloudflare Access or account-based admin auth.
+8. Update docs after each significant change, and during active work at least every 10 minutes.
 
 ## Update Rule
 

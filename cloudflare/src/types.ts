@@ -8,6 +8,7 @@ export interface Env {
   PUBLISH_QUEUE?: Queue<PublishQueueMessage>;
   META_APP_ID?: string;
   META_APP_SECRET?: string;
+  META_LOGIN_CONFIG_ID?: string;
   OAUTH_STATE_SECRET?: string;
   TOKEN_ENCRYPTION_KEY?: string;
   ADMIN_SETUP_KEY?: string;

@@ -9,6 +9,7 @@ interface ProviderConfig {
   platform: OAuthPlatform;
   clientId: string;
   clientSecret: string;
+  loginConfigId?: string;
   scopes: string[];
   authUrl: string;
   tokenUrl: string;
@@ -130,6 +131,7 @@ async function providerConfig(env: Env, platform: OAuthPlatform): Promise<Provid
       platform,
       clientId: metaClientId,
       clientSecret: metaClientSecret,
+      loginConfigId: settings.metaLoginConfigId,
       scopes: ["instagram_basic", "instagram_content_publish", "pages_show_list", "pages_read_engagement", "business_management"],
       authUrl: "https://www.facebook.com/v25.0/dialog/oauth",
       tokenUrl: `${facebookGraphBaseUrl}/oauth/access_token`,
@@ -294,6 +296,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);
   if (platform === "instagram") {
+    if (config.loginConfigId) authUrl.searchParams.set("config_id", config.loginConfigId);
     authUrl.searchParams.set("auth_type", "rerequest");
   }
 
@@ -302,6 +305,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
     client_id: config.clientId,
     redirect_uri: redirectUri(request),
     scope: config.scopes.join(","),
+    has_config_id: Boolean(config.loginConfigId),
   });
 
   return redirectResponse(authUrl.toString(), {

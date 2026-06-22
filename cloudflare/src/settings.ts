@@ -11,10 +11,13 @@ interface SettingRow {
 export interface RuntimeSettings {
   metaAppId: string;
   metaAppSecret: string;
+  metaLoginConfigId: string;
   metaAppIdSource: string;
   metaAppSecretSource: string;
+  metaLoginConfigIdSource: string;
   metaAppIdUpdatedAt: string;
   metaAppSecretUpdatedAt: string;
+  metaLoginConfigIdUpdatedAt: string;
   adminSetupKeyConfigured: boolean;
   tokenEncryptionKeyConfigured: boolean;
 }
@@ -104,15 +107,20 @@ export async function getRuntimeSettings(env: Env): Promise<RuntimeSettings> {
   const rows = await readSettings(env);
   const storedMetaAppId = rows.meta_app_id?.value ?? "";
   const storedMetaSecret = rows.meta_app_secret?.encrypted ? await decryptValue(env, rows.meta_app_secret.value).catch(() => "") : rows.meta_app_secret?.value ?? "";
+  const storedMetaLoginConfigId = rows.meta_login_config_id?.value ?? "";
   const metaAppId = storedMetaAppId || env.META_APP_ID || env.INSTAGRAM_CLIENT_ID || "";
   const metaAppSecret = storedMetaSecret || env.META_APP_SECRET || env.INSTAGRAM_CLIENT_SECRET || "";
+  const metaLoginConfigId = storedMetaLoginConfigId || env.META_LOGIN_CONFIG_ID || "";
   return {
     metaAppId,
     metaAppSecret,
+    metaLoginConfigId,
     metaAppIdSource: storedMetaAppId ? "admin_settings" : env.META_APP_ID ? "META_APP_ID" : env.INSTAGRAM_CLIENT_ID ? "INSTAGRAM_CLIENT_ID" : "",
     metaAppSecretSource: storedMetaSecret ? "admin_settings" : env.META_APP_SECRET ? "META_APP_SECRET" : env.INSTAGRAM_CLIENT_SECRET ? "INSTAGRAM_CLIENT_SECRET" : "",
+    metaLoginConfigIdSource: storedMetaLoginConfigId ? "admin_settings" : env.META_LOGIN_CONFIG_ID ? "META_LOGIN_CONFIG_ID" : "",
     metaAppIdUpdatedAt: storedMetaAppId ? rows.meta_app_id?.updated_at ?? "" : "",
     metaAppSecretUpdatedAt: storedMetaSecret ? rows.meta_app_secret?.updated_at ?? "" : "",
+    metaLoginConfigIdUpdatedAt: storedMetaLoginConfigId ? rows.meta_login_config_id?.updated_at ?? "" : "",
     adminSetupKeyConfigured: Boolean(env.ADMIN_SETUP_KEY),
     tokenEncryptionKeyConfigured: Boolean(env.TOKEN_ENCRYPTION_KEY),
   };
@@ -125,10 +133,13 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
     token_encryption_key_configured: settings.tokenEncryptionKeyConfigured,
     meta_app_id_configured: Boolean(settings.metaAppId),
     meta_app_secret_configured: Boolean(settings.metaAppSecret),
+    meta_login_config_id_configured: Boolean(settings.metaLoginConfigId),
     meta_app_id_source: settings.metaAppIdSource,
     meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
     meta_app_secret_source: settings.metaAppSecretSource,
     meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
+    meta_login_config_id_source: settings.metaLoginConfigIdSource,
+    meta_login_config_id_updated_at: settings.metaLoginConfigIdUpdatedAt,
   });
 }
 
@@ -139,26 +150,33 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     admin_key?: string;
     meta_app_id?: string;
     meta_app_secret?: string;
+    meta_login_config_id?: string;
   };
 
   if (input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
-  if (!metaAppId && !metaAppSecret) return badRequest("At least one setting value is required.");
+  const metaLoginConfigId = input.meta_login_config_id?.trim() ?? "";
+  if (!metaAppId && !metaAppSecret && !metaLoginConfigId) return badRequest("At least one setting value is required.");
   if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Meta App ID must contain digits only.");
+  if (metaLoginConfigId && !/^\d+$/.test(metaLoginConfigId)) return badRequest("Facebook Login Configuration ID must contain digits only.");
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);
   if (metaAppSecret) await setSetting(env, "meta_app_secret", await encryptValue(env, metaAppSecret), true);
+  if (metaLoginConfigId) await setSetting(env, "meta_login_config_id", metaLoginConfigId, false);
 
   const settings = await getRuntimeSettings(env);
   return jsonResponse({
     saved: true,
     meta_app_id_configured: Boolean(settings.metaAppId),
     meta_app_secret_configured: Boolean(settings.metaAppSecret),
+    meta_login_config_id_configured: Boolean(settings.metaLoginConfigId),
     meta_app_id_source: settings.metaAppIdSource,
     meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
     meta_app_secret_source: settings.metaAppSecretSource,
     meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
+    meta_login_config_id_source: settings.metaLoginConfigIdSource,
+    meta_login_config_id_updated_at: settings.metaLoginConfigIdUpdatedAt,
   });
 }
