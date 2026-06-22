@@ -300,7 +300,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("state", state);
   if (platform === "instagram") {
-    authUrl.searchParams.set("enable_fb_login", "0");
+    authUrl.searchParams.set("enable_fb_login", "1");
     authUrl.searchParams.set("force_authentication", "1");
   }
 
