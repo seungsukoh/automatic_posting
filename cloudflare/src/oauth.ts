@@ -130,7 +130,7 @@ async function providerConfig(env: Env, platform: OAuthPlatform): Promise<Provid
       platform,
       clientId: metaClientId,
       clientSecret: metaClientSecret,
-      scopes: ["instagram_basic", "instagram_content_publishing", "pages_show_list", "pages_read_engagement", "business_management"],
+      scopes: ["instagram_basic", "instagram_content_publish", "pages_show_list", "pages_read_engagement", "business_management"],
       authUrl: "https://www.facebook.com/v21.0/dialog/oauth",
       tokenUrl: `${facebookGraphBaseUrl}/oauth/access_token`,
     };
