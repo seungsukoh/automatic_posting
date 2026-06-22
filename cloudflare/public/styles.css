@@ -1336,6 +1336,23 @@ button:disabled {
   background: #eef2f6;
 }
 
+.settingsStatus .settingsHint {
+  flex-basis: 100%;
+  width: 100%;
+  border: 1px solid #ead79e;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff8e3;
+  color: #5e4400;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.settingsStatus .settingsHint code {
+  color: #8a3d10;
+  font-weight: 800;
+}
+
 .setupOverview {
   background: var(--panel);
 }

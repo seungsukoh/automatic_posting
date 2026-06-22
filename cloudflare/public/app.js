@@ -975,9 +975,24 @@ function renderAdminSettingsStatus(status) {
     ["Instagram App ID", status.meta_app_id_configured],
     ["Instagram secret", status.meta_app_secret_configured],
   ];
-  adminSettingsStatus.innerHTML = rows.map(([label, ok]) => `
+  const badges = rows.map(([label, ok]) => `
     <span class="${ok ? "ok" : "missing"}">${label}: ${ok ? "설정됨" : "필요"}</span>
   `).join("");
+  const sourceLabel = {
+    admin_settings: "관리자 설정",
+    META_APP_ID: "Cloudflare META_APP_ID",
+    INSTAGRAM_CLIENT_ID: "Cloudflare INSTAGRAM_CLIENT_ID",
+  }[status.meta_app_id_source] || "미확인";
+  const currentId = status.meta_app_id_value
+    ? `
+      <small class="settingsHint">
+        현재 OAuth client_id: <b>${escapeHtml(status.meta_app_id_value)}</b>
+        (${escapeHtml(sourceLabel)}${status.meta_app_id_updated_at ? `, ${formatDateTime(status.meta_app_id_updated_at)} 저장` : ""}).
+        <code>Invalid platform app</code>이면 이 값이 Basic App ID가 아니라 Instagram 제품의 Business login settings에 있는 Instagram App ID인지 확인하세요.
+      </small>
+    `
+    : "";
+  adminSettingsStatus.innerHTML = `${badges}${currentId}`;
 }
 
 function renderAdminSettingsSummary(status) {

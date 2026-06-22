@@ -5,11 +5,16 @@ interface SettingRow {
   name: string;
   value: string;
   encrypted: number;
+  updated_at: string;
 }
 
 export interface RuntimeSettings {
   metaAppId: string;
   metaAppSecret: string;
+  metaAppIdSource: string;
+  metaAppSecretSource: string;
+  metaAppIdUpdatedAt: string;
+  metaAppSecretUpdatedAt: string;
   adminSetupKeyConfigured: boolean;
   tokenEncryptionKeyConfigured: boolean;
 }
@@ -91,16 +96,23 @@ async function setSetting(env: Env, name: string, value: string, encrypted: bool
 async function readSettings(env: Env): Promise<Record<string, SettingRow>> {
   if (!hasD1(env)) return {};
   await ensureSettingsSchema(env);
-  const rows = await env.DB.prepare("select name, value, encrypted from app_settings").all<SettingRow>();
+  const rows = await env.DB.prepare("select name, value, encrypted, updated_at from app_settings").all<SettingRow>();
   return Object.fromEntries((rows.results ?? []).map((row) => [row.name, row]));
 }
 
 export async function getRuntimeSettings(env: Env): Promise<RuntimeSettings> {
   const rows = await readSettings(env);
+  const storedMetaAppId = rows.meta_app_id?.value ?? "";
   const storedMetaSecret = rows.meta_app_secret?.encrypted ? await decryptValue(env, rows.meta_app_secret.value).catch(() => "") : rows.meta_app_secret?.value ?? "";
+  const metaAppId = storedMetaAppId || env.META_APP_ID || env.INSTAGRAM_CLIENT_ID || "";
+  const metaAppSecret = storedMetaSecret || env.META_APP_SECRET || env.INSTAGRAM_CLIENT_SECRET || "";
   return {
-    metaAppId: rows.meta_app_id?.value || env.META_APP_ID || env.INSTAGRAM_CLIENT_ID || "",
-    metaAppSecret: storedMetaSecret || env.META_APP_SECRET || env.INSTAGRAM_CLIENT_SECRET || "",
+    metaAppId,
+    metaAppSecret,
+    metaAppIdSource: storedMetaAppId ? "admin_settings" : env.META_APP_ID ? "META_APP_ID" : env.INSTAGRAM_CLIENT_ID ? "INSTAGRAM_CLIENT_ID" : "",
+    metaAppSecretSource: storedMetaSecret ? "admin_settings" : env.META_APP_SECRET ? "META_APP_SECRET" : env.INSTAGRAM_CLIENT_SECRET ? "INSTAGRAM_CLIENT_SECRET" : "",
+    metaAppIdUpdatedAt: storedMetaAppId ? rows.meta_app_id?.updated_at ?? "" : "",
+    metaAppSecretUpdatedAt: storedMetaSecret ? rows.meta_app_secret?.updated_at ?? "" : "",
     adminSetupKeyConfigured: Boolean(env.ADMIN_SETUP_KEY),
     tokenEncryptionKeyConfigured: Boolean(env.TOKEN_ENCRYPTION_KEY),
   };
@@ -113,6 +125,11 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
     token_encryption_key_configured: settings.tokenEncryptionKeyConfigured,
     meta_app_id_configured: Boolean(settings.metaAppId),
     meta_app_secret_configured: Boolean(settings.metaAppSecret),
+    meta_app_id_value: settings.metaAppId,
+    meta_app_id_source: settings.metaAppIdSource,
+    meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
+    meta_app_secret_source: settings.metaAppSecretSource,
+    meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
   });
 }
 
@@ -129,14 +146,21 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   if (!metaAppId && !metaAppSecret) return badRequest("At least one setting value is required.");
+  if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Instagram App ID must contain digits only.");
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);
   if (metaAppSecret) await setSetting(env, "meta_app_secret", await encryptValue(env, metaAppSecret), true);
 
+  const settings = await getRuntimeSettings(env);
   return jsonResponse({
     saved: true,
-    meta_app_id_configured: Boolean(metaAppId) || Boolean((await getRuntimeSettings(env)).metaAppId),
-    meta_app_secret_configured: Boolean(metaAppSecret) || Boolean((await getRuntimeSettings(env)).metaAppSecret),
+    meta_app_id_configured: Boolean(settings.metaAppId),
+    meta_app_secret_configured: Boolean(settings.metaAppSecret),
+    meta_app_id_value: settings.metaAppId,
+    meta_app_id_source: settings.metaAppIdSource,
+    meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
+    meta_app_secret_source: settings.metaAppSecretSource,
+    meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
   });
 }
