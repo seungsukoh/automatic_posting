@@ -36,7 +36,7 @@ export async function uploadAsset(request: Request, env: Env): Promise<Response>
   const extension = extensionForType(image.type);
   const originalName = cleanFileName(image.name);
   const key = `uploads/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${originalName}.${extension}`;
-  await env.ASSETS.put(key, image.stream(), {
+  await env.ASSETS.put(key, await image.arrayBuffer(), {
     httpMetadata: {
       contentType: image.type,
       cacheControl: "public, max-age=31536000, immutable",

@@ -240,6 +240,38 @@ function normalizedImageFile(file) {
   return new File([file], file.name, { type });
 }
 
+function jpegFileName(name) {
+  const clean = String(name || "image").replace(/\.[^.]+$/, "");
+  return `${clean || "image"}.jpg`;
+}
+
+async function convertImageToJpeg(file) {
+  const type = imageTypeForFile(file);
+  const source = normalizedImageFile(file);
+  if (type === "image/jpeg") return source;
+
+  const bitmap = await createImageBitmap(source);
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas is not available.");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0);
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) resolve(result);
+        else reject(new Error("Image conversion failed."));
+      }, "image/jpeg", 0.92);
+    });
+    return new File([blob], jpegFileName(file.name), { type: "image/jpeg" });
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 function formValue(name) {
   return String(form.elements[name]?.value || "").trim();
 }
@@ -828,12 +860,6 @@ function previewStatusFor(platform) {
   if (platform === "instagram") {
     const file = imageFile.files?.[0];
     const hasImage = Boolean(file || form.elements.image_url.value);
-    if (file && imageTypeForFile(file) !== "image/jpeg") {
-      return {
-        label: "JPG 필요",
-        tone: "missing",
-      };
-    }
     return {
       label: hasImage ? "이미지 포함" : "이미지 필요",
       tone: hasImage ? "ok" : "missing",
@@ -1224,9 +1250,7 @@ function batchValidationState(items, platforms) {
     .sort((a, b) => a.getTime() - b.getTime());
   const issues = items.map((item) => batchItemScheduleIssue(item));
   const duplicate = batchDuplicateState(items, platforms);
-  const jpgBlockCount = platforms.includes("instagram")
-    ? items.filter((item) => item.detectedType !== "image/jpeg").length
-    : 0;
+  const jpgBlockCount = 0;
   return {
     dateCount: new Set(items.map((item) => item.dateKey)).size,
     captionCount: items.filter((item) => item.captionSource).length,
@@ -1440,7 +1464,7 @@ function renderBatchQueue() {
   const skipped = appState.batchSkipped;
   const platforms = selectedPlatforms();
   const state = batchValidationState(items, platforms);
-  const needsInstagramJpeg = platforms.includes("instagram") && items.some((item) => item.detectedType !== "image/jpeg");
+  const needsInstagramJpeg = false;
   const hasPastItems = state.pastCount > 0;
   const hasKakao = state.hasKakao;
   const hasOverflowItems = state.overflowCount > 0;
@@ -1511,7 +1535,7 @@ function renderBatchQueue() {
     <div class="batchDateGroups">
       ${[...groups.entries()].map(([dateKey, group]) => {
         const groupHasBlockingIssue = group.some((item) => {
-          const itemNeedsJpeg = platforms.includes("instagram") && item.detectedType !== "image/jpeg";
+          const itemNeedsJpeg = false;
           const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
           return itemNeedsJpeg || batchItemScheduleIssue(item) || state.missingCopyPaths.has(item.relativePath) || itemWarnings.length;
         });
@@ -1524,7 +1548,7 @@ function renderBatchQueue() {
             <span>${group.length}개 이미지</span>
           </summary>
           ${group.map((item) => {
-            const needsJpeg = platforms.includes("instagram") && item.detectedType !== "image/jpeg";
+            const needsJpeg = false;
             const result = batchResultFor(item);
             const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
             const scheduleIssue = batchItemScheduleIssue(item);
@@ -1617,9 +1641,10 @@ clearImage.addEventListener("click", () => {
   clearImagePreview();
 });
 
-async function uploadImageFileToAssets(file) {
+async function uploadImageFileToAssets(file, options = {}) {
+  const uploadFile = options.forceJpeg ? await convertImageToJpeg(file) : normalizedImageFile(file);
   const uploadBody = new FormData();
-  uploadBody.set("image", normalizedImageFile(file));
+  uploadBody.set("image", uploadFile);
   return request("/api/assets/upload", {
     method: "POST",
     body: uploadBody,
@@ -1634,7 +1659,7 @@ async function uploadSelectedImage() {
   formStatus.textContent = "이미지 업로드 중";
   let result;
   try {
-    result = await uploadImageFileToAssets(file);
+    result = await uploadImageFileToAssets(file, { forceJpeg: selectedPlatforms().includes("instagram") });
   } finally {
     imagePreview.classList.remove("uploading");
   }
@@ -1699,7 +1724,7 @@ async function loadJobs() {
 
 async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
   onStage("uploading", "업로드 중");
-  const uploadedImage = await uploadImageFileToAssets(item.file);
+  const uploadedImage = await uploadImageFileToAssets(item.file, { forceJpeg: platforms.includes("instagram") });
   const fallbackTitle = fileStem(item.fileName);
   const titleTemplate = item.captionTitle || formValue("title");
   const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
@@ -1797,14 +1822,9 @@ form.addEventListener("submit", async (event) => {
   }
   const selectedImage = imageFile.files?.[0];
   if (platforms.includes("instagram") && !selectedImage && !form.elements.image_url.value) {
-    showToast("Instagram 발행에는 JPG 이미지가 필요합니다.", "error");
+    showToast("Instagram 발행에는 이미지가 필요합니다.", "error");
     return;
   }
-  if (platforms.includes("instagram") && selectedImage && imageTypeForFile(selectedImage) !== "image/jpeg") {
-    showToast("Instagram 게시 테스트는 JPG 이미지를 선택하세요.", "error");
-    return;
-  }
-
   setBusy(submitPost, true, "처리 중");
   formStatus.textContent = "발행 요청 중";
   try {
@@ -1909,11 +1929,6 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   }
   if (state.pastCount > 0) {
     showToast("지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.", "error");
-    renderBatchQueue();
-    return;
-  }
-  if (state.jpgBlockCount > 0) {
-    showToast("Instagram 예약은 JPG 이미지만 사용할 수 있습니다.", "error");
     renderBatchQueue();
     return;
   }
