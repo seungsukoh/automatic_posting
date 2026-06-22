@@ -243,6 +243,28 @@ function getCookie(request: Request, name: string): string {
   return match ? decodeURIComponent(match.slice(name.length + 1)) : "";
 }
 
+async function safeAudit(env: Env, action: string, metadata: Record<string, unknown>): Promise<void> {
+  try {
+    await audit(env, action, "oauth", null, metadata);
+  } catch {
+    // OAuth should not fail just because diagnostics could not be written.
+  }
+}
+
+async function auditOAuthFailure(env: Env, request: Request, reason: string, details: Record<string, unknown> = {}): Promise<void> {
+  const url = new URL(request.url);
+  await safeAudit(env, "oauth.callback.failed", {
+    reason,
+    has_code: Boolean(url.searchParams.get("code")),
+    has_state: Boolean(url.searchParams.get("state")),
+    has_state_cookie: Boolean(getCookie(request, stateCookieName)),
+    error: url.searchParams.get("error") ?? "",
+    error_description: url.searchParams.get("error_description") ?? "",
+    user_agent: request.headers.get("user-agent") ?? "",
+    ...details,
+  });
+}
+
 export async function oauthReadiness(request: Request, env: Env): Promise<Response> {
   const instagram = await providerConfig(env, "instagram");
   const threads = await providerConfig(env, "threads");
@@ -282,6 +304,13 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
     authUrl.searchParams.set("force_authentication", "1");
   }
 
+  await safeAudit(env, "oauth.start", {
+    platform,
+    client_id: config.clientId,
+    redirect_uri: redirectUri(request),
+    scope: config.scopes.join(","),
+  });
+
   return redirectResponse(authUrl.toString(), {
     "set-cookie": `${stateCookieName}=${encodeURIComponent(state)}; Path=/api/auth/meta; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
   });
@@ -292,11 +321,20 @@ export async function handleMetaCallback(request: Request, env: Env): Promise<Re
   const code = url.searchParams.get("code") ?? "";
   const state = url.searchParams.get("state") ?? "";
   const error = url.searchParams.get("error_description") ?? url.searchParams.get("error") ?? "";
-  if (error) return redirectResponse(`/?oauth_error=${encodeURIComponent(error)}`);
-  if (!code || !state) return redirectResponse("/?oauth_error=missing_oauth_code");
+  if (error) {
+    await auditOAuthFailure(env, request, "provider_error", { message: error });
+    return redirectResponse(`/?oauth_error=${encodeURIComponent(error)}`);
+  }
+  if (!code || !state) {
+    await auditOAuthFailure(env, request, "missing_code_or_state");
+    return redirectResponse("/?oauth_error=missing_oauth_code");
+  }
 
   try {
-    if (getCookie(request, stateCookieName) !== state) throw new Error("OAuth browser state cookie did not match.");
+    if (getCookie(request, stateCookieName) !== state) {
+      await auditOAuthFailure(env, request, "state_cookie_mismatch");
+      throw new Error("OAuth browser state cookie did not match.");
+    }
     const verified = await verifyState(env, state);
     const config = await providerConfig(env, verified.platform);
     if (!config) throw new Error("OAuth provider is not configured.");
@@ -325,6 +363,7 @@ export async function handleMetaCallback(request: Request, env: Env): Promise<Re
     });
   } catch (callbackError) {
     const message = callbackError instanceof Error ? callbackError.message : "OAuth callback failed.";
+    await auditOAuthFailure(env, request, "callback_exception", { message });
     return redirectResponse(`/?oauth_error=${encodeURIComponent(message)}`, {
       "set-cookie": `${stateCookieName}=; Path=/api/auth/meta; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
     });
