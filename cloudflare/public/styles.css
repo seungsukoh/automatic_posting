@@ -19,7 +19,7 @@
   --danger: #b42318;
   --danger-bg: #fde7e4;
   --focus: #7aa7ff;
-  --shadow: 0 18px 50px rgba(20, 33, 42, 0.08);
+  --shadow: 0 8px 22px rgba(20, 33, 42, 0.06);
 }
 
 * {
@@ -28,10 +28,8 @@
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 12% 0, rgba(181, 139, 42, 0.12), transparent 320px),
-    linear-gradient(180deg, #f8faf9 0, var(--bg) 380px),
-    var(--bg);
+  background: #f4f7f8;
+  overflow-x: hidden;
 }
 
 .shell {
@@ -61,16 +59,16 @@ body {
 
 .topbar {
   margin-bottom: 18px;
-  padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 18px 20px;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: linear-gradient(135deg, #13202a 0, #20313d 100%);
-  color: #ffffff;
-  box-shadow: 0 20px 60px rgba(19, 32, 42, 0.18);
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: var(--shadow);
 }
 
 .topbar p {
-  color: #c7d2d9;
+  color: var(--muted);
 }
 
 h1,
@@ -99,6 +97,7 @@ h3 {
 p {
   color: var(--muted);
   margin-top: 6px;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -119,20 +118,20 @@ p {
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 18px;
 }
 
 .summaryItem {
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 12px;
+  grid-template-columns: 10px 1fr;
+  gap: 10px;
   align-items: center;
-  padding: 14px;
+  padding: 10px 12px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(23, 32, 38, 0.05);
+  box-shadow: none;
 }
 
 .summaryIcon,
@@ -147,9 +146,15 @@ p {
 }
 
 .summaryIcon {
-  width: 44px;
-  height: 44px;
-  font-size: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  font-size: 0;
+}
+
+.summaryItem .summaryIcon {
+  width: 10px;
+  height: 10px;
 }
 
 .summaryItem.ready .summaryIcon {
@@ -175,12 +180,15 @@ p {
 
 .customerStartPanel {
   margin-bottom: 18px;
+  padding: 14px 16px;
+  box-shadow: none;
+  background: #ffffff;
 }
 
 .customerReadiness {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .startSteps {
@@ -191,12 +199,18 @@ p {
 
 .startStep {
   display: grid;
-  gap: 7px;
-  min-height: 116px;
-  padding: 14px;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  min-height: auto;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
+}
+
+.startStep p {
+  grid-column: 1 / -1;
+  margin-top: 0;
 }
 
 .startStep span,
@@ -233,7 +247,7 @@ p {
 .platformStatusItem p,
 .startActions p {
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .startActions {
@@ -241,7 +255,7 @@ p {
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  padding: 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fafb;
@@ -249,12 +263,17 @@ p {
 
 .appLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 390px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 18px;
   align-items: start;
 }
 
-.mainColumn,
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .sideColumn {
   display: grid;
   gap: 18px;
@@ -266,24 +285,20 @@ p {
 }
 
 .panel {
-  padding: 20px;
+  padding: 18px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
 }
 
-.panel:hover {
-  border-color: #c8d2d8;
-}
-
 .composePanel {
-  padding: 22px;
+  padding: 18px;
 }
 
 form {
   display: grid;
-  gap: 15px;
+  gap: 14px;
   margin-top: 16px;
 }
 
@@ -322,6 +337,59 @@ select {
 textarea {
   resize: vertical;
   line-height: 1.55;
+}
+
+.setupGrid {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.formSection {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.formSectionHead {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.formSectionHead div {
+  display: grid;
+  gap: 2px;
+}
+
+.formSectionHead strong {
+  font-size: 14px;
+}
+
+.formSectionHead span:not(.stepNumber) {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e9f0ff;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 input:focus,
@@ -367,13 +435,13 @@ button:disabled {
 }
 
 .topbar .secondaryButton {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  border-color: #c5d0d7;
+  background: #ffffff;
+  color: var(--text);
 }
 
 .topbar .secondaryButton:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #f5f8fa;
 }
 
 .secondaryButton:hover,
@@ -445,7 +513,11 @@ button:disabled {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafb;
+  background: #ffffff;
+}
+
+.formSection.marketingTools {
+  padding: 14px;
 }
 
 .toggleRow {
@@ -461,8 +533,8 @@ button:disabled {
 }
 
 .utmPreview {
-  min-height: 38px;
-  border: 1px dashed #c5d0d7;
+  min-height: 34px;
+  border: 1px solid #dbe3e8;
   border-radius: 6px;
   padding: 9px 10px;
   background: #ffffff;
@@ -472,9 +544,96 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.manualPostDetails {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.manualPostDetails summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+
+.manualPostDetails summary::-webkit-details-marker {
+  display: none;
+}
+
+.manualPostDetails summary::after {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.manualPostDetails[open] summary::after {
+  content: "-";
+}
+
+.manualPostDetails small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.manualPostContent {
+  display: grid;
+  gap: 14px;
+  padding: 0 14px 14px;
+}
+
+.schedulerBoard {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.batchInsights {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
 .utmPreview.ready {
   border-style: solid;
   color: var(--primary-dark);
+}
+
+.trackingDetails {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.trackingDetails summary {
+  cursor: pointer;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.trackingFields {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.fileDrop:focus-within,
+.platformPicker input:focus-visible + span {
+  outline: 3px solid rgba(122, 167, 255, 0.35);
+  border-color: var(--focus);
 }
 
 .batchControls,
@@ -487,14 +646,15 @@ button:disabled {
 }
 
 .folderDrop {
-  min-height: 118px;
+  min-height: 150px;
+  background: #ffffff;
 }
 
 .batchGuide,
 .batchMetricGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .batchGuide article,
@@ -506,7 +666,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .batchGuide article,
@@ -532,6 +692,22 @@ button:disabled {
 
 .batchMetricGrid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.batchMetricGrid article {
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 11px 12px;
+}
+
+.batchMetricGrid article:last-child {
+  border-right: 0;
 }
 
 .batchMetricGrid span {
@@ -547,8 +723,8 @@ button:disabled {
 
 .batchRuleSummary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
+  grid-template-columns: 1fr;
+  gap: 5px;
 }
 
 .batchChecks {
@@ -621,6 +797,29 @@ button:disabled {
 .batchDateHeader {
   padding: 12px 14px;
   background: #f8fafb;
+  cursor: pointer;
+  list-style: none;
+}
+
+.batchDateHeader::-webkit-details-marker {
+  display: none;
+}
+
+.batchDateHeader::after {
+  content: "+";
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2f6;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.batchDateGroup[open] .batchDateHeader::after {
+  content: "-";
 }
 
 .batchDateHeader span,
@@ -742,7 +941,7 @@ button:disabled {
 }
 
 .scheduleCalendar {
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -789,7 +988,7 @@ button:disabled {
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 5px;
+  gap: 4px;
 }
 
 .calendarWeekday {
@@ -803,10 +1002,10 @@ button:disabled {
   display: grid;
   align-content: start;
   gap: 4px;
-  min-height: 76px;
+  min-height: 58px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 7px;
+  padding: 6px;
   background: #f8fafb;
 }
 
@@ -1005,14 +1204,14 @@ button:disabled {
 
 .platformReadiness {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .platformStatusItem {
   display: grid;
-  gap: 6px;
-  padding: 12px;
+  gap: 5px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -1108,14 +1307,14 @@ button:disabled {
 }
 
 .readinessGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .readinessItem {
   display: grid;
   gap: 7px;
-  min-height: 96px;
-  padding: 12px;
+  min-height: auto;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -1138,9 +1337,7 @@ button:disabled {
 }
 
 .setupOverview {
-  background:
-    linear-gradient(180deg, rgba(181, 139, 42, 0.08), rgba(255, 255, 255, 0) 42%),
-    var(--panel);
+  background: var(--panel);
 }
 
 .setupCallout {
@@ -1452,7 +1649,9 @@ button:disabled {
   }
 
   .startSteps,
-  .platformReadiness {
+  .platformReadiness,
+  .setupGrid,
+  .schedulerBoard {
     grid-template-columns: 1fr;
   }
 
@@ -1482,14 +1681,39 @@ button:disabled {
   .readinessGrid,
   .platformPicker,
   .connectionCard,
-  .job {
+  .job,
+  .setupGrid,
+  .schedulerBoard {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;
   }
 
+  .batchMetricGrid article {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .batchMetricGrid article:last-child {
+    border-bottom: 0;
+  }
+
+  .manualPostDetails summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    min-height: 56px;
+  }
+
   .topbar {
     padding: 18px;
+  }
+
+  .startStep {
+    grid-template-columns: 1fr;
+  }
+
+  .startStep span {
+    justify-self: start;
   }
 
   .panel,
@@ -1520,9 +1744,38 @@ button:disabled {
     display: grid;
   }
 
+  .formActions > button,
+  .dialogActions > button,
+  .topActions > button,
+  .jobActions > button,
+  .jobActions > .linkButton,
+  .startActions button,
+  .startActions .linkButton {
+    width: 100%;
+  }
+
   button,
   .linkButton {
-    width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+    padding-block: 10px;
+  }
+
+  .ghostButton,
+  .iconButton {
+    width: auto;
+  }
+
+  .iconButton {
+    justify-self: end;
+  }
+
+  .scheduleCalendar {
+    overflow-x: auto;
+  }
+
+  .calendarGrid {
+    min-width: 560px;
   }
 
   .toast {

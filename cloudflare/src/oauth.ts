@@ -179,9 +179,20 @@ async function resolveInstagramAccount(accessToken: string): Promise<{ accountId
   const data = (await response.json()) as InstagramPagesResponse;
   if (!response.ok) throw new Error(data.error?.message ?? "Could not read Facebook Pages for Instagram.");
 
+  const pages = data.data ?? [];
+  if (pages.length === 0) {
+    throw new Error("No Facebook Pages were returned. Reconnect and approve Page access for the Facebook Page linked to Instagram.");
+  }
+
   const page = data.data?.find((item) => item.instagram_business_account?.id && item.access_token);
   if (!page?.instagram_business_account?.id || !page.access_token) {
-    throw new Error("No Instagram Business account connected to an accessible Facebook Page.");
+    const pagesWithInstagram = pages.filter((item) => item.instagram_business_account?.id);
+    if (pagesWithInstagram.length > 0) {
+      const pageNames = pagesWithInstagram.map((item) => item.name ?? item.id ?? "unnamed Page").slice(0, 3).join(", ");
+      throw new Error(`Instagram account was found on Facebook Page(s), but Page access token was missing: ${pageNames}. Reconnect and approve all requested permissions.`);
+    }
+    const pageNames = pages.map((item) => item.name ?? item.id ?? "unnamed Page").slice(0, 3).join(", ");
+    throw new Error(`Facebook Page access works, but no Page exposes an Instagram Business account: ${pageNames}. Check that the selected Page is linked to the Instagram professional account and approve access to that Page.`);
   }
 
   return {

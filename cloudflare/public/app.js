@@ -33,6 +33,7 @@ const customerReadiness = document.querySelector("#customerReadiness");
 const platformReadiness = document.querySelector("#platformReadiness");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
+const manualPostDetails = document.querySelector(".manualPostDetails");
 const formStatus = document.querySelector("#formStatus");
 const titleCount = document.querySelector("#titleCount");
 const bodyCount = document.querySelector("#bodyCount");
@@ -54,6 +55,8 @@ const redirectUriValue = document.querySelector("#redirectUriValue");
 const redirectUriMirrors = document.querySelectorAll(".redirectUriMirror");
 
 let previewUrl = "";
+let singlePostSubmitRequested = false;
+let batchSubmitRequested = false;
 const appState = {
   accounts: [],
   readiness: null,
@@ -62,6 +65,7 @@ const appState = {
   batchItems: [],
   batchSkipped: [],
   batchResults: {},
+  batchDateGroups: {},
   batchSubmitting: false,
   platformSelectionInitialized: false,
 };
@@ -1169,6 +1173,9 @@ async function buildBatchItems(fileList) {
 }
 
 function batchValidationState(items, platforms) {
+  const defaultBody = formValue("body");
+  const missingCaptionItems = items.filter((item) => !item.captionSource);
+  const missingCopyItems = items.filter((item) => !item.captionSource && !defaultBody);
   const scheduledDates = items
     .map((item) => scheduledDateForBatchItem(item))
     .filter((date) => Number.isFinite(date.getTime()))
@@ -1181,6 +1188,9 @@ function batchValidationState(items, platforms) {
   return {
     dateCount: new Set(items.map((item) => item.dateKey)).size,
     captionCount: items.filter((item) => item.captionSource).length,
+    missingCaptionCount: missingCaptionItems.length,
+    missingCopyCount: missingCopyItems.length,
+    missingCopyPaths: new Set(missingCopyItems.map((item) => item.relativePath)),
     taskCount: items.length * platforms.length,
     firstDate: scheduledDates[0] || null,
     lastDate: scheduledDates[scheduledDates.length - 1] || null,
@@ -1250,6 +1260,8 @@ function renderBatchPlan() {
     state.duplicate.fileConflictCount ? `같은 날짜의 같은 파일명 ${state.duplicate.fileConflictCount}개를 확인하세요.` : "",
     state.duplicate.planConflictCount ? `이번 예약 목록 안에 같은 시간 중복 후보 ${state.duplicate.planConflictCount}개가 있습니다.` : "",
     state.duplicate.existingConflictCount ? `기존 예약과 시간이 겹치는 후보 ${state.duplicate.existingConflictCount}개가 있습니다.` : "",
+    state.missingCaptionCount ? `캡션 파일이 없는 이미지 ${state.missingCaptionCount}개는 공통 문구를 사용합니다.` : "",
+    state.missingCopyCount ? `본문 없이 예약될 이미지 ${state.missingCopyCount}개가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.` : "",
     state.hasThreads ? "Threads는 현재 mock 게시 상태입니다." : "",
   ].filter(Boolean);
 
@@ -1283,7 +1295,7 @@ function renderBatchPlan() {
       <span>채널: <strong>${platforms.length ? platforms.map(platformLabel).join(", ") : "선택 필요"}</strong></span>
       <span>문구: <strong>${titleTemplate ? "작성 제목 사용" : "파일명 제목 사용"}</strong>${body || link || hashtags ? " · 본문/링크/해시태그 적용" : ""}</span>
       <span>캠페인: <strong>${formValue("campaign_name") || "미지정"}</strong>${utmAuto?.checked ? " · UTM 자동" : ""}</span>
-      <span>캡션: <strong>${state.captionCount ? `${state.captionCount}개 파일 매칭` : "공통 문구 사용"}</strong></span>
+      <span>캡션: <strong>${state.captionCount ? `${state.captionCount}개 파일 매칭` : "공통 문구 사용"}</strong>${state.missingCaptionCount ? ` · ${state.missingCaptionCount}개 미매칭` : ""}</span>
     </div>
     ${warnings.length ? `
       <div class="batchChecks">
@@ -1389,6 +1401,10 @@ function renderBatchQueue() {
   const needsInstagramJpeg = platforms.includes("instagram") && items.some((item) => item.detectedType !== "image/jpeg");
   const hasPastItems = state.pastCount > 0;
   const hasKakao = state.hasKakao;
+  const hasOverflowItems = state.overflowCount > 0;
+  const hasDuplicateWarnings = state.duplicate.warningCount > 0;
+  const hasMissingCopy = state.missingCopyCount > 0;
+  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
   const allSucceeded = items.length > 0 && items.every((item) => batchResultFor(item)?.status === "success");
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
@@ -1397,11 +1413,13 @@ function renderBatchQueue() {
   renderScheduleCalendar();
 
   if (submitBatch) {
-    submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || needsInstagramJpeg || hasPastItems || hasKakao;
+    submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || hasBlockingIssue;
     submitBatch.textContent = appState.batchSubmitting
       ? "예약 생성 중"
       : allSucceeded
       ? "예약 완료"
+      : hasBlockingIssue
+      ? "예약 조건 확인 필요"
       : items.length && platforms.length
       ? `${remainingTaskCount || state.taskCount}개 예약 작업 만들기`
       : "예약 작업 만들기";
@@ -1421,6 +1439,10 @@ function renderBatchQueue() {
     const group = groups.get(item.dateKey) || [];
     group.push(item);
     groups.set(item.dateKey, group);
+  }
+  const dateKeys = new Set(groups.keys());
+  for (const key of Object.keys(appState.batchDateGroups)) {
+    if (!dateKeys.has(key)) delete appState.batchDateGroups[key];
   }
 
   const skippedNotice = renderSkippedDetails(skipped);
@@ -1445,23 +1467,34 @@ function renderBatchQueue() {
     ${pastNotice}
     ${duplicateNotice}
     <div class="batchDateGroups">
-      ${[...groups.entries()].map(([dateKey, group]) => `
-        <section class="batchDateGroup">
-          <div class="batchDateHeader">
+      ${[...groups.entries()].map(([dateKey, group]) => {
+        const groupHasBlockingIssue = group.some((item) => {
+          const itemNeedsJpeg = platforms.includes("instagram") && item.detectedType !== "image/jpeg";
+          const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
+          return itemNeedsJpeg || batchItemScheduleIssue(item) || state.missingCopyPaths.has(item.relativePath) || itemWarnings.length;
+        });
+        const preferredOpen = appState.batchDateGroups[dateKey];
+        const openGroup = (groupHasBlockingIssue || (typeof preferredOpen === "boolean" ? preferredOpen : groups.size <= 2 && group.length <= 6)) ? " open" : "";
+        return `
+        <details class="batchDateGroup" data-date-key="${escapeHtml(dateKey)}"${openGroup}>
+          <summary class="batchDateHeader">
             <strong>${dateKey}</strong>
-            <span>${group.length}개</span>
-          </div>
+            <span>${group.length}개 이미지</span>
+          </summary>
           ${group.map((item) => {
             const needsJpeg = platforms.includes("instagram") && item.detectedType !== "image/jpeg";
             const result = batchResultFor(item);
             const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
             const scheduleIssue = batchItemScheduleIssue(item);
+            const missingCopy = state.missingCopyPaths.has(item.relativePath);
             const badgeLabel = needsJpeg
               ? "JPG 필요"
               : scheduleIssue === "past"
               ? "지난 시간"
               : scheduleIssue === "overflow"
               ? "다음날"
+              : missingCopy
+              ? "문구 필요"
               : itemWarnings.length
               ? "중복 확인"
               : batchItemTypeLabel(item);
@@ -1474,11 +1507,12 @@ function renderBatchQueue() {
                   <small>${escapeHtml(item.relativePath)}</small>
                   ${item.captionSource ? `<span class="captionBadge">캡션 매칭: ${escapeHtml(item.captionSource)}</span>` : ""}
                   ${captionPreview ? `<span class="batchCaptionPreview">${escapeHtml(captionPreview)}</span>` : ""}
+                  ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
                   ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
                 </div>
                 <div class="batchFileSchedule">
                   <strong>${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</strong>
-                  <span class="batchBadge ${needsJpeg || scheduleIssue || itemWarnings.length ? "warning" : ""}">
+                  <span class="batchBadge ${needsJpeg || scheduleIssue || missingCopy || itemWarnings.length ? "warning" : ""}">
                     ${badgeLabel}
                   </span>
                   ${result ? `<span class="batchProgress ${result.status}">${escapeHtml(result.label)}</span>` : ""}
@@ -1486,8 +1520,9 @@ function renderBatchQueue() {
               </div>
             `;
           }).join("")}
-        </section>
-      `).join("")}
+        </details>
+      `;
+      }).join("")}
     </div>
   `;
 }
@@ -1496,6 +1531,7 @@ function clearBatchQueue() {
   appState.batchItems = [];
   appState.batchSkipped = [];
   appState.batchResults = {};
+  appState.batchDateGroups = {};
   if (batchFolderInput) batchFolderInput.value = "";
   if (batchStatus) batchStatus.textContent = "대기 중";
   renderBatchQueue();
@@ -1654,6 +1690,22 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
   onStage("success", "예약 완료");
 }
 
+function requestSinglePostSubmit() {
+  singlePostSubmitRequested = true;
+  form.requestSubmit();
+  window.setTimeout(() => {
+    singlePostSubmitRequested = false;
+  }, 0);
+}
+
+function requestBatchSubmit() {
+  batchSubmitRequested = true;
+  batchScheduleForm.requestSubmit();
+  window.setTimeout(() => {
+    batchSubmitRequested = false;
+  }, 0);
+}
+
 form.addEventListener("input", () => {
   updateFormMeta();
   resetBatchResultsForPlanChange();
@@ -1668,6 +1720,15 @@ form.addEventListener("change", (event) => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const explicitSinglePostSubmit = singlePostSubmitRequested;
+  singlePostSubmitRequested = false;
+  if (!explicitSinglePostSubmit) {
+    if (manualPostDetails) manualPostDetails.open = true;
+    formStatus.textContent = "단건 게시 확인 필요";
+    showToast("단건 게시 옵션을 열고 게시 버튼을 눌러야 발행됩니다.", "error");
+    submitPost?.focus({ preventScroll: true });
+    return;
+  }
   const data = new FormData(form);
   const platforms = selectedPlatforms();
   if (platforms.length === 0) {
@@ -1731,12 +1792,15 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+submitPost?.addEventListener("click", requestSinglePostSubmit);
+
 batchFolderInput?.addEventListener("change", async () => {
   if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
   appState.batchItems = items;
   appState.batchSkipped = skipped;
   appState.batchResults = {};
+  appState.batchDateGroups = {};
   if (batchStatus) batchStatus.textContent = items.length ? `${items.length}개 준비` : "대기 중";
   renderBatchQueue();
 });
@@ -1750,9 +1814,23 @@ batchInterval?.addEventListener("input", () => {
   renderBatchQueue();
 });
 clearBatch?.addEventListener("click", clearBatchQueue);
+submitBatch?.addEventListener("click", requestBatchSubmit);
+
+batchQueue?.addEventListener("toggle", (event) => {
+  const group = event.target?.closest?.(".batchDateGroup");
+  if (!group || !batchQueue.contains(group)) return;
+  const dateKey = group.dataset.dateKey;
+  if (dateKey) appState.batchDateGroups[dateKey] = group.open;
+}, true);
 
 batchScheduleForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const explicitBatchSubmit = batchSubmitRequested;
+  batchSubmitRequested = false;
+  if (!explicitBatchSubmit) {
+    showToast("예약 작업 만들기 버튼을 눌러야 대량 예약이 생성됩니다.", "error");
+    return;
+  }
   const items = appState.batchItems;
   const platforms = selectedPlatforms();
   const state = batchValidationState(items, platforms);
@@ -1785,6 +1863,21 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
     renderBatchQueue();
     return;
   }
+  if (state.overflowCount > 0) {
+    showToast("다음날로 넘어가는 예약이 있습니다. 날짜 폴더나 간격을 조정하세요.", "error");
+    renderBatchQueue();
+    return;
+  }
+  if (state.duplicate.warningCount > 0) {
+    showToast("중복 가능성이 있는 예약 시간이 있습니다. 파일명과 예약 시간을 조정하세요.", "error");
+    renderBatchQueue();
+    return;
+  }
+  if (state.missingCopyCount > 0) {
+    showToast("본문 없이 예약될 이미지가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.", "error");
+    renderBatchQueue();
+    return;
+  }
 
   const pendingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   if (pendingItems.length === 0) {
@@ -1792,6 +1885,14 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
     renderBatchQueue();
     return;
   }
+  const taskCount = pendingItems.length * platforms.length;
+  const confirmed = window.confirm([
+    `${taskCount}개 예약 작업을 만들까요?`,
+    `기간: ${state.firstDate ? formatFullDateTime(state.firstDate) : "-"} ~ ${state.lastDate ? formatFullDateTime(state.lastDate) : "-"}`,
+    `채널: ${platforms.map(platformLabel).join(", ")}`,
+    `캠페인: ${formValue("campaign_name") || "미지정"}`,
+  ].join("\n"));
+  if (!confirmed) return;
 
   appState.batchSubmitting = true;
   setBusy(submitBatch, true, "예약 생성 중");
@@ -1938,6 +2039,8 @@ refreshJobs.addEventListener("click", async () => {
 });
 
 runScheduler.addEventListener("click", async () => {
+  const confirmed = window.confirm("현재 시간이 지난 예약 작업을 즉시 처리합니다. 계속할까요?");
+  if (!confirmed) return;
   setBusy(runScheduler, true, "실행 중");
   try {
     const result = await request("/api/scheduler/run", { method: "POST", body: "{}" });
@@ -1946,7 +2049,7 @@ runScheduler.addEventListener("click", async () => {
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(runScheduler, false, "예약 작업 실행");
+    setBusy(runScheduler, false, "만기 예약 처리");
   }
 });
 
