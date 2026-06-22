@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 01:07 KST
+Last updated: 2026-06-23 01:20 KST
 
 ## Current Status
 
@@ -16,6 +16,8 @@ Last updated: 2026-06-23 01:07 KST
 - Meta OAuth/Graph endpoints were updated from v21.0 to v25.0 and deployed.
 - Immediate publish diagnostic reached the Instagram publisher path. With a JPG image, the current failure is `Instagram account is not connected.`
 - Facebook Login for Business `config_id` support was added and deployed. Current production settings do not yet have a config ID, so OAuth URLs do not include `config_id` yet.
+- Admin setup key was rotated again during troubleshooting. The preferred operating model is that the user should not need to enter it during normal connection/posting work; direct backend configuration or a future admin-auth flow should handle rare settings changes.
+- Alternate Instagram OAuth mode was added and deployed: `/api/auth/meta/start?platform=instagram&variant=basic`. This omits `auth_type=rerequest` and is exposed as "대체 연결 시도" in the connection card.
 
 ## Active Issues
 
@@ -26,16 +28,17 @@ Last updated: 2026-06-23 01:07 KST
 - README and docs need cleanup where old assumptions mention R2 as the active storage.
 - The app has not yet proven the end-to-end production path because Instagram is disconnected: reconnect Instagram, upload image, publish immediately, create scheduled job, and publish successfully.
 - Admin key rotation did not directly change Instagram OAuth, but it created operational confusion because the key was not preserved for later admin edits.
+- Admin-key UX is a product issue: it should not block normal Instagram reconnect or posting.
 
 ## Next Plan
 
 1. Stabilize Instagram OAuth first; production now emits v25.0 OAuth URLs.
 2. Add the Facebook Login for Business Configuration ID to admin settings if Meta requires it; this will append `config_id` to the OAuth URL.
-3. Resolve Facebook-side "사용할 수 없는 기능" block so the callback reaches `/api/auth/meta/callback`.
+3. Try the alternate connection link. If it still shows "사용할 수 없는 기능", the block is before callback and must be resolved through Facebook Login product/configuration state.
 4. Once Instagram is connected, run a real image upload and immediate Instagram publish test.
 5. Redesign the product surface around the core user flow: connect/reconnect account, choose channel, upload folder, create schedule, monitor result.
 6. Hide admin setup from the normal operating path and expose it only through an explicit admin entry.
-7. Replace admin-key memory burden with a documented reset process and later Cloudflare Access or account-based admin auth.
+7. Replace admin-key memory burden with direct operator configuration for now, then Cloudflare Access or account-based admin auth.
 8. Update docs after each significant change, and during active work at least every 10 minutes.
 
 ## Update Rule

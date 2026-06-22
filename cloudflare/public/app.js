@@ -962,13 +962,17 @@ function renderConnectionCard(platform, readiness, account) {
     : configured
       ? "계정 승인 대기"
       : missing.map(missingLabel).join(", ");
-  const action = platform === "threads" && !connected
+  const primaryAction = platform === "threads" && !connected
     ? `<button class="secondaryButton" type="button" disabled>준비 중</button>`
     : connected
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
       : `<button class="secondaryButton" type="button" disabled>운영자 설정 필요</button>`;
+  const fallbackAction = platform === "instagram" && configured && !connected
+    ? `<a class="secondaryButton" href="/api/auth/meta/start?platform=instagram&variant=basic">대체 연결 시도</a>`
+    : "";
+  const action = `<div class="connectionActions">${primaryAction}${fallbackAction}</div>`;
 
   return `
     <article class="connectionCard ${connected ? "connected" : ""}">

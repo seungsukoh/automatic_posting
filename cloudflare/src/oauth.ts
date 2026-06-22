@@ -297,7 +297,9 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
   authUrl.searchParams.set("state", state);
   if (platform === "instagram") {
     if (config.loginConfigId) authUrl.searchParams.set("config_id", config.loginConfigId);
-    authUrl.searchParams.set("auth_type", "rerequest");
+    if (url.searchParams.get("variant") !== "basic") {
+      authUrl.searchParams.set("auth_type", "rerequest");
+    }
   }
 
   await safeAudit(env, "oauth.start", {
@@ -306,6 +308,7 @@ export async function startMetaOAuth(request: Request, env: Env): Promise<Respon
     redirect_uri: redirectUri(request),
     scope: config.scopes.join(","),
     has_config_id: Boolean(config.loginConfigId),
+    variant: url.searchParams.get("variant") === "basic" ? "basic" : "rerequest",
   });
 
   return redirectResponse(authUrl.toString(), {
