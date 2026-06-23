@@ -1,4 +1,4 @@
-const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
+﻿const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const TEXT_CAPTION_EXTENSIONS = new Set(["txt", "md"]);
@@ -19,10 +19,6 @@ const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 const clearImage = document.querySelector("#clearImage");
 const accountConnections = document.querySelector("#accountConnections");
-const systemReadiness = document.querySelector("#systemReadiness");
-const workspaceSummary = document.querySelector("#workspaceSummary");
-const customerReadiness = document.querySelector("#customerReadiness");
-const platformReadiness = document.querySelector("#platformReadiness");
 const platformQuickPicker = document.querySelector("#platformQuickPicker");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
@@ -81,9 +77,9 @@ async function request(path, options = {}) {
   } catch {
     const contentType = response.headers.get("content-type") || "";
     const looksLikeHtml = contentType.includes("text/html") || text.trim().startsWith("<");
-    throw new Error(looksLikeHtml ? "Cloudflare 함수가 JSON을 반환하지 않습니다." : "API 응답을 해석할 수 없습니다.");
+    throw new Error(looksLikeHtml ? "Cloudflare í•¨ìˆ˜ê°€ JSONì„ ë°˜í™˜í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤." : "API ì‘ë‹µì„ í•´ì„í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
   }
-  if (!response.ok) throw new Error(data.error || "요청을 처리하지 못했습니다.");
+  if (!response.ok) throw new Error(data.error || "ìš”ì²­ì„ ì²˜ë¦¬í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
   return data;
 }
 
@@ -130,22 +126,22 @@ function platformInitial(platform) {
 
 function missingLabel(key) {
   return {
-    client_id: "운영자 OAuth 설정",
-    client_secret: "운영자 OAuth 설정",
-    oauth_state_secret: "운영자 보안 설정",
-    token_encryption_key: "운영자 보안 설정",
+    client_id: "ì•± ì—°ê²° ì¤€ë¹„",
+    client_secret: "ì•± ì—°ê²° ì¤€ë¹„",
+    oauth_state_secret: "ì•± ì—°ê²° ì¤€ë¹„",
+    token_encryption_key: "ì•± ì—°ê²° ì¤€ë¹„",
   }[key] || key;
 }
 
 function statusLabel(status) {
   return {
-    queued: "대기",
-    running: "발행 중",
-    scheduled: "예약",
-    success: "성공",
-    failed: "실패",
-    missing: "없음",
-  }[status] || status || "알 수 없음";
+    queued: "ëŒ€ê¸°",
+    running: "ë°œí–‰ ì¤‘",
+    scheduled: "ì˜ˆì•½",
+    success: "ì„±ê³µ",
+    failed: "ì‹¤íŒ¨",
+    missing: "ì—†ìŒ",
+  }[status] || status || "ì•Œ ìˆ˜ ì—†ìŒ";
 }
 
 function formatDateTime(value) {
@@ -178,7 +174,7 @@ function formatFullDateTime(value) {
 function localTimezoneLabel() {
   return new Intl.DateTimeFormat("ko-KR", { timeZoneName: "short" })
     .formatToParts(new Date())
-    .find((part) => part.type === "timeZoneName")?.value || "브라우저 시간";
+    .find((part) => part.type === "timeZoneName")?.value || "ë¸Œë¼ìš°ì € ì‹œê°„";
 }
 
 function dateKeyFromDate(value) {
@@ -295,19 +291,19 @@ function renderUtmPreview() {
   const link = formValue("link_url");
   if (!link) {
     utmPreview.className = "utmPreview";
-    utmPreview.textContent = "링크를 입력하면 UTM 미리보기가 표시됩니다.";
+    utmPreview.textContent = "ë§í¬ë¥¼ ìž…ë ¥í•˜ë©´ UTM ë¯¸ë¦¬ë³´ê¸°ê°€ í‘œì‹œë©ë‹ˆë‹¤.";
     return;
   }
   try {
     new URL(link);
   } catch {
     utmPreview.className = "utmPreview";
-    utmPreview.textContent = "https://로 시작하는 올바른 링크를 입력하면 UTM을 붙일 수 있습니다.";
+    utmPreview.textContent = "https://ë¡œ ì‹œìž‘í•˜ëŠ” ì˜¬ë°”ë¥¸ ë§í¬ë¥¼ ìž…ë ¥í•˜ë©´ UTMì„ ë¶™ì¼ ìˆ˜ ìžˆìŠµë‹ˆë‹¤.";
     return;
   }
   if (!utmAuto?.checked) {
     utmPreview.className = "utmPreview";
-    utmPreview.textContent = "UTM 자동 추가가 꺼져 있습니다.";
+    utmPreview.textContent = "UTM ìžë™ ì¶”ê°€ê°€ êº¼ì ¸ ìžˆìŠµë‹ˆë‹¤.";
     return;
   }
   utmPreview.className = "utmPreview ready";
@@ -439,10 +435,10 @@ function captionData(fields, source) {
 
 function captionFromCsvRow(row, source) {
   return captionData({
-    title: firstRowValue(row, ["title", "post_title", "제목"]),
-    body: firstRowValue(row, ["body", "caption", "content", "copy", "본문", "문구", "캡션"]),
-    hashtags: firstRowValue(row, ["hashtags", "hashtag", "tags", "tag", "해시태그", "태그"]),
-    link: firstRowValue(row, ["link_url", "link", "url", "landing_url", "링크", "랜딩"]),
+    title: firstRowValue(row, ["title", "post_title", "ì œëª©"]),
+    body: firstRowValue(row, ["body", "caption", "content", "copy", "ë³¸ë¬¸", "ë¬¸êµ¬", "ìº¡ì…˜"]),
+    hashtags: firstRowValue(row, ["hashtags", "hashtag", "tags", "tag", "í•´ì‹œíƒœê·¸", "íƒœê·¸"]),
+    link: firstRowValue(row, ["link_url", "link", "url", "landing_url", "ë§í¬", "ëžœë”©"]),
   }, source);
 }
 
@@ -454,13 +450,13 @@ function parseTextCaption(text, source) {
   let structured = false;
 
   for (const line of clean.split(/\r?\n/)) {
-    const match = line.match(/^\s*(title|제목|body|본문|caption|캡션|hashtags|해시태그|link|url|링크)\s*[:=]\s*(.*)$/i);
+    const match = line.match(/^\s*(title|ì œëª©|body|ë³¸ë¬¸|caption|ìº¡ì…˜|hashtags|í•´ì‹œíƒœê·¸|link|url|ë§í¬)\s*[:=]\s*(.*)$/i);
     if (match) {
       structured = true;
       const key = match[1].toLowerCase();
-      if (key === "title" || key === "제목") fields.title = match[2];
-      else if (key === "hashtags" || key === "해시태그") fields.hashtags = match[2];
-      else if (key === "link" || key === "url" || key === "링크") fields.link = match[2];
+      if (key === "title" || key === "ì œëª©") fields.title = match[2];
+      else if (key === "hashtags" || key === "í•´ì‹œíƒœê·¸") fields.hashtags = match[2];
+      else if (key === "link" || key === "url" || key === "ë§í¬") fields.link = match[2];
       else fields.body = [fields.body, match[2]].filter(Boolean).join("\n");
     } else {
       bodyLines.push(line);
@@ -556,7 +552,7 @@ function batchItemTypeLabel(item) {
     "image/jpeg": "JPG",
     "image/png": "PNG",
     "image/webp": "WEBP",
-  }[item.detectedType] || "이미지";
+  }[item.detectedType] || "ì´ë¯¸ì§€";
 }
 
 function batchResultFor(item) {
@@ -587,7 +583,7 @@ function batchDuplicateState(items, platforms) {
   for (const group of fileGroups.values()) {
     if (group.length < 2) continue;
     fileConflictCount += group.length;
-    group.forEach((item) => addBatchWarning(itemWarnings, item, "같은 날짜에 같은 파일명이 있습니다."));
+    group.forEach((item) => addBatchWarning(itemWarnings, item, "ê°™ì€ ë‚ ì§œì— ê°™ì€ íŒŒì¼ëª…ì´ ìžˆìŠµë‹ˆë‹¤."));
   }
 
   for (const item of items) {
@@ -604,7 +600,7 @@ function batchDuplicateState(items, platforms) {
     if (group.length < 2) continue;
     planConflictCount += group.length;
     const platform = key.split("::")[0];
-    group.forEach((item) => addBatchWarning(itemWarnings, item, `${platformLabel(platform)} 같은 시간 예약 후보가 있습니다.`));
+    group.forEach((item) => addBatchWarning(itemWarnings, item, `${platformLabel(platform)} ê°™ì€ ì‹œê°„ ì˜ˆì•½ í›„ë³´ê°€ ìžˆìŠµë‹ˆë‹¤.`));
   }
 
   for (const job of appState.jobs) {
@@ -619,7 +615,7 @@ function batchDuplicateState(items, platforms) {
     for (const platform of platforms) {
       if (!existingSlots.has(`${platform}::${scheduledTime}`)) continue;
       existingConflictCount += 1;
-      addBatchWarning(itemWarnings, item, `${platformLabel(platform)}에 이미 같은 시간 예약이 있습니다.`);
+      addBatchWarning(itemWarnings, item, `${platformLabel(platform)}ì— ì´ë¯¸ ê°™ì€ ì‹œê°„ ì˜ˆì•½ì´ ìžˆìŠµë‹ˆë‹¤.`);
     }
   }
 
@@ -640,28 +636,19 @@ function accountForPlatform(platform) {
   return appState.accounts.find((account) => account.platform === platform && account.status !== "disconnected") || null;
 }
 
-function systemReadyForUsers() {
-  return Boolean(
-    appState.system?.d1?.bound
-    && appState.system?.d1?.schema_ready
-    && (appState.system?.media?.bound || appState.system?.r2?.bound)
-    && appState.system?.secrets?.token_encryption_key,
-  );
-}
-
 function platformStatus(platform) {
   const account = accountForPlatform(platform);
   const readiness = appState.readiness?.platforms?.[platform];
   const configured = Boolean(readiness?.configured);
   const connected = account?.status === "connected";
-  const serviceReady = systemReadyForUsers() && configured;
+  const serviceReady = configured;
 
   if (platform === "threads") {
     return {
       selectable: false,
       connected,
-      label: "준비 중",
-      detail: connected ? "계정은 연결됐지만 현재 테스트 발행만 가능합니다." : "Threads 실제 발행은 운영자가 API 권한을 완료한 뒤 사용할 수 있습니다.",
+      label: "ì‚¬ìš© ë¶ˆê°€",
+      detail: "í˜„ìž¬ Instagram ê²Œì‹œë§Œ ì‚¬ìš©í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.",
       tone: "pending",
     };
   }
@@ -669,8 +656,8 @@ function platformStatus(platform) {
     return {
       selectable: false,
       connected: false,
-      label: "준비 중",
-      detail: "Kakao 공식 발송 경로는 아직 운영 설정에 포함되지 않았습니다.",
+      label: "ì‚¬ìš© ë¶ˆê°€",
+      detail: "í˜„ìž¬ Instagram ê²Œì‹œë§Œ ì‚¬ìš©í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.",
       tone: "missing",
     };
   }
@@ -678,8 +665,8 @@ function platformStatus(platform) {
     return {
       selectable: false,
       connected: false,
-      label: "서비스 설정 필요",
-      detail: "운영자가 Meta 앱과 보안 키를 먼저 설정해야 합니다.",
+      label: "ì‚¬ìš© ë¶ˆê°€",
+      detail: "í˜„ìž¬ ì´ ì±„ë„ì€ ì‚¬ìš©í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.",
       tone: "missing",
     };
   }
@@ -687,22 +674,22 @@ function platformStatus(platform) {
     return {
       selectable: false,
       connected: false,
-      label: "계정 연결 필요",
-      detail: "Instagram 연결하기를 눌러 게시할 계정을 승인하세요.",
+      label: "ê³„ì • ì—°ê²° í•„ìš”",
+      detail: "Instagram ì—°ê²°í•˜ê¸°ë¥¼ ëˆŒëŸ¬ ê²Œì‹œí•  ê³„ì •ì„ ìŠ¹ì¸í•˜ì„¸ìš”.",
       tone: "pending",
     };
   }
   return {
     selectable: true,
     connected: true,
-    label: "예약 가능",
-    detail: account.username || account.account_id || "연결된 계정",
+    label: "ì˜ˆì•½ ê°€ëŠ¥",
+    detail: account.username || account.account_id || "ì—°ê²°ëœ ê³„ì •",
     tone: "ok",
   };
 }
 
 function validatePublishablePlatforms(platforms) {
-  if (platforms.length === 0) return "먼저 게시할 계정을 연결하고 플랫폼을 선택하세요.";
+  if (platforms.length === 0) return "ë¨¼ì € ê²Œì‹œí•  ê³„ì •ì„ ì—°ê²°í•˜ê³  í”Œëž«í¼ì„ ì„ íƒí•˜ì„¸ìš”.";
   const blocked = platforms
     .map((platform) => ({ platform, status: platformStatus(platform) }))
     .filter(({ status }) => !status.selectable);
@@ -711,7 +698,7 @@ function validatePublishablePlatforms(platforms) {
   return `${platformLabel(first.platform)}: ${first.status.detail}`;
 }
 
-function renderPlatformReadiness() {
+function syncPlatformPicker() {
   const inputs = [...form.querySelectorAll("input[name='platforms']")];
   const readyInputs = [];
 
@@ -728,26 +715,6 @@ function renderPlatformReadiness() {
   if (!appState.platformSelectionInitialized && selectedPlatforms().length === 0 && readyInputs.length === 1) {
     readyInputs[0].checked = true;
     appState.platformSelectionInitialized = true;
-  }
-
-  if (platformReadiness) {
-    const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
-    platformReadiness.innerHTML = visibleInputs.length ? visibleInputs.map((input) => {
-      const status = platformStatus(input.value);
-      return `
-        <article class="platformStatusItem ${status.tone}">
-          <strong>${platformLabel(input.value)}</strong>
-          <span>${escapeHtml(status.label)}</span>
-          <p>${escapeHtml(status.detail)}</p>
-        </article>
-      `;
-    }).join("") : `
-      <article class="platformStatusItem pending">
-        <strong>게시 채널 대기</strong>
-        <span>계정 연결 필요</span>
-        <p>사용 가능한 채널은 계정 연결 영역에서 승인한 뒤 여기에 표시됩니다.</p>
-      </article>
-    `;
   }
 
   if (platformQuickPicker) {
@@ -778,54 +745,6 @@ function renderPlatformReadiness() {
   renderBatchQueue();
 }
 
-function readinessStep(label, ok, detail) {
-  return `
-    <article class="startStep ${ok ? "ready" : "missing"}">
-      <strong>${escapeHtml(label)}</strong>
-      <span>${ok ? "완료" : "필요"}</span>
-      <p>${escapeHtml(detail)}</p>
-    </article>
-  `;
-}
-
-function renderCustomerReadiness() {
-  if (!customerReadiness) return;
-  const instagram = platformStatus("instagram");
-  const serviceReady = systemReadyForUsers() && Boolean(appState.readiness?.platforms?.instagram?.configured);
-  const instagramConnected = instagram.connected;
-  const readyToSchedule = instagram.selectable;
-  const state = !serviceReady
-    ? {
-      title: "운영 설정 확인 필요",
-      detail: "Meta 앱과 보안 설정은 운영자가 Cloudflare에서 관리합니다. 일반 사용자는 이 값을 입력하지 않습니다.",
-      action: `<button class="secondaryButton" type="button" disabled>운영자 확인 필요</button>`,
-      tone: "missing",
-    }
-    : !instagramConnected
-      ? {
-        title: "Instagram 계정 연결 필요",
-        detail: "게시할 Instagram Business 계정만 승인하면 바로 게시와 예약을 사용할 수 있습니다.",
-        action: `<a class="linkButton primary" href="/api/auth/meta/start?platform=instagram">Instagram 연결하기</a>`,
-        tone: "pending",
-      }
-      : {
-        title: "게시 준비 완료",
-        detail: `${instagram.detail} 계정으로 바로 게시하거나 날짜 폴더 예약을 만들 수 있습니다.`,
-        action: `<button type="button" data-scroll-batch>날짜 폴더 예약하기</button>`,
-        tone: "ready",
-      };
-
-  customerReadiness.innerHTML = `
-    <div class="startActions singleState ${state.tone}">
-      <div>
-        <strong>${state.title}</strong>
-        <p>${state.detail}</p>
-      </div>
-      ${state.action}
-    </div>
-  `;
-}
-
 function formatPublishTextFromForm() {
   return [
     form.elements.title.value || "",
@@ -850,13 +769,13 @@ function previewStatusFor(platform) {
     const file = imageFile.files?.[0];
     const hasImage = Boolean(file || form.elements.image_url.value);
     return {
-      label: hasImage ? "이미지 포함" : "텍스트 이미지 자동 생성",
+      label: hasImage ? "ì´ë¯¸ì§€ í¬í•¨" : "í…ìŠ¤íŠ¸ ì´ë¯¸ì§€ ìžë™ ìƒì„±",
       tone: "ok",
     };
   }
-  if (platform === "threads") return { label: "Mock 게시", tone: "pending" };
-  if (platform === "kakao") return { label: "경로 미구성", tone: "missing" };
-  return { label: "확인 필요", tone: "pending" };
+  if (platform === "threads") return { label: "Mock ê²Œì‹œ", tone: "pending" };
+  if (platform === "kakao") return { label: "ê²½ë¡œ ë¯¸êµ¬ì„±", tone: "missing" };
+  return { label: "í™•ì¸ í•„ìš”", tone: "pending" };
 }
 
 function renderPublishPreview() {
@@ -866,8 +785,8 @@ function renderPublishPreview() {
   if (platforms.length === 0) {
     publishPreview.innerHTML = `
       <div class="emptyState compact">
-        <strong>선택된 플랫폼이 없습니다.</strong>
-        <span>플랫폼을 선택하면 최종 문구가 표시됩니다.</span>
+        <strong>ì„ íƒëœ í”Œëž«í¼ì´ ì—†ìŠµë‹ˆë‹¤.</strong>
+        <span>í”Œëž«í¼ì„ ì„ íƒí•˜ë©´ ìµœì¢… ë¬¸êµ¬ê°€ í‘œì‹œë©ë‹ˆë‹¤.</span>
       </div>
     `;
     return;
@@ -877,13 +796,13 @@ function renderPublishPreview() {
     const status = previewStatusFor(platform);
     const previewBody = text
       ? escapeHtml(text)
-      : `<span class="previewEmpty">입력 대기</span>`;
+      : `<span class="previewEmpty">ìž…ë ¥ ëŒ€ê¸°</span>`;
     return `
       <article class="publishPreviewCard">
         <div class="previewHeader">
           <div>
             <strong>${platformLabel(platform)}</strong>
-            <span>${text.length}자</span>
+            <span>${text.length}ìž</span>
           </div>
           <span class="previewStatus ${status.tone}">${status.label}</span>
         </div>
@@ -893,75 +812,38 @@ function renderPublishPreview() {
   }).join("");
 }
 
-function updateSummary() {
-  if (!workspaceSummary) return;
-  const connectedCount = appState.accounts.filter((account) => account.status === "connected").length;
-  const systemOk = Boolean(
-    appState.system?.d1?.bound
-    && appState.system?.d1?.schema_ready
-    && (appState.system?.media?.bound || appState.system?.r2?.bound)
-    && appState.system?.secrets?.token_encryption_key,
-  );
-  const failedCount = appState.jobs.filter((job) => job.status === "failed").length;
-  const activeCount = appState.jobs.filter((job) => ["queued", "running", "scheduled"].includes(job.status)).length;
-
-  workspaceSummary.innerHTML = `
-    <article class="summaryItem ${connectedCount ? "ready" : "missing"}">
-      <span class="summaryIcon" aria-hidden="true">A</span>
-      <div>
-        <strong>계정</strong>
-        <p>${connectedCount ? `${connectedCount}개 연결됨` : "연결 대기"}</p>
-      </div>
-    </article>
-    <article class="summaryItem ${systemOk ? "ready" : "missing"}">
-      <span class="summaryIcon" aria-hidden="true">S</span>
-      <div>
-        <strong>시스템</strong>
-        <p>${systemOk ? "정상" : "확인 필요"}</p>
-      </div>
-    </article>
-    <article class="summaryItem ${failedCount ? "missing" : "ready"}">
-      <span class="summaryIcon" aria-hidden="true">J</span>
-      <div>
-        <strong>작업</strong>
-        <p>${failedCount ? `${failedCount}개 실패` : `${activeCount}개 진행`}</p>
-      </div>
-    </article>
-  `;
-}
-
 function renderConnectionCard(platform, readiness, account) {
   const configured = Boolean(readiness?.configured);
   const missing = readiness?.missing || [];
   const connected = account?.status === "connected";
   const disconnected = account?.status === "disconnected";
   const badge = connected
-    ? `<span class="statusBadge ok">연결됨</span>`
+    ? `<span class="statusBadge ok">ì—°ê²°ë¨</span>`
     : disconnected
-      ? `<span class="statusBadge missing">재연결 필요</span>`
+      ? `<span class="statusBadge missing">ìž¬ì—°ê²° í•„ìš”</span>`
     : platform === "threads"
-      ? `<span class="statusBadge pending">준비 중</span>`
+      ? `<span class="statusBadge pending">ì¤€ë¹„ ì¤‘</span>`
     : configured
-      ? `<span class="statusBadge pending">승인 가능</span>`
-      : `<span class="statusBadge missing">설정 필요</span>`;
+      ? `<span class="statusBadge pending">ìŠ¹ì¸ ê°€ëŠ¥</span>`
+      : `<span class="statusBadge missing">ì„¤ì • í•„ìš”</span>`;
   const statusText = connected
     ? escapeHtml(account.username || account.account_id)
     : disconnected
-      ? `${escapeHtml(account.username || account.account_id || platformLabel(platform))} 계정 토큰이 해제됐습니다. 다시 승인하세요.`
+      ? `${escapeHtml(account.username || account.account_id || platformLabel(platform))} ê³„ì • í† í°ì´ í•´ì œëìŠµë‹ˆë‹¤. ë‹¤ì‹œ ìŠ¹ì¸í•˜ì„¸ìš”.`
     : platform === "threads"
-      ? "실제 발행 준비 중"
+      ? "ì‹¤ì œ ë°œí–‰ ì¤€ë¹„ ì¤‘"
     : configured
-      ? "계정 승인 대기"
+      ? "ê³„ì • ìŠ¹ì¸ ëŒ€ê¸°"
       : missing.map(missingLabel).join(", ");
   const primaryAction = platform === "threads" && !connected
-    ? `<button class="secondaryButton" type="button" disabled>준비 중</button>`
+    ? `<button class="secondaryButton" type="button" disabled>ì¤€ë¹„ ì¤‘</button>`
     : connected
-    ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
+    ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">ì—°ê²° í•´ì œ</button>`
     : configured
-      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
-      : `<button class="secondaryButton" type="button" disabled>운영자 설정 필요</button>`;
+      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "ìž¬ì—°ê²°í•˜ê¸°" : "ì—°ê²°í•˜ê¸°"}</a>`
+      : `<button class="secondaryButton" type="button" disabled>ì‚¬ìš© ë¶ˆê°€</button>`;
   const fallbackAction = platform === "instagram" && configured && !connected
-    ? `<a class="secondaryButton" href="/api/auth/meta/start?platform=instagram&variant=basic">대체 연결 시도</a>`
+    ? `<a class="secondaryButton" href="/api/auth/meta/start?platform=instagram&variant=basic">ëŒ€ì²´ ì—°ê²° ì‹œë„</a>`
     : "";
   const action = `<div class="connectionActions">${primaryAction}${fallbackAction}</div>`;
 
@@ -973,7 +855,7 @@ function renderConnectionCard(platform, readiness, account) {
           <h3>${platformLabel(platform)}</h3>
           ${badge}
         </div>
-        <p>${statusText || "확인 필요"}</p>
+        <p>${statusText || "í™•ì¸ í•„ìš”"}</p>
       </div>
       ${action}
     </article>
@@ -996,68 +878,28 @@ async function loadConnections() {
   const accounts = accountsData.accounts || [];
   appState.accounts = accounts;
   appState.readiness = readiness;
-  updateSummary();
-  renderCustomerReadiness();
-  renderPlatformReadiness();
+  syncPlatformPicker();
 
   const accountError = accountsData.error
-    ? `<div class="connectionWarning">계정 상태 확인 필요: ${escapeHtml(accountsData.error)}</div>`
+    ? `<div class="connectionWarning">ê³„ì • ìƒíƒœ í™•ì¸ í•„ìš”: ${escapeHtml(accountsData.error)}</div>`
     : "";
   accountConnections.innerHTML = `
     ${accountError}
     <div class="connectionGrid">
-      ${["instagram", "threads"].map((platform) => renderConnectionCard(
+      ${["instagram"].map((platform) => renderConnectionCard(
         platform,
         readiness.platforms?.[platform],
         accounts.find((account) => account.platform === platform),
       )).join("")}
     </div>
   `;
-  renderCustomerReadiness();
-  renderPlatformReadiness();
-}
-
-function readinessItem(label, ok, detail = "") {
-  return `
-    <article class="readinessItem ${ok ? "ready" : "missing"}">
-      <strong>${escapeHtml(label)}</strong>
-      <span>${ok ? "정상" : "필요"}</span>
-      ${detail ? `<small>${escapeHtml(detail)}</small>` : ""}
-    </article>
-  `;
-}
-
-async function loadSystemReadiness() {
-  if (!systemReadiness) return;
-  systemReadiness.innerHTML = `<div class="skeletonBlock"></div>`;
-  const status = await request("/api/system/readiness").catch((error) => ({ error: error.message }));
-  if (status.error) {
-    systemReadiness.innerHTML = readinessItem("시스템 상태", false, status.error);
-    appState.system = null;
-    updateSummary();
-    renderCustomerReadiness();
-    renderPlatformReadiness();
-    return;
-  }
-  appState.system = status;
-  updateSummary();
-  renderCustomerReadiness();
-  renderPlatformReadiness();
-  const missingTables = Object.entries(status.d1?.tables || {})
-    .filter(([, ok]) => !ok)
-    .map(([name]) => name);
-  systemReadiness.innerHTML = [
-    readinessItem("D1 DB", Boolean(status.d1?.bound), "DB"),
-    readinessItem("스키마", Boolean(status.d1?.schema_ready), missingTables.length ? `누락: ${missingTables.join(", ")}` : "적용 완료"),
-    readinessItem("이미지 저장소", Boolean(status.media?.bound || status.r2?.bound), status.media?.storage === "kv" ? "MEDIA_KV" : "MEDIA_BUCKET"),
-    readinessItem("암호화 키", Boolean(status.secrets?.token_encryption_key), "TOKEN_ENCRYPTION_KEY"),
-  ].join("");
+  syncPlatformPicker();
 }
 
 function clearImagePreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = "";
-  imagePreview.textContent = "선택된 이미지가 없습니다.";
+  imagePreview.textContent = "ì„ íƒëœ ì´ë¯¸ì§€ê°€ ì—†ìŠµë‹ˆë‹¤.";
   clearImage.disabled = true;
   form.elements.image_key.value = "";
   form.elements.image_url.value = "";
@@ -1069,7 +911,7 @@ function updateFormMeta() {
   const body = form.elements.body.value || "";
   const mode = form.elements.mode.value;
   titleCount.textContent = `${title.length} / 120`;
-  bodyCount.textContent = `${body.length}자`;
+  bodyCount.textContent = `${body.length}ìž`;
   scheduledAtGroup.classList.toggle("isHidden", mode !== "scheduled");
   form.elements.scheduled_at.required = mode === "scheduled";
   renderPublishPreview();
@@ -1096,7 +938,7 @@ async function buildBatchItems(fileList) {
         const caption = parseTextCaption(await file.text(), relativePath);
         if (caption) textCaptions.set(captionSidecarKey(dateFolder.key, segments, file.name), caption);
       } catch {
-        skipped.push({ name: relativePath, reason: "캡션 파일 읽기 실패" });
+        skipped.push({ name: relativePath, reason: "ìº¡ì…˜ íŒŒì¼ ì½ê¸° ì‹¤íŒ¨" });
       }
       continue;
     }
@@ -1107,19 +949,19 @@ async function buildBatchItems(fileList) {
     }
 
     if (!dateFolder) {
-      skipped.push({ name: relativePath, reason: "날짜 폴더 없음" });
+      skipped.push({ name: relativePath, reason: "ë‚ ì§œ í´ë” ì—†ìŒ" });
       continue;
     }
     if (!ALLOWED_IMAGE_TYPES.has(detectedType)) {
-      skipped.push({ name: relativePath, reason: "이미지 형식 제외" });
+      skipped.push({ name: relativePath, reason: "ì´ë¯¸ì§€ í˜•ì‹ ì œì™¸" });
       continue;
     }
     if (file.size <= 0) {
-      skipped.push({ name: relativePath, reason: "빈 파일" });
+      skipped.push({ name: relativePath, reason: "ë¹ˆ íŒŒì¼" });
       continue;
     }
     if (file.size > MAX_IMAGE_SIZE) {
-      skipped.push({ name: relativePath, reason: "8MB 초과" });
+      skipped.push({ name: relativePath, reason: "8MB ì´ˆê³¼" });
       continue;
     }
 
@@ -1131,16 +973,16 @@ async function buildBatchItems(fileList) {
     try {
       const rows = parseCaptionCsv(await csv.file.text());
       for (const row of rows) {
-        const reference = firstRowValue(row, ["file", "filename", "file_name", "image", "image_file", "path", "파일", "파일명", "이미지"]);
+        const reference = firstRowValue(row, ["file", "filename", "file_name", "image", "image_file", "path", "íŒŒì¼", "íŒŒì¼ëª…", "ì´ë¯¸ì§€"]);
         if (!reference) continue;
         const caption = captionFromCsvRow(row, csv.relativePath);
         if (!caption) continue;
-        const rowDate = firstRowValue(row, ["date", "folder", "date_folder", "scheduled_date", "날짜", "폴더"]);
+        const rowDate = firstRowValue(row, ["date", "folder", "date_folder", "scheduled_date", "ë‚ ì§œ", "í´ë”"]);
         const dateKey = parseDateFolderName(rowDate)?.key || csv.dateKey;
         for (const key of csvCaptionKeys(dateKey, reference)) csvCaptions.set(key, caption);
       }
     } catch {
-      skipped.push({ name: csv.relativePath, reason: "CSV 읽기 실패" });
+      skipped.push({ name: csv.relativePath, reason: "CSV ì½ê¸° ì‹¤íŒ¨" });
     }
   }
 
@@ -1213,28 +1055,28 @@ function batchValidationState(items, platforms) {
 
 function skippedFixFor(reason) {
   return {
-    "날짜 폴더 없음": "YYYY-MM-DD 날짜 폴더 안에 넣기",
-    "이미지 형식 제외": "JPG, PNG, WEBP로 저장",
-    "빈 파일": "파일을 다시 저장",
-    "8MB 초과": "8MB 이하로 압축",
-    "캡션 파일 읽기 실패": "TXT/MD 인코딩 확인",
-    "CSV 읽기 실패": "UTF-8 CSV 형식 확인",
-  }[reason] || "파일 확인";
+    "ë‚ ì§œ í´ë” ì—†ìŒ": "YYYY-MM-DD ë‚ ì§œ í´ë” ì•ˆì— ë„£ê¸°",
+    "ì´ë¯¸ì§€ í˜•ì‹ ì œì™¸": "JPG, PNG, WEBPë¡œ ì €ìž¥",
+    "ë¹ˆ íŒŒì¼": "íŒŒì¼ì„ ë‹¤ì‹œ ì €ìž¥",
+    "8MB ì´ˆê³¼": "8MB ì´í•˜ë¡œ ì••ì¶•",
+    "ìº¡ì…˜ íŒŒì¼ ì½ê¸° ì‹¤íŒ¨": "TXT/MD ì¸ì½”ë”© í™•ì¸",
+    "CSV ì½ê¸° ì‹¤íŒ¨": "UTF-8 CSV í˜•ì‹ í™•ì¸",
+  }[reason] || "íŒŒì¼ í™•ì¸";
 }
 
 function renderSkippedDetails(skipped) {
   if (!skipped.length) return "";
   return `
     <details class="batchSkipped">
-      <summary>${skipped.length}개 파일 제외</summary>
+      <summary>${skipped.length}ê°œ íŒŒì¼ ì œì™¸</summary>
       <div>
         ${skipped.slice(0, 12).map((entry) => `
           <article>
             <strong>${escapeHtml(entry.name)}</strong>
-            <span>${escapeHtml(entry.reason)} · ${escapeHtml(skippedFixFor(entry.reason))}</span>
+            <span>${escapeHtml(entry.reason)} Â· ${escapeHtml(skippedFixFor(entry.reason))}</span>
           </article>
         `).join("")}
-        ${skipped.length > 12 ? `<small>외 ${skipped.length - 12}개</small>` : ""}
+        ${skipped.length > 12 ? `<small>ì™¸ ${skipped.length - 12}ê°œ</small>` : ""}
       </div>
     </details>
   `;
@@ -1250,26 +1092,26 @@ function renderBatchPlan() {
   if (items.length === 0) {
     batchPlan.innerHTML = `
       <div class="batchPlanEmpty">
-        <strong>폴더 구조</strong>
-        <span>상위폴더 / 2026-06-21 / 001.jpg</span>
-        <span>날짜 폴더별 파일명 숫자순으로 예약됩니다. 001.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
+        <strong>í´ë” êµ¬ì¡°</strong>
+        <span>ìƒìœ„í´ë” / 2026-06-21 / 001.jpg</span>
+        <span>ë‚ ì§œ í´ë”ë³„ íŒŒì¼ëª… ìˆ«ìžìˆœìœ¼ë¡œ ì˜ˆì•½ë©ë‹ˆë‹¤. 001.txt ë˜ëŠ” captions.csvê°€ ìžˆìœ¼ë©´ ë¬¸êµ¬ë¥¼ ìžë™ ë§¤ì¹­í•©ë‹ˆë‹¤.</span>
       </div>
     `;
     return;
   }
 
   const warnings = [
-    state.noPlatforms ? "플랫폼을 하나 이상 선택하세요." : "",
-    state.hasKakao ? "Kakao는 발송 경로가 아직 구성되지 않아 배치 예약에서 제외해야 합니다." : "",
-    state.jpgBlockCount ? `Instagram 선택 시 JPG가 아닌 이미지 ${state.jpgBlockCount}개를 교체해야 합니다.` : "",
-    state.pastCount ? `이미 지난 예약 시간 ${state.pastCount}개가 있습니다.` : "",
-    state.overflowCount ? `간격 때문에 날짜 폴더 다음 날로 넘어가는 이미지 ${state.overflowCount}개가 있습니다.` : "",
-    state.duplicate.fileConflictCount ? `같은 날짜의 같은 파일명 ${state.duplicate.fileConflictCount}개를 확인하세요.` : "",
-    state.duplicate.planConflictCount ? `이번 예약 목록 안에 같은 시간 중복 후보 ${state.duplicate.planConflictCount}개가 있습니다.` : "",
-    state.duplicate.existingConflictCount ? `기존 예약과 시간이 겹치는 후보 ${state.duplicate.existingConflictCount}개가 있습니다.` : "",
-    state.missingCaptionCount ? `캡션 파일이 없는 이미지 ${state.missingCaptionCount}개는 공통 문구를 사용합니다.` : "",
-    state.missingCopyCount ? `본문 없이 예약될 이미지 ${state.missingCopyCount}개가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.` : "",
-    state.hasThreads ? "Threads는 현재 mock 게시 상태입니다." : "",
+    state.noPlatforms ? "í”Œëž«í¼ì„ í•˜ë‚˜ ì´ìƒ ì„ íƒí•˜ì„¸ìš”." : "",
+    state.hasKakao ? "KakaoëŠ” ë°œì†¡ ê²½ë¡œê°€ ì•„ì§ êµ¬ì„±ë˜ì§€ ì•Šì•„ ë°°ì¹˜ ì˜ˆì•½ì—ì„œ ì œì™¸í•´ì•¼ í•©ë‹ˆë‹¤." : "",
+    state.jpgBlockCount ? `Instagram ì„ íƒ ì‹œ JPGê°€ ì•„ë‹Œ ì´ë¯¸ì§€ ${state.jpgBlockCount}ê°œë¥¼ êµì²´í•´ì•¼ í•©ë‹ˆë‹¤.` : "",
+    state.pastCount ? `ì´ë¯¸ ì§€ë‚œ ì˜ˆì•½ ì‹œê°„ ${state.pastCount}ê°œê°€ ìžˆìŠµë‹ˆë‹¤.` : "",
+    state.overflowCount ? `ê°„ê²© ë•Œë¬¸ì— ë‚ ì§œ í´ë” ë‹¤ìŒ ë‚ ë¡œ ë„˜ì–´ê°€ëŠ” ì´ë¯¸ì§€ ${state.overflowCount}ê°œê°€ ìžˆìŠµë‹ˆë‹¤.` : "",
+    state.duplicate.fileConflictCount ? `ê°™ì€ ë‚ ì§œì˜ ê°™ì€ íŒŒì¼ëª… ${state.duplicate.fileConflictCount}ê°œë¥¼ í™•ì¸í•˜ì„¸ìš”.` : "",
+    state.duplicate.planConflictCount ? `ì´ë²ˆ ì˜ˆì•½ ëª©ë¡ ì•ˆì— ê°™ì€ ì‹œê°„ ì¤‘ë³µ í›„ë³´ ${state.duplicate.planConflictCount}ê°œê°€ ìžˆìŠµë‹ˆë‹¤.` : "",
+    state.duplicate.existingConflictCount ? `ê¸°ì¡´ ì˜ˆì•½ê³¼ ì‹œê°„ì´ ê²¹ì¹˜ëŠ” í›„ë³´ ${state.duplicate.existingConflictCount}ê°œê°€ ìžˆìŠµë‹ˆë‹¤.` : "",
+    state.missingCaptionCount ? `ìº¡ì…˜ íŒŒì¼ì´ ì—†ëŠ” ì´ë¯¸ì§€ ${state.missingCaptionCount}ê°œëŠ” ê³µí†µ ë¬¸êµ¬ë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤.` : "",
+    state.missingCopyCount ? `ë³¸ë¬¸ ì—†ì´ ì˜ˆì•½ë  ì´ë¯¸ì§€ ${state.missingCopyCount}ê°œê°€ ìžˆìŠµë‹ˆë‹¤. ìº¡ì…˜ íŒŒì¼ì´ë‚˜ ê¸°ë³¸ ë³¸ë¬¸ì„ ìž…ë ¥í•˜ì„¸ìš”.` : "",
+    state.hasThreads ? "ThreadsëŠ” í˜„ìž¬ mock ê²Œì‹œ ìƒíƒœìž…ë‹ˆë‹¤." : "",
   ].filter(Boolean);
 
   const titleTemplate = String(form.elements.title.value || "").trim();
@@ -1280,29 +1122,29 @@ function renderBatchPlan() {
   batchPlan.innerHTML = `
     <div class="batchMetricGrid">
       <article>
-        <span>이미지</span>
-        <strong>${items.length}개</strong>
+        <span>ì´ë¯¸ì§€</span>
+        <strong>${items.length}ê°œ</strong>
       </article>
       <article>
-        <span>날짜 폴더</span>
-        <strong>${state.dateCount}일</strong>
+        <span>ë‚ ì§œ í´ë”</span>
+        <strong>${state.dateCount}ì¼</strong>
       </article>
       <article>
-        <span>예약 작업</span>
-        <strong>${state.taskCount}개</strong>
+        <span>ì˜ˆì•½ ìž‘ì—…</span>
+        <strong>${state.taskCount}ê°œ</strong>
       </article>
       <article>
-        <span>시간대</span>
+        <span>ì‹œê°„ëŒ€</span>
         <strong>${escapeHtml(timeZone)}</strong>
       </article>
     </div>
     <div class="batchRuleSummary">
-      <span>첫 예약: <strong>${state.firstDate ? escapeHtml(formatFullDateTime(state.firstDate)) : "-"}</strong></span>
-      <span>마지막 예약: <strong>${state.lastDate ? escapeHtml(formatFullDateTime(state.lastDate)) : "-"}</strong></span>
-      <span>채널: <strong>${platforms.length ? platforms.map(platformLabel).join(", ") : "선택 필요"}</strong></span>
-      <span>문구: <strong>${titleTemplate ? "작성 제목 사용" : "파일명 제목 사용"}</strong>${body || link || hashtags ? " · 본문/링크/해시태그 적용" : ""}</span>
-      <span>캠페인: <strong>${formValue("campaign_name") || "미지정"}</strong>${utmAuto?.checked ? " · UTM 자동" : ""}</span>
-      <span>캡션: <strong>${state.captionCount ? `${state.captionCount}개 파일 매칭` : "공통 문구 사용"}</strong>${state.missingCaptionCount ? ` · ${state.missingCaptionCount}개 미매칭` : ""}</span>
+      <span>ì²« ì˜ˆì•½: <strong>${state.firstDate ? escapeHtml(formatFullDateTime(state.firstDate)) : "-"}</strong></span>
+      <span>ë§ˆì§€ë§‰ ì˜ˆì•½: <strong>${state.lastDate ? escapeHtml(formatFullDateTime(state.lastDate)) : "-"}</strong></span>
+      <span>ì±„ë„: <strong>${platforms.length ? platforms.map(platformLabel).join(", ") : "ì„ íƒ í•„ìš”"}</strong></span>
+      <span>ë¬¸êµ¬: <strong>${titleTemplate ? "ìž‘ì„± ì œëª© ì‚¬ìš©" : "íŒŒì¼ëª… ì œëª© ì‚¬ìš©"}</strong>${body || link || hashtags ? " Â· ë³¸ë¬¸/ë§í¬/í•´ì‹œíƒœê·¸ ì ìš©" : ""}</span>
+      <span>ìº íŽ˜ì¸: <strong>${formValue("campaign_name") || "ë¯¸ì§€ì •"}</strong>${utmAuto?.checked ? " Â· UTM ìžë™" : ""}</span>
+      <span>ìº¡ì…˜: <strong>${state.captionCount ? `${state.captionCount}ê°œ íŒŒì¼ ë§¤ì¹­` : "ê³µí†µ ë¬¸êµ¬ ì‚¬ìš©"}</strong>${state.missingCaptionCount ? ` Â· ${state.missingCaptionCount}ê°œ ë¯¸ë§¤ì¹­` : ""}</span>
     </div>
     ${warnings.length ? `
       <div class="batchChecks">
@@ -1310,7 +1152,7 @@ function renderBatchPlan() {
       </div>
     ` : `
       <div class="batchChecks ok">
-        <span>${state.taskCount}개 예약 작업을 만들 준비가 됐습니다.</span>
+        <span>${state.taskCount}ê°œ ì˜ˆì•½ ìž‘ì—…ì„ ë§Œë“¤ ì¤€ë¹„ê°€ ëìŠµë‹ˆë‹¤.</span>
       </div>
     `}
   `;
@@ -1343,8 +1185,8 @@ function renderScheduleCalendar() {
   if (keys.length === 0) {
     scheduleCalendar.innerHTML = `
       <div class="scheduleCalendarHeader">
-        <strong>예약 캘린더</strong>
-        <span>폴더를 선택하면 날짜별 예약량이 표시됩니다.</span>
+        <strong>ì˜ˆì•½ ìº˜ë¦°ë”</strong>
+        <span>í´ë”ë¥¼ ì„ íƒí•˜ë©´ ë‚ ì§œë³„ ì˜ˆì•½ëŸ‰ì´ í‘œì‹œë©ë‹ˆë‹¤.</span>
       </div>
     `;
     return;
@@ -1356,7 +1198,7 @@ function renderScheduleCalendar() {
   gridStart.setDate(monthStart.getDate() - monthStart.getDay());
   const monthLabel = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(monthStart);
   const todayKey = dateKeyFromDate(new Date());
-  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const weekdays = ["ì¼", "ì›”", "í™”", "ìˆ˜", "ëª©", "ê¸ˆ", "í† "];
   const days = Array.from({ length: 42 }, (_, index) => {
     const day = new Date(gridStart);
     day.setDate(gridStart.getDate() + index);
@@ -1375,22 +1217,22 @@ function renderScheduleCalendar() {
     return `
       <div class="${className}">
         <strong>${day.getDate()}</strong>
-        ${batchCount ? `<span>신규 ${batchCount}개</span>` : ""}
-        ${existingCount ? `<span>기존 ${existingCount}개</span>` : ""}
-        ${hasConflict ? "<span>중복 확인</span>" : ""}
+        ${batchCount ? `<span>ì‹ ê·œ ${batchCount}ê°œ</span>` : ""}
+        ${existingCount ? `<span>ê¸°ì¡´ ${existingCount}ê°œ</span>` : ""}
+        ${hasConflict ? "<span>ì¤‘ë³µ í™•ì¸</span>" : ""}
       </div>
     `;
   }).join("");
 
   scheduleCalendar.innerHTML = `
     <div class="scheduleCalendarHeader">
-      <strong>${escapeHtml(monthLabel)} 예약 캘린더</strong>
-      <span>신규 ${items.length}개 · 기존 ${[...existingCounts.values()].reduce((sum, count) => sum + count, 0)}개</span>
+      <strong>${escapeHtml(monthLabel)} ì˜ˆì•½ ìº˜ë¦°ë”</strong>
+      <span>ì‹ ê·œ ${items.length}ê°œ Â· ê¸°ì¡´ ${[...existingCounts.values()].reduce((sum, count) => sum + count, 0)}ê°œ</span>
     </div>
     <div class="calendarLegend">
-      <span>신규 예약</span>
-      <span class="existing">기존 예약</span>
-      <span class="conflict">중복 확인</span>
+      <span>ì‹ ê·œ ì˜ˆì•½</span>
+      <span class="existing">ê¸°ì¡´ ì˜ˆì•½</span>
+      <span class="conflict">ì¤‘ë³µ í™•ì¸</span>
     </div>
     <div class="calendarGrid">
       ${weekdays.map((day) => `<div class="calendarWeekday">${day}</div>`).join("")}
@@ -1422,22 +1264,22 @@ function renderBatchQueue() {
   if (submitBatch) {
     submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || hasBlockingIssue;
     submitBatch.textContent = appState.batchSubmitting
-      ? "예약 생성 중"
+      ? "ì˜ˆì•½ ìƒì„± ì¤‘"
       : allSucceeded
-      ? "예약 완료"
+      ? "ì˜ˆì•½ ì™„ë£Œ"
       : hasBlockingIssue
-      ? "예약 조건 확인 필요"
+      ? "ì˜ˆì•½ ì¡°ê±´ í™•ì¸ í•„ìš”"
       : items.length && platforms.length
-      ? `${remainingTaskCount || state.taskCount}개 예약 작업 만들기`
-      : "예약 작업 만들기";
+      ? `${remainingTaskCount || state.taskCount}ê°œ ì˜ˆì•½ ìž‘ì—… ë§Œë“¤ê¸°`
+      : "ì˜ˆì•½ ìž‘ì—… ë§Œë“¤ê¸°";
   }
   if (clearBatch) clearBatch.disabled = items.length === 0 && skipped.length === 0;
 
   if (items.length === 0) {
     batchQueue.className = "batchQueue emptyState compact";
     batchQueue.innerHTML = skipped.length
-      ? `<strong>${skipped.length}개 파일이 제외되었습니다.</strong><span>날짜 폴더와 이미지 형식을 확인하세요.</span>${renderSkippedDetails(skipped)}`
-      : `<strong>상위 폴더를 선택하세요.</strong><span>예: campaign / 2026-06-21 / 001.jpg</span>`;
+      ? `<strong>${skipped.length}ê°œ íŒŒì¼ì´ ì œì™¸ë˜ì—ˆìŠµë‹ˆë‹¤.</strong><span>ë‚ ì§œ í´ë”ì™€ ì´ë¯¸ì§€ í˜•ì‹ì„ í™•ì¸í•˜ì„¸ìš”.</span>${renderSkippedDetails(skipped)}`
+      : `<strong>ìƒìœ„ í´ë”ë¥¼ ì„ íƒí•˜ì„¸ìš”.</strong><span>ì˜ˆ: campaign / 2026-06-21 / 001.jpg</span>`;
     return;
   }
 
@@ -1454,20 +1296,20 @@ function renderBatchQueue() {
 
   const skippedNotice = renderSkippedDetails(skipped);
   const instagramNotice = needsInstagramJpeg
-    ? `<div class="batchWarning">Instagram 예약은 JPG 이미지만 사용할 수 있습니다.</div>`
+    ? `<div class="batchWarning">Instagram ì˜ˆì•½ì€ JPG ì´ë¯¸ì§€ë§Œ ì‚¬ìš©í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.</div>`
     : "";
   const pastNotice = hasPastItems
-    ? `<div class="batchWarning">이미 지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.</div>`
+    ? `<div class="batchWarning">ì´ë¯¸ ì§€ë‚œ ì˜ˆì•½ ì‹œê°„ì´ í¬í•¨ë˜ì–´ ìžˆìŠµë‹ˆë‹¤. ë‚ ì§œ í´ë”ë‚˜ ì‹œìž‘ ì‹œê°„ì„ ì¡°ì •í•˜ì„¸ìš”.</div>`
     : "";
   const duplicateNotice = state.duplicate.warningCount
-    ? `<div class="batchWarning">중복 가능성이 있는 예약 ${state.duplicate.warningCount}건이 있습니다. 같은 시간에 같은 채널로 나가는지 확인하세요.</div>`
+    ? `<div class="batchWarning">ì¤‘ë³µ ê°€ëŠ¥ì„±ì´ ìžˆëŠ” ì˜ˆì•½ ${state.duplicate.warningCount}ê±´ì´ ìžˆìŠµë‹ˆë‹¤. ê°™ì€ ì‹œê°„ì— ê°™ì€ ì±„ë„ë¡œ ë‚˜ê°€ëŠ”ì§€ í™•ì¸í•˜ì„¸ìš”.</div>`
     : "";
 
   batchQueue.className = "batchQueue";
   batchQueue.innerHTML = `
     <div class="batchSummary">
-      <strong>${items.length}개 예약 후보</strong>
-      <span>${groups.size}일 · ${platforms.length || 0}개 채널 · ${state.taskCount}개 작업</span>
+      <strong>${items.length}ê°œ ì˜ˆì•½ í›„ë³´</strong>
+      <span>${groups.size}ì¼ Â· ${platforms.length || 0}ê°œ ì±„ë„ Â· ${state.taskCount}ê°œ ìž‘ì—…</span>
     </div>
     ${skippedNotice}
     ${instagramNotice}
@@ -1486,7 +1328,7 @@ function renderBatchQueue() {
         <details class="batchDateGroup" data-date-key="${escapeHtml(dateKey)}"${openGroup}>
           <summary class="batchDateHeader">
             <strong>${dateKey}</strong>
-            <span>${group.length}개 이미지</span>
+            <span>${group.length}ê°œ ì´ë¯¸ì§€</span>
           </summary>
           ${group.map((item) => {
             const needsJpeg = false;
@@ -1495,15 +1337,15 @@ function renderBatchQueue() {
             const scheduleIssue = batchItemScheduleIssue(item);
             const missingCopy = state.missingCopyPaths.has(item.relativePath);
             const badgeLabel = needsJpeg
-              ? "JPG 필요"
+              ? "JPG í•„ìš”"
               : scheduleIssue === "past"
-              ? "지난 시간"
+              ? "ì§€ë‚œ ì‹œê°„"
               : scheduleIssue === "overflow"
-              ? "다음날"
+              ? "ë‹¤ìŒë‚ "
               : missingCopy
-              ? "문구 필요"
+              ? "ë¬¸êµ¬ í•„ìš”"
               : itemWarnings.length
-              ? "중복 확인"
+              ? "ì¤‘ë³µ í™•ì¸"
               : batchItemTypeLabel(item);
             const captionPreview = truncateText(item.captionBody || item.captionTitle || item.captionHashtags || "", 96);
             return `
@@ -1512,9 +1354,9 @@ function renderBatchQueue() {
                 <div class="batchFileMeta">
                   <strong>${escapeHtml(item.fileName)}</strong>
                   <small>${escapeHtml(item.relativePath)}</small>
-                  ${item.captionSource ? `<span class="captionBadge">캡션 매칭: ${escapeHtml(item.captionSource)}</span>` : ""}
+                  ${item.captionSource ? `<span class="captionBadge">ìº¡ì…˜ ë§¤ì¹­: ${escapeHtml(item.captionSource)}</span>` : ""}
                   ${captionPreview ? `<span class="batchCaptionPreview">${escapeHtml(captionPreview)}</span>` : ""}
-                  ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
+                  ${missingCopy ? `<span class="batchCaptionPreview">ìº¡ì…˜ íŒŒì¼ ë˜ëŠ” ê¸°ë³¸ ë³¸ë¬¸ì´ í•„ìš”í•©ë‹ˆë‹¤.</span>` : ""}
                   ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
                 </div>
                 <div class="batchFileSchedule">
@@ -1540,14 +1382,14 @@ function clearBatchQueue() {
   appState.batchResults = {};
   appState.batchDateGroups = {};
   if (batchFolderInput) batchFolderInput.value = "";
-  if (batchStatus) batchStatus.textContent = "대기 중";
+  if (batchStatus) batchStatus.textContent = "ëŒ€ê¸° ì¤‘";
   renderBatchQueue();
 }
 
 function resetBatchResultsForPlanChange() {
   if (appState.batchSubmitting || Object.keys(appState.batchResults).length === 0) return;
   appState.batchResults = {};
-  if (batchStatus && appState.batchItems.length) batchStatus.textContent = `${appState.batchItems.length}개 준비`;
+  if (batchStatus && appState.batchItems.length) batchStatus.textContent = `${appState.batchItems.length}ê°œ ì¤€ë¹„`;
 }
 
 imageFile.addEventListener("change", () => {
@@ -1555,12 +1397,12 @@ imageFile.addEventListener("change", () => {
   clearImagePreview();
   if (!file) return;
   if (!ALLOWED_IMAGE_TYPES.has(imageTypeForFile(file))) {
-    showToast("PNG, JPG, WEBP 이미지만 선택할 수 있습니다.", "error");
+    showToast("PNG, JPG, WEBP ì´ë¯¸ì§€ë§Œ ì„ íƒí•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.", "error");
     imageFile.value = "";
     return;
   }
   if (file.size > MAX_IMAGE_SIZE) {
-    showToast("이미지는 8MB 이하로 선택해 주세요.", "error");
+    showToast("ì´ë¯¸ì§€ëŠ” 8MB ì´í•˜ë¡œ ì„ íƒí•´ ì£¼ì„¸ìš”.", "error");
     imageFile.value = "";
     return;
   }
@@ -1568,10 +1410,10 @@ imageFile.addEventListener("change", () => {
   previewUrl = URL.createObjectURL(file);
   clearImage.disabled = false;
   imagePreview.innerHTML = `
-    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
+    <img src="${previewUrl}" alt="ì„ íƒí•œ ì´ë¯¸ì§€ ë¯¸ë¦¬ë³´ê¸°" />
     <div>
       <strong>${escapeHtml(file.name)}</strong>
-      <span>${Math.ceil(file.size / 1024)} KB · 업로드 전</span>
+      <span>${Math.ceil(file.size / 1024)} KB Â· ì—…ë¡œë“œ ì „</span>
     </div>
   `;
   renderPublishPreview();
@@ -1685,7 +1527,7 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
   const uploadSource = file || await generateTextPostImageFile();
 
   imagePreview.classList.add("uploading");
-  formStatus.textContent = shouldGenerateTextImage ? "텍스트 이미지 생성 중" : "이미지 업로드 중";
+  formStatus.textContent = shouldGenerateTextImage ? "í…ìŠ¤íŠ¸ ì´ë¯¸ì§€ ìƒì„± ì¤‘" : "ì´ë¯¸ì§€ ì—…ë¡œë“œ ì¤‘";
   let result;
   try {
     result = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") });
@@ -1695,10 +1537,10 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
   form.elements.image_key.value = result.image_key;
   form.elements.image_url.value = result.image_url;
   imagePreview.innerHTML = `
-    <img src="${shouldGenerateTextImage ? result.image_url : previewUrl}" alt="게시 이미지 미리보기" />
+    <img src="${shouldGenerateTextImage ? result.image_url : previewUrl}" alt="ê²Œì‹œ ì´ë¯¸ì§€ ë¯¸ë¦¬ë³´ê¸°" />
     <div>
       <strong>${escapeHtml(shouldGenerateTextImage ? "text-post.jpg" : uploadSource.name)}</strong>
-      <span>${shouldGenerateTextImage ? "본문으로 자동 생성" : "업로드 완료"}</span>
+      <span>${shouldGenerateTextImage ? "ë³¸ë¬¸ìœ¼ë¡œ ìžë™ ìƒì„±" : "ì—…ë¡œë“œ ì™„ë£Œ"}</span>
     </div>
   `;
   return result;
@@ -1707,8 +1549,8 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
 function renderEmptyJobs() {
   jobsEl.innerHTML = `
     <div class="emptyState">
-      <strong>아직 발행 작업이 없습니다.</strong>
-      <span>게시글을 저장하고 발행하면 이곳에 작업 상태가 표시됩니다.</span>
+      <strong>ì•„ì§ ë°œí–‰ ìž‘ì—…ì´ ì—†ìŠµë‹ˆë‹¤.</strong>
+      <span>ê²Œì‹œê¸€ì„ ì €ìž¥í•˜ê³  ë°œí–‰í•˜ë©´ ì´ê³³ì— ìž‘ì—… ìƒíƒœê°€ í‘œì‹œë©ë‹ˆë‹¤.</span>
     </div>
   `;
 }
@@ -1719,7 +1561,6 @@ async function loadJobs() {
   const data = await request("/api/jobs");
   const jobs = data.jobs || [];
   appState.jobs = jobs;
-  updateSummary();
   renderScheduleCalendar();
   if (jobs.length === 0) {
     renderEmptyJobs();
@@ -1727,17 +1568,17 @@ async function loadJobs() {
   }
   jobsEl.innerHTML = jobs.map((job) => {
     const retry = job.status === "failed" || job.status === "queued"
-      ? `<button class="secondaryButton" data-retry="${job.id}" type="button">재시도</button>`
+      ? `<button class="secondaryButton" data-retry="${job.id}" type="button">ìž¬ì‹œë„</button>`
       : "";
     const link = job.external_post_url
-      ? `<a class="jobLink" href="${escapeHtml(job.external_post_url)}" target="_blank" rel="noreferrer">게시물 열기</a>`
+      ? `<a class="jobLink" href="${escapeHtml(job.external_post_url)}" target="_blank" rel="noreferrer">ê²Œì‹œë¬¼ ì—´ê¸°</a>`
       : "";
     return `
       <article class="job">
         <div class="platformMark" aria-hidden="true">${platformInitial(job.platform)}</div>
         <div>
           <strong>${platformLabel(job.platform)}</strong>
-          <p>${escapeHtml(job.title || "제목 없음")}</p>
+          <p>${escapeHtml(job.title || "ì œëª© ì—†ìŒ")}</p>
           ${job.campaign_name ? `<span class="jobCampaign">${escapeHtml(job.campaign_name)}</span>` : ""}
         </div>
         <span class="status ${escapeHtml(job.status)}">${statusLabel(job.status)}</span>
@@ -1752,7 +1593,7 @@ async function loadJobs() {
 }
 
 async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
-  onStage("uploading", "업로드 중");
+  onStage("uploading", "ì—…ë¡œë“œ ì¤‘");
   const uploadedImage = await uploadImageFileToAssets(item.file, { forceJpeg: platforms.includes("instagram") });
   const fallbackTitle = fileStem(item.fileName);
   const titleTemplate = item.captionTitle || formValue("title");
@@ -1760,7 +1601,7 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
   const body = item.captionBody || formValue("body");
   const linkUrl = applyAutoUtm(item.captionLink || formValue("link_url"), platforms, fallbackTitle);
   const hashtags = item.captionHashtags || formValue("hashtags");
-  onStage("creating", "게시글 생성 중");
+  onStage("creating", "ê²Œì‹œê¸€ ìƒì„± ì¤‘");
   const post = await request("/api/posts", {
     method: "POST",
     body: JSON.stringify({
@@ -1775,7 +1616,7 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
     }),
   });
 
-  onStage("scheduling", "예약 등록 중");
+  onStage("scheduling", "ì˜ˆì•½ ë“±ë¡ ì¤‘");
   await request(`/api/posts/${post.post_id}/publish`, {
     method: "POST",
     body: JSON.stringify({
@@ -1783,7 +1624,7 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
       scheduled_at: scheduledAtForBatchItem(item),
     }),
   });
-  onStage("success", "예약 완료");
+  onStage("success", "ì˜ˆì•½ ì™„ë£Œ");
 }
 
 function requestSinglePostSubmit() {
@@ -1823,7 +1664,7 @@ platformQuickPicker?.addEventListener("click", (event) => {
   appState.platformSelectionInitialized = true;
   updateFormMeta();
   resetBatchResultsForPlanChange();
-  renderPlatformReadiness();
+  syncPlatformPicker();
 });
 
 form.addEventListener("submit", async (event) => {
@@ -1832,8 +1673,8 @@ form.addEventListener("submit", async (event) => {
   singlePostSubmitRequested = false;
   if (!explicitSinglePostSubmit) {
     if (manualPostDetails) manualPostDetails.open = true;
-    formStatus.textContent = "단건 게시 확인 필요";
-    showToast("단건 게시 옵션을 열고 게시 버튼을 눌러야 발행됩니다.", "error");
+    formStatus.textContent = "ë‹¨ê±´ ê²Œì‹œ í™•ì¸ í•„ìš”";
+    showToast("ë‹¨ê±´ ê²Œì‹œ ì˜µì…˜ì„ ì—´ê³  ê²Œì‹œ ë²„íŠ¼ì„ ëˆŒëŸ¬ì•¼ ë°œí–‰ë©ë‹ˆë‹¤.", "error");
     submitPost?.focus({ preventScroll: true });
     return;
   }
@@ -1846,11 +1687,11 @@ form.addEventListener("submit", async (event) => {
   const platformError = validatePublishablePlatforms(platforms);
   if (platformError) {
     showToast(platformError, "error");
-    renderPlatformReadiness();
+    syncPlatformPicker();
     return;
   }
-  setBusy(submitPost, true, "처리 중");
-  formStatus.textContent = "발행 요청 중";
+  setBusy(submitPost, true, "ì²˜ë¦¬ ì¤‘");
+  formStatus.textContent = "ë°œí–‰ ìš”ì²­ ì¤‘";
   try {
     const uploadedImage = await uploadSelectedImage(platforms);
     const post = await request("/api/posts", {
@@ -1879,27 +1720,27 @@ form.addEventListener("submit", async (event) => {
     form.reset();
     clearImagePreview();
     updateFormMeta();
-    formStatus.textContent = "완료";
-    showToast(mode === "scheduled" ? "예약 작업을 만들었습니다." : "발행 작업을 만들었습니다.");
+    formStatus.textContent = "ì™„ë£Œ";
+    showToast(mode === "scheduled" ? "ì˜ˆì•½ ìž‘ì—…ì„ ë§Œë“¤ì—ˆìŠµë‹ˆë‹¤." : "ë°œí–‰ ìž‘ì—…ì„ ë§Œë“¤ì—ˆìŠµë‹ˆë‹¤.");
     await loadJobs();
   } catch (error) {
-    formStatus.textContent = "실패";
+    formStatus.textContent = "ì‹¤íŒ¨";
     showToast(error.message, "error");
   } finally {
-    setBusy(submitPost, false, "게시 작업 만들기");
+    setBusy(submitPost, false, "ê²Œì‹œ ìž‘ì—… ë§Œë“¤ê¸°");
   }
 });
 
 submitPost?.addEventListener("click", requestSinglePostSubmit);
 
 batchFolderInput?.addEventListener("change", async () => {
-  if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
+  if (batchStatus) batchStatus.textContent = "í´ë” ì½ëŠ” ì¤‘";
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
   appState.batchItems = items;
   appState.batchSkipped = skipped;
   appState.batchResults = {};
   appState.batchDateGroups = {};
-  if (batchStatus) batchStatus.textContent = items.length ? `${items.length}개 준비` : "대기 중";
+  if (batchStatus) batchStatus.textContent = items.length ? `${items.length}ê°œ ì¤€ë¹„` : "ëŒ€ê¸° ì¤‘";
   renderBatchQueue();
 });
 
@@ -1926,14 +1767,14 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   const explicitBatchSubmit = batchSubmitRequested;
   batchSubmitRequested = false;
   if (!explicitBatchSubmit) {
-    showToast("예약 작업 만들기 버튼을 눌러야 대량 예약이 생성됩니다.", "error");
+    showToast("ì˜ˆì•½ ìž‘ì—… ë§Œë“¤ê¸° ë²„íŠ¼ì„ ëˆŒëŸ¬ì•¼ ëŒ€ëŸ‰ ì˜ˆì•½ì´ ìƒì„±ë©ë‹ˆë‹¤.", "error");
     return;
   }
   const items = appState.batchItems;
   const platforms = selectedPlatforms();
   const state = batchValidationState(items, platforms);
   if (items.length === 0) {
-    showToast("예약할 이미지가 없습니다.", "error");
+    showToast("ì˜ˆì•½í•  ì´ë¯¸ì§€ê°€ ì—†ìŠµë‹ˆë‹¤.", "error");
     return;
   }
   if (platforms.length === 0) {
@@ -1943,64 +1784,64 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   const platformError = validatePublishablePlatforms(platforms);
   if (platformError) {
     showToast(platformError, "error");
-    renderPlatformReadiness();
+    syncPlatformPicker();
     return;
   }
   if (state.hasKakao) {
-    showToast("Kakao는 아직 배치 예약 발송 경로가 구성되지 않았습니다.", "error");
+    showToast("KakaoëŠ” ì•„ì§ ë°°ì¹˜ ì˜ˆì•½ ë°œì†¡ ê²½ë¡œê°€ êµ¬ì„±ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.", "error");
     renderBatchQueue();
     return;
   }
   if (state.pastCount > 0) {
-    showToast("지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.", "error");
+    showToast("ì§€ë‚œ ì˜ˆì•½ ì‹œê°„ì´ í¬í•¨ë˜ì–´ ìžˆìŠµë‹ˆë‹¤. ë‚ ì§œ í´ë”ë‚˜ ì‹œìž‘ ì‹œê°„ì„ ì¡°ì •í•˜ì„¸ìš”.", "error");
     renderBatchQueue();
     return;
   }
   if (state.overflowCount > 0) {
-    showToast("다음날로 넘어가는 예약이 있습니다. 날짜 폴더나 간격을 조정하세요.", "error");
+    showToast("ë‹¤ìŒë‚ ë¡œ ë„˜ì–´ê°€ëŠ” ì˜ˆì•½ì´ ìžˆìŠµë‹ˆë‹¤. ë‚ ì§œ í´ë”ë‚˜ ê°„ê²©ì„ ì¡°ì •í•˜ì„¸ìš”.", "error");
     renderBatchQueue();
     return;
   }
   if (state.duplicate.warningCount > 0) {
-    showToast("중복 가능성이 있는 예약 시간이 있습니다. 파일명과 예약 시간을 조정하세요.", "error");
+    showToast("ì¤‘ë³µ ê°€ëŠ¥ì„±ì´ ìžˆëŠ” ì˜ˆì•½ ì‹œê°„ì´ ìžˆìŠµë‹ˆë‹¤. íŒŒì¼ëª…ê³¼ ì˜ˆì•½ ì‹œê°„ì„ ì¡°ì •í•˜ì„¸ìš”.", "error");
     renderBatchQueue();
     return;
   }
   if (state.missingCopyCount > 0) {
-    showToast("본문 없이 예약될 이미지가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.", "error");
+    showToast("ë³¸ë¬¸ ì—†ì´ ì˜ˆì•½ë  ì´ë¯¸ì§€ê°€ ìžˆìŠµë‹ˆë‹¤. ìº¡ì…˜ íŒŒì¼ì´ë‚˜ ê¸°ë³¸ ë³¸ë¬¸ì„ ìž…ë ¥í•˜ì„¸ìš”.", "error");
     renderBatchQueue();
     return;
   }
 
   const pendingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   if (pendingItems.length === 0) {
-    showToast("이미 모든 예약 작업이 완료되었습니다.");
+    showToast("ì´ë¯¸ ëª¨ë“  ì˜ˆì•½ ìž‘ì—…ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.");
     renderBatchQueue();
     return;
   }
   const taskCount = pendingItems.length * platforms.length;
   const confirmed = window.confirm([
-    `${taskCount}개 예약 작업을 만들까요?`,
-    `기간: ${state.firstDate ? formatFullDateTime(state.firstDate) : "-"} ~ ${state.lastDate ? formatFullDateTime(state.lastDate) : "-"}`,
-    `채널: ${platforms.map(platformLabel).join(", ")}`,
-    `캠페인: ${formValue("campaign_name") || "미지정"}`,
+    `${taskCount}ê°œ ì˜ˆì•½ ìž‘ì—…ì„ ë§Œë“¤ê¹Œìš”?`,
+    `ê¸°ê°„: ${state.firstDate ? formatFullDateTime(state.firstDate) : "-"} ~ ${state.lastDate ? formatFullDateTime(state.lastDate) : "-"}`,
+    `ì±„ë„: ${platforms.map(platformLabel).join(", ")}`,
+    `ìº íŽ˜ì¸: ${formValue("campaign_name") || "ë¯¸ì§€ì •"}`,
   ].join("\n"));
   if (!confirmed) return;
 
   appState.batchSubmitting = true;
-  setBusy(submitBatch, true, "예약 생성 중");
+  setBusy(submitBatch, true, "ì˜ˆì•½ ìƒì„± ì¤‘");
   if (clearBatch) clearBatch.disabled = true;
   let created = 0;
   const failed = [];
   try {
     for (const item of pendingItems) {
-      appState.batchResults[item.relativePath] = { status: "running", label: "대기 중" };
+      appState.batchResults[item.relativePath] = { status: "running", label: "ëŒ€ê¸° ì¤‘" };
     }
     renderBatchQueue();
 
     for (const item of pendingItems) {
       const key = item.relativePath;
-      if (batchStatus) batchStatus.textContent = `${created + failed.length + 1}/${pendingItems.length} 처리 중`;
+      if (batchStatus) batchStatus.textContent = `${created + failed.length + 1}/${pendingItems.length} ì²˜ë¦¬ ì¤‘`;
       try {
         await createScheduledBatchItem(item, platforms, (status, label) => {
           appState.batchResults[key] = { status, label };
@@ -2008,8 +1849,8 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
         });
         created += 1;
       } catch (error) {
-        const message = error instanceof Error ? error.message : "예약 생성 실패";
-        appState.batchResults[key] = { status: "failed", label: "실패" };
+        const message = error instanceof Error ? error.message : "ì˜ˆì•½ ìƒì„± ì‹¤íŒ¨";
+        appState.batchResults[key] = { status: "failed", label: "ì‹¤íŒ¨" };
         failed.push({
           item,
           message,
@@ -2020,15 +1861,15 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
 
     if (created > 0) await loadJobs();
     if (failed.length > 0) {
-      if (batchStatus) batchStatus.textContent = `${created}개 완료 / ${failed.length}개 실패`;
-      showToast(`${failed.length}개 예약 실패: ${failed[0].message}`, "error");
+      if (batchStatus) batchStatus.textContent = `${created}ê°œ ì™„ë£Œ / ${failed.length}ê°œ ì‹¤íŒ¨`;
+      showToast(`${failed.length}ê°œ ì˜ˆì•½ ì‹¤íŒ¨: ${failed[0].message}`, "error");
     } else {
-      if (batchStatus) batchStatus.textContent = "완료";
-      showToast(`${created}개 예약 작업을 만들었습니다.`);
+      if (batchStatus) batchStatus.textContent = "ì™„ë£Œ";
+      showToast(`${created}ê°œ ì˜ˆì•½ ìž‘ì—…ì„ ë§Œë“¤ì—ˆìŠµë‹ˆë‹¤.`);
     }
   } finally {
     appState.batchSubmitting = false;
-    setBusy(submitBatch, false, "예약 작업 만들기");
+    setBusy(submitBatch, false, "ì˜ˆì•½ ìž‘ì—… ë§Œë“¤ê¸°");
     renderBatchQueue();
   }
 });
@@ -2036,80 +1877,73 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
 jobsEl.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-retry]");
   if (!button) return;
-  setBusy(button, true, "재시도 중");
+  setBusy(button, true, "ìž¬ì‹œë„ ì¤‘");
   try {
     await request(`/api/jobs/${button.dataset.retry}/retry`, { method: "POST", body: "{}" });
-    showToast("작업을 다시 실행했습니다.");
+    showToast("ìž‘ì—…ì„ ë‹¤ì‹œ ì‹¤í–‰í–ˆìŠµë‹ˆë‹¤.");
     await loadJobs();
   } catch (error) {
     showToast(error.message, "error");
-    setBusy(button, false, "재시도");
-  }
-});
-
-customerReadiness?.addEventListener("click", (event) => {
-  if (event.target.closest("[data-scroll-batch]")) {
-    batchScheduleForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setBusy(button, false, "ìž¬ì‹œë„");
   }
 });
 
 accountConnections?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-disconnect]");
   if (!button) return;
-  setBusy(button, true, "해제 중");
+  setBusy(button, true, "í•´ì œ ì¤‘");
   try {
     await request("/api/social-accounts/disconnect", {
       method: "POST",
       body: JSON.stringify({ platform: button.dataset.disconnect }),
     });
-    showToast("계정 연결을 해제했습니다.");
+    showToast("ê³„ì • ì—°ê²°ì„ í•´ì œí–ˆìŠµë‹ˆë‹¤.");
     await loadConnections();
   } catch (error) {
     showToast(error.message, "error");
-    setBusy(button, false, "연결 해제");
+    setBusy(button, false, "ì—°ê²° í•´ì œ");
   }
 });
 
 refreshJobs.addEventListener("click", async () => {
-  setBusy(refreshJobs, true, "새로고침 중");
+  setBusy(refreshJobs, true, "ìƒˆë¡œê³ ì¹¨ ì¤‘");
   try {
-    await Promise.all([loadJobs(), loadConnections(), loadSystemReadiness()]);
-    showToast("상태를 새로고침했습니다.");
+    await Promise.all([loadJobs(), loadConnections()]);
+    showToast("ìƒíƒœë¥¼ ìƒˆë¡œê³ ì¹¨í–ˆìŠµë‹ˆë‹¤.");
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(refreshJobs, false, "작업 새로고침");
+    setBusy(refreshJobs, false, "ìž‘ì—… ìƒˆë¡œê³ ì¹¨");
   }
 });
 
 runScheduler.addEventListener("click", async () => {
-  const confirmed = window.confirm("자동 실행이 지연된 예약 작업을 지금 확인합니다. 계속할까요?");
+  const confirmed = window.confirm("ìžë™ ì‹¤í–‰ì´ ì§€ì—°ëœ ì˜ˆì•½ ìž‘ì—…ì„ ì§€ê¸ˆ í™•ì¸í•©ë‹ˆë‹¤. ê³„ì†í• ê¹Œìš”?");
   if (!confirmed) return;
-  setBusy(runScheduler, true, "실행 중");
+  setBusy(runScheduler, true, "ì‹¤í–‰ ì¤‘");
   try {
     const result = await request("/api/scheduler/run", { method: "POST", body: "{}" });
-    showToast(`${result.processed?.length || 0}개 예약 작업을 확인했습니다.`);
+    showToast(`${result.processed?.length || 0}ê°œ ì˜ˆì•½ ìž‘ì—…ì„ í™•ì¸í–ˆìŠµë‹ˆë‹¤.`);
     await loadJobs();
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(runScheduler, false, "예약 작업 수동 확인");
+    setBusy(runScheduler, false, "ì˜ˆì•½ ìž‘ì—… ìˆ˜ë™ í™•ì¸");
   }
 });
 
 const oauthResult = new URLSearchParams(window.location.search);
 if (oauthResult.get("connected")) {
-  showToast("계정 연결이 완료됐습니다.");
+  showToast("ê³„ì • ì—°ê²°ì´ ì™„ë£ŒëìŠµë‹ˆë‹¤.");
   history.replaceState({}, "", window.location.pathname);
 }
 if (oauthResult.get("oauth_error")) {
-  showToast(`계정 연결 실패: ${oauthResult.get("oauth_error")}`, "error");
+  showToast(`ê³„ì • ì—°ê²° ì‹¤íŒ¨: ${oauthResult.get("oauth_error")}`, "error");
   history.replaceState({}, "", window.location.pathname);
 }
 
 updateFormMeta();
-renderCustomerReadiness();
-renderPlatformReadiness();
+syncPlatformPicker();
 const redirectUri = `${window.location.origin}/api/auth/meta/callback`;
 if (redirectUriValue) redirectUriValue.textContent = redirectUri;
 redirectUriMirrors.forEach((element) => {
@@ -2118,7 +1952,6 @@ redirectUriMirrors.forEach((element) => {
 loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
-loadSystemReadiness();
 loadJobs().catch((error) => {
-  jobsEl.innerHTML = `<div class="emptyState error"><strong>작업을 불러오지 못했습니다.</strong><span>${escapeHtml(error.message)}</span></div>`;
+  jobsEl.innerHTML = `<div class="emptyState error"><strong>ìž‘ì—…ì„ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.</strong><span>${escapeHtml(error.message)}</span></div>`;
 });

@@ -185,12 +185,6 @@ p {
   background: #ffffff;
 }
 
-.customerReadiness {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-}
-
 .startSteps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -261,27 +255,15 @@ p {
   background: #f8fafb;
 }
 
-.appLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 18px;
-  align-items: start;
-}
-
+.postingFlow,
 .mainColumn {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.sideColumn {
-  display: grid;
-  gap: 18px;
-}
-
-.sideColumn {
-  position: sticky;
-  top: 18px;
+.accountPanel {
+  border-color: #bfd0dc;
 }
 
 .panel {
@@ -1309,12 +1291,6 @@ button:disabled {
   color: #8a969e;
 }
 
-.platformReadiness {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-
 .platformStatusItem {
   display: grid;
   grid-template-columns: minmax(90px, auto) auto minmax(0, 1fr);
@@ -1328,7 +1304,6 @@ button:disabled {
 
 .connections,
 .readinessGrid,
-.settingsStatus,
 .jobs {
   display: grid;
   gap: 12px;
@@ -1337,6 +1312,7 @@ button:disabled {
 
 .connectionGrid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -1373,7 +1349,6 @@ button:disabled {
 
 .statusBadge,
 .status,
-.settingsStatus span,
 .readinessItem span {
   width: fit-content;
   border-radius: 999px;
@@ -1383,7 +1358,6 @@ button:disabled {
 }
 
 .statusBadge.ok,
-.settingsStatus .ok,
 .readinessItem.ready span,
 .status.success {
   background: var(--success-bg);
@@ -1399,7 +1373,6 @@ button:disabled {
 }
 
 .statusBadge.missing,
-.settingsStatus .missing,
 .readinessItem.missing span,
 .status.failed {
   background: var(--danger-bg);
@@ -1432,238 +1405,6 @@ button:disabled {
 .readinessItem small {
   color: var(--muted);
   overflow-wrap: anywhere;
-}
-
-.settingsStatus {
-  display: flex;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.settingsStatus span {
-  background: #eef2f6;
-}
-
-.settingsStatus .settingsHint {
-  flex-basis: 100%;
-  width: 100%;
-  border: 1px solid #ead79e;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #fff8e3;
-  color: #5e4400;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.settingsStatus .settingsHint code {
-  color: #8a3d10;
-  font-weight: 800;
-}
-
-.setupOverview {
-  background: var(--panel);
-}
-
-.setupCallout {
-  display: grid;
-  gap: 7px;
-  margin-top: 16px;
-  padding: 14px;
-  border: 1px solid #ead79e;
-  border-radius: 8px;
-  background: #fff8e3;
-  color: #5e4400;
-}
-
-.setupCallout span {
-  color: #7a5a0d;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.settingsDialog {
-  width: min(920px, calc(100% - 28px));
-  border: 0;
-  border-radius: 8px;
-  padding: 0;
-  background: transparent;
-  color: var(--text);
-}
-
-.settingsDialog::backdrop {
-  background: rgba(9, 16, 22, 0.58);
-  backdrop-filter: blur(4px);
-}
-
-.dialogSurface {
-  overflow: auto;
-  max-height: min(92vh, 960px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 28px 90px rgba(9, 16, 22, 0.34);
-}
-
-.dialogHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 24px;
-  background: linear-gradient(135deg, #13202a, #263b48);
-  color: #ffffff;
-}
-
-.dialogHeader p {
-  color: #c8d4da;
-}
-
-.iconButton {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.iconButton:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.setupGuide {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 18px 24px 0;
-}
-
-.setupGuide article {
-  display: grid;
-  gap: 8px;
-  min-height: 132px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f8fafb;
-}
-
-.setupGuide article span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: #e9f0ff;
-  color: var(--primary-dark);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.setupGuide article p {
-  overflow-wrap: anywhere;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.setupValueMap {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 16px 24px 0;
-}
-
-.setupValueMap article {
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.setupValueMap p {
-  margin-top: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.setupValueMap span {
-  color: var(--primary-dark);
-  font-size: 12px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.setupGuide code,
-.setupValueMap code,
-.setupSteps code {
-  display: inline-block;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  border-radius: 6px;
-  padding: 3px 6px;
-  background: #eef2f6;
-  color: var(--ink);
-  font: 12px Consolas, "Cascadia Mono", monospace;
-}
-
-.setupSteps {
-  display: grid;
-  gap: 10px;
-  margin: 16px 24px 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: setup-step;
-}
-
-.setupSteps li {
-  position: relative;
-  display: grid;
-  gap: 5px;
-  min-height: 74px;
-  padding: 13px 14px 13px 54px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #ffffff;
-  counter-increment: setup-step;
-}
-
-.setupSteps li::before {
-  content: counter(setup-step);
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: #e9f0ff;
-  color: var(--primary-dark);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.setupSteps p {
-  margin-top: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.settingsDialog .adminSettings {
-  padding: 18px 24px 24px;
-}
-
-.dialogActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .job {
@@ -1762,27 +1503,13 @@ button:disabled {
 }
 
 @media (max-width: 1040px) {
-  .appLayout {
-    grid-template-columns: 1fr;
-  }
-
-  .sideColumn {
-    position: static;
-  }
-
   .readinessGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .startSteps,
-  .platformReadiness,
   .setupGrid,
   .schedulerBoard {
-    grid-template-columns: 1fr;
-  }
-
-  .setupGuide,
-  .setupValueMap {
     grid-template-columns: 1fr;
   }
 }
@@ -1864,14 +1591,12 @@ button:disabled {
   .jobActions,
   .formActions,
   .topActions,
-  .dialogActions,
   .previewHeader {
     justify-content: stretch;
     display: grid;
   }
 
   .formActions > button,
-  .dialogActions > button,
   .topActions > button,
   .jobActions > button,
   .jobActions > .linkButton,
@@ -1887,13 +1612,8 @@ button:disabled {
     padding-block: 10px;
   }
 
-  .ghostButton,
-  .iconButton {
+  .ghostButton {
     width: auto;
-  }
-
-  .iconButton {
-    justify-self: end;
   }
 
   .scheduleCalendar {
@@ -1909,24 +1629,4 @@ button:disabled {
     bottom: 12px;
   }
 
-  .dialogHeader {
-    display: grid;
-    padding: 18px;
-  }
-
-  .setupGuide,
-  .settingsDialog .adminSettings {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-
-  .setupSteps {
-    margin-left: 18px;
-    margin-right: 18px;
-  }
-
-  .setupValueMap {
-    margin-left: 18px;
-    margin-right: 18px;
-  }
 }

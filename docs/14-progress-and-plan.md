@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 02:08 KST
+Last updated: 2026-06-23 02:27 KST
 
 ## Current Status
 
@@ -33,6 +33,11 @@ Last updated: 2026-06-23 02:08 KST
 - Production `/api/social-accounts` still reports Instagram `careerengineeringlab` as connected.
 - Exposed admin setup key was rotated in Cloudflare Pages Secret and production was redeployed after rotation.
 - Production `/api/admin/settings` still reports all required configured flags without returning raw secret values.
+- UX issue reopened: the normal posting screen still mixed user posting flow with admin/operator readiness concepts.
+- Main app layout was reworked into a user-only posting flow: Instagram account connection, writing, date-folder scheduling, and job monitoring.
+- Admin/operator/system readiness panels, summary blocks, hidden admin styles, and normal-bundle admin wording were removed from the public app surface.
+- User-only layout cleanup was deployed to production. Production now serves `/assets/index-O8GS0dtt.js` and `/assets/index-D15iZJHN.css`.
+- Production bundle verification found no admin/operator/system-mode strings in the public app assets.
 
 ## Active Issues
 
@@ -46,12 +51,11 @@ Last updated: 2026-06-23 02:08 KST
 
 ## Next Plan
 
-1. Do a browser-level UX pass on the production app after the deployed cleanup.
-2. Continue redesign around the core flow: connect/reconnect account, choose channel, write post or upload folder, create schedule, monitor result.
-3. Add a single-post pre-submit confirmation summary if the current flow still feels risky.
-4. Improve job detail failure display.
-5. Keep admin settings as operator-managed Cloudflare/D1 configuration for now.
-6. Later replace the admin-key memory burden with Cloudflare Access or account-based admin auth.
+1. Do a browser-level UX pass on the production app after deployment.
+2. Add a single-post pre-submit confirmation summary if the current flow still feels risky.
+3. Improve job detail failure display.
+4. Keep admin settings out of the normal product surface; use Cloudflare/operator tooling for rare configuration changes.
+5. Later replace the admin-key memory burden with Cloudflare Access or account-based admin auth.
 
 ## Update Rule
 
