@@ -12,12 +12,18 @@ export interface RuntimeSettings {
   metaAppId: string;
   metaAppSecret: string;
   metaLoginConfigId: string;
+  threadsClientId: string;
+  threadsClientSecret: string;
   metaAppIdSource: string;
   metaAppSecretSource: string;
   metaLoginConfigIdSource: string;
+  threadsClientIdSource: string;
+  threadsClientSecretSource: string;
   metaAppIdUpdatedAt: string;
   metaAppSecretUpdatedAt: string;
   metaLoginConfigIdUpdatedAt: string;
+  threadsClientIdUpdatedAt: string;
+  threadsClientSecretUpdatedAt: string;
   adminSetupKeyConfigured: boolean;
   tokenEncryptionKeyConfigured: boolean;
 }
@@ -108,19 +114,29 @@ export async function getRuntimeSettings(env: Env): Promise<RuntimeSettings> {
   const storedMetaAppId = rows.meta_app_id?.value ?? "";
   const storedMetaSecret = rows.meta_app_secret?.encrypted ? await decryptValue(env, rows.meta_app_secret.value).catch(() => "") : rows.meta_app_secret?.value ?? "";
   const storedMetaLoginConfigId = rows.meta_login_config_id?.value ?? "";
+  const storedThreadsClientId = rows.threads_client_id?.value ?? "";
+  const storedThreadsSecret = rows.threads_client_secret?.encrypted ? await decryptValue(env, rows.threads_client_secret.value).catch(() => "") : rows.threads_client_secret?.value ?? "";
   const metaAppId = storedMetaAppId || env.META_APP_ID || env.INSTAGRAM_CLIENT_ID || "";
   const metaAppSecret = storedMetaSecret || env.META_APP_SECRET || env.INSTAGRAM_CLIENT_SECRET || "";
   const metaLoginConfigId = storedMetaLoginConfigId || env.META_LOGIN_CONFIG_ID || "";
+  const threadsClientId = storedThreadsClientId || env.THREADS_CLIENT_ID || "";
+  const threadsClientSecret = storedThreadsSecret || env.THREADS_CLIENT_SECRET || "";
   return {
     metaAppId,
     metaAppSecret,
     metaLoginConfigId,
+    threadsClientId,
+    threadsClientSecret,
     metaAppIdSource: storedMetaAppId ? "admin_settings" : env.META_APP_ID ? "META_APP_ID" : env.INSTAGRAM_CLIENT_ID ? "INSTAGRAM_CLIENT_ID" : "",
     metaAppSecretSource: storedMetaSecret ? "admin_settings" : env.META_APP_SECRET ? "META_APP_SECRET" : env.INSTAGRAM_CLIENT_SECRET ? "INSTAGRAM_CLIENT_SECRET" : "",
     metaLoginConfigIdSource: storedMetaLoginConfigId ? "admin_settings" : env.META_LOGIN_CONFIG_ID ? "META_LOGIN_CONFIG_ID" : "",
+    threadsClientIdSource: storedThreadsClientId ? "admin_settings" : env.THREADS_CLIENT_ID ? "THREADS_CLIENT_ID" : "",
+    threadsClientSecretSource: storedThreadsSecret ? "admin_settings" : env.THREADS_CLIENT_SECRET ? "THREADS_CLIENT_SECRET" : "",
     metaAppIdUpdatedAt: storedMetaAppId ? rows.meta_app_id?.updated_at ?? "" : "",
     metaAppSecretUpdatedAt: storedMetaSecret ? rows.meta_app_secret?.updated_at ?? "" : "",
     metaLoginConfigIdUpdatedAt: storedMetaLoginConfigId ? rows.meta_login_config_id?.updated_at ?? "" : "",
+    threadsClientIdUpdatedAt: storedThreadsClientId ? rows.threads_client_id?.updated_at ?? "" : "",
+    threadsClientSecretUpdatedAt: storedThreadsSecret ? rows.threads_client_secret?.updated_at ?? "" : "",
     adminSetupKeyConfigured: Boolean(env.ADMIN_SETUP_KEY),
     tokenEncryptionKeyConfigured: Boolean(env.TOKEN_ENCRYPTION_KEY),
   };
@@ -134,12 +150,18 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
     meta_app_id_configured: Boolean(settings.metaAppId),
     meta_app_secret_configured: Boolean(settings.metaAppSecret),
     meta_login_config_id_configured: Boolean(settings.metaLoginConfigId),
+    threads_client_id_configured: Boolean(settings.threadsClientId),
+    threads_client_secret_configured: Boolean(settings.threadsClientSecret),
     meta_app_id_source: settings.metaAppIdSource,
     meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
     meta_app_secret_source: settings.metaAppSecretSource,
     meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
     meta_login_config_id_source: settings.metaLoginConfigIdSource,
     meta_login_config_id_updated_at: settings.metaLoginConfigIdUpdatedAt,
+    threads_client_id_source: settings.threadsClientIdSource,
+    threads_client_id_updated_at: settings.threadsClientIdUpdatedAt,
+    threads_client_secret_source: settings.threadsClientSecretSource,
+    threads_client_secret_updated_at: settings.threadsClientSecretUpdatedAt,
   });
 }
 
@@ -151,20 +173,27 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     meta_app_id?: string;
     meta_app_secret?: string;
     meta_login_config_id?: string;
+    threads_client_id?: string;
+    threads_client_secret?: string;
   };
 
   if (input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   const metaLoginConfigId = input.meta_login_config_id?.trim() ?? "";
-  if (!metaAppId && !metaAppSecret && !metaLoginConfigId) return badRequest("At least one setting value is required.");
+  const threadsClientId = input.threads_client_id?.trim() ?? "";
+  const threadsClientSecret = input.threads_client_secret?.trim() ?? "";
+  if (!metaAppId && !metaAppSecret && !metaLoginConfigId && !threadsClientId && !threadsClientSecret) return badRequest("At least one setting value is required.");
   if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Meta App ID must contain digits only.");
   if (metaLoginConfigId && !/^\d+$/.test(metaLoginConfigId)) return badRequest("Facebook Login Configuration ID must contain digits only.");
+  if (threadsClientId && !/^\d+$/.test(threadsClientId)) return badRequest("Threads App ID must contain digits only.");
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);
   if (metaAppSecret) await setSetting(env, "meta_app_secret", await encryptValue(env, metaAppSecret), true);
   if (metaLoginConfigId) await setSetting(env, "meta_login_config_id", metaLoginConfigId, false);
+  if (threadsClientId) await setSetting(env, "threads_client_id", threadsClientId, false);
+  if (threadsClientSecret) await setSetting(env, "threads_client_secret", await encryptValue(env, threadsClientSecret), true);
 
   const settings = await getRuntimeSettings(env);
   return jsonResponse({
@@ -172,11 +201,17 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     meta_app_id_configured: Boolean(settings.metaAppId),
     meta_app_secret_configured: Boolean(settings.metaAppSecret),
     meta_login_config_id_configured: Boolean(settings.metaLoginConfigId),
+    threads_client_id_configured: Boolean(settings.threadsClientId),
+    threads_client_secret_configured: Boolean(settings.threadsClientSecret),
     meta_app_id_source: settings.metaAppIdSource,
     meta_app_id_updated_at: settings.metaAppIdUpdatedAt,
     meta_app_secret_source: settings.metaAppSecretSource,
     meta_app_secret_updated_at: settings.metaAppSecretUpdatedAt,
     meta_login_config_id_source: settings.metaLoginConfigIdSource,
     meta_login_config_id_updated_at: settings.metaLoginConfigIdUpdatedAt,
+    threads_client_id_source: settings.threadsClientIdSource,
+    threads_client_id_updated_at: settings.threadsClientIdUpdatedAt,
+    threads_client_secret_source: settings.threadsClientSecretSource,
+    threads_client_secret_updated_at: settings.threadsClientSecretUpdatedAt,
   });
 }

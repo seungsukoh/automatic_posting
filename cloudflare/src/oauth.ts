@@ -140,8 +140,8 @@ async function providerConfig(env: Env, platform: OAuthPlatform): Promise<Provid
 
   return {
     platform,
-    clientId: env.THREADS_CLIENT_ID ?? settings.metaAppId,
-    clientSecret: env.THREADS_CLIENT_SECRET ?? settings.metaAppSecret,
+    clientId: settings.threadsClientId,
+    clientSecret: settings.threadsClientSecret,
     scopes: ["threads_basic", "threads_content_publish"],
     authUrl: "https://threads.net/oauth/authorize",
     tokenUrl: "https://graph.threads.net/oauth/access_token",
