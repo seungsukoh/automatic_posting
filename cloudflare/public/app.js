@@ -625,7 +625,7 @@ function slugifyCampaign(value) {
     .replace(/\s+/g, "-")
     .replace(/[^\p{Letter}\p{Number}_-]+/gu, "")
     .replace(/-+/g, "-")
-    .slice(0, 80) || "automatic-posting";
+    .slice(0, 80) || "social-posting";
 }
 
 function applyAutoUtm(rawUrl, platforms, contentKey = "") {
@@ -638,7 +638,7 @@ function applyAutoUtm(rawUrl, platforms, contentKey = "") {
     return cleanUrl;
   }
   const source = platforms.length === 1 ? platforms[0] : "social";
-  const campaign = slugifyCampaign(formValue("campaign_name") || "automatic-posting");
+  const campaign = slugifyCampaign(formValue("campaign_name") || "social-posting");
   if (!url.searchParams.has("utm_source")) url.searchParams.set("utm_source", source);
   if (!url.searchParams.has("utm_medium")) url.searchParams.set("utm_medium", "social");
   if (!url.searchParams.has("utm_campaign")) url.searchParams.set("utm_campaign", campaign);
@@ -1104,11 +1104,11 @@ function syncPlatformPicker() {
     if (status.selectable) readyInputs.push(input);
   });
 
-  if (selectedPlatforms().length === 0 && readyInputs.length > 0) {
-    const preferred = readyInputs.find((input) => input.value === "threads")
-      || readyInputs.find((input) => input.value === "instagram")
-      || readyInputs[0];
-    preferred.checked = true;
+  if (selectedPlatforms().length === 0 && readyInputs.length > 0 && !appState.platformSelectionInitialized) {
+    const defaultInputs = readyInputs.filter((input) => ["instagram", "threads"].includes(input.value));
+    (defaultInputs.length ? defaultInputs : [readyInputs[0]]).forEach((input) => {
+      input.checked = true;
+    });
     appState.platformSelectionInitialized = true;
   }
 
@@ -1451,7 +1451,12 @@ function renderConnectionCard(platform, readiness, account) {
 
 async function loadConnections() {
   if (!accountConnections) return;
-  accountConnections.innerHTML = `<div class="skeletonBlock"></div>`;
+  accountConnections.innerHTML = `
+    <div class="inlineNotice pending">
+      <strong>계정 연결 상태 확인 중</strong>
+      <span>연결된 Instagram과 Threads 계정을 불러오고 있습니다.</span>
+    </div>
+  `;
   const readiness = await request("/api/oauth/meta/readiness").catch(() => ({
     platforms: {
       instagram: { configured: false, missing: ["client_id", "client_secret", "oauth_state_secret", "token_encryption_key"] },
@@ -2164,7 +2169,7 @@ async function generateTextPostImageFile() {
   context.fillStyle = "#0f172a";
   context.textBaseline = "top";
   context.font = "700 62px Arial, sans-serif";
-  const titleLines = wrapCanvasText(context, title || "Automatic Posting", 800).slice(0, 3);
+  const titleLines = wrapCanvasText(context, title || "소셜 게시 자동화", 800).slice(0, 3);
   let y = 168;
   for (const line of titleLines) {
     context.fillText(line, 140, y);
