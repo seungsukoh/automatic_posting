@@ -598,15 +598,56 @@ button:disabled {
 }
 
 .marketingTools {
-  display: grid;
-  gap: 12px;
-  padding: 12px;
+  display: block;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .formSection.marketingTools {
+  padding: 0;
+}
+
+.marketingSummary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.marketingSummary::-webkit-details-marker {
+  display: none;
+}
+
+.marketingSummary::after {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.marketingTools[open] .marketingSummary {
+  border-bottom: 1px solid var(--line);
+}
+
+.marketingTools[open] .marketingSummary::after {
+  content: "-";
+}
+
+.marketingFields {
+  display: grid;
+  gap: 12px;
   padding: 12px;
 }
 
@@ -702,6 +743,20 @@ button:disabled {
   display: grid;
   gap: 12px;
   padding: 0 12px 12px;
+}
+
+.postExecutionGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.postModeGrid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.45fr) minmax(240px, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .schedulerBoard {
@@ -1986,7 +2041,9 @@ button:focus-visible,
   .adminSettingsGrid,
   .adminStatusGrid,
   .setupGrid,
-  .schedulerBoard {
+  .schedulerBoard,
+  .postExecutionGrid,
+  .postModeGrid {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;

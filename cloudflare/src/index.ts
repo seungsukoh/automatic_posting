@@ -152,7 +152,6 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return badRequest("media_type must be image or video");
     }
     const platforms = [...new Set(input.platforms)];
-    if (platforms.length !== 1) return badRequest("select exactly one platform");
     input.platforms = platforms;
     const postId = await createPost(env, input);
     return jsonResponse({ post_id: postId }, 201);

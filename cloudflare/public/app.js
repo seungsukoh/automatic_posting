@@ -476,8 +476,14 @@ function selectedInstagramImageIssue(platforms = selectedPlatforms()) {
 
 function selectedVideoIssue(platforms = selectedPlatforms()) {
   if (selectedMediaKind !== "video") return "";
-  if (platforms.includes("instagram")) return instagramVideoIssue(selectedVideoInfo);
-  if (platforms.includes("threads")) return threadsVideoIssue(selectedVideoInfo);
+  if (platforms.includes("instagram")) {
+    const issue = instagramVideoIssue(selectedVideoInfo);
+    if (issue) return issue;
+  }
+  if (platforms.includes("threads")) {
+    const issue = threadsVideoIssue(selectedVideoInfo);
+    if (issue) return issue;
+  }
   return "";
 }
 
@@ -1189,7 +1195,8 @@ function previewStatusFor(platform) {
   }
   if (platform === "threads") {
     const file = imageFile.files?.[0];
-    const hasMedia = Boolean(file || form.elements.image_url.value);
+    const usesGeneratedInstagramImage = !file && selectedPlatforms().includes("instagram");
+    const hasMedia = Boolean(file || form.elements.image_url.value || usesGeneratedInstagramImage);
     const mediaIssue = selectedMediaIssue([platform]);
     if (mediaIssue) return { label: "영상 확인 필요", tone: "missing" };
     return { label: hasMedia ? selectedMediaKind === "video" ? "영상 포함" : "이미지 포함" : "텍스트 게시", tone: "ok" };
@@ -1715,7 +1722,7 @@ function renderBatchPlan() {
   }
 
   const warnings = [
-    state.noPlatforms ? "게시 채널을 하나 선택하세요." : "",
+    state.noPlatforms ? "게시 채널을 선택하세요." : "",
     state.hasKakao ? "Kakao는 발송 경로가 아직 구성되지 않아 배치 예약에서 제외해야 합니다." : "",
     state.jpgBlockCount ? `Instagram 선택 시 JPG가 아닌 이미지 ${state.jpgBlockCount}개를 교체해야 합니다.` : "",
     state.instagramRatioBlockCount ? `Instagram 비율에 맞지 않는 이미지 ${state.instagramRatioBlockCount}개는 원본 비율을 유지하고 흰 여백만 추가합니다.` : "",
