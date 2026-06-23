@@ -28,6 +28,7 @@ const refreshJobs = document.querySelector("#refreshJobs");
 const runScheduler = document.querySelector("#runScheduler");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
+const mediaChecklist = document.querySelector("#mediaChecklist");
 const clearImage = document.querySelector("#clearImage");
 const accountConnections = document.querySelector("#accountConnections");
 const platformQuickPicker = document.querySelector("#platformQuickPicker");
@@ -45,9 +46,12 @@ const batchScheduleForm = document.querySelector("#batchScheduleForm");
 const batchFolderInput = document.querySelector("#batchFolderInput");
 const batchStartTime = document.querySelector("#batchStartTime");
 const batchInterval = document.querySelector("#batchInterval");
+const batchFolderFeedback = document.querySelector("#batchFolderFeedback");
 const batchPlan = document.querySelector("#batchPlan");
 const batchQueue = document.querySelector("#batchQueue");
 const scheduleCalendar = document.querySelector("#scheduleCalendar");
+const jobsOverview = document.querySelector("#jobsOverview");
+const jobsFilters = document.querySelector("#jobsFilters");
 const batchStatus = document.querySelector("#batchStatus");
 const submitBatch = document.querySelector("#submitBatch");
 const clearBatch = document.querySelector("#clearBatch");
@@ -83,6 +87,7 @@ const appState = {
   jobs: [],
   activeWorkspaceTab: "",
   jobsLoaded: false,
+  jobFilter: "all",
   adminSettings: null,
   settingsPlatform: "",
   batchItems: [],
@@ -234,6 +239,7 @@ function statusLabel(status) {
     scheduled: "예약",
     success: "성공",
     failed: "실패",
+    cancelled: "취소",
     missing: "없음",
   }[status] || status || "알 수 없음";
 }
@@ -296,6 +302,10 @@ function dateKeyFromDate(value) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function compactDateKey(value) {
+  return String(value || "").replaceAll("-", "");
 }
 
 function fileExtension(name) {
@@ -566,7 +576,10 @@ async function createInstagramAdjustedImageFile(file, mode = "pad", sourceInfo =
 
 function renderSelectedImagePreview(statusText = "업로드 전") {
   const file = imageFile.files?.[0];
-  if (!file || !previewUrl) return;
+  if (!file || !previewUrl) {
+    renderMediaChecklist();
+    return;
+  }
   const displayFile = adjustedImageFile || file;
   const issue = selectedMediaIssue();
   const adjustedLabel = selectedImageAdjustment
@@ -606,6 +619,51 @@ function renderSelectedImagePreview(statusText = "업로드 전") {
       ${adjustmentActions}
     </div>
   `;
+  renderMediaChecklist();
+}
+
+function mediaCheck(label, tone, detail) {
+  return `
+    <article class="mediaCheckItem ${tone}">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(detail)}</span>
+    </article>
+  `;
+}
+
+function renderMediaChecklist() {
+  if (!mediaChecklist) return;
+  const platforms = selectedPlatforms();
+  const file = imageFile.files?.[0];
+  const checks = [];
+
+  if (!file) {
+    checks.push(mediaCheck("미디어", "pending", platforms.includes("instagram") ? "Instagram 선택 시 본문 기반 JPG 이미지를 자동 생성합니다." : "파일 없이 Threads 텍스트 게시가 가능합니다."));
+    checks.push(mediaCheck("형식", "ok", "이미지는 PNG/JPG/WEBP, 영상은 MP4/MOV를 사용할 수 있습니다."));
+    checks.push(mediaCheck("검사", platforms.length ? "ok" : "pending", platforms.length ? `${platforms.map(platformLabel).join(", ")} 기준으로 검사합니다.` : "게시 채널을 선택하면 플랫폼별 제한을 확인합니다."));
+    mediaChecklist.innerHTML = checks.join("");
+    return;
+  }
+
+  const kindLabel = selectedMediaKind === "video" ? "영상" : "이미지";
+  const typeOk = selectedMediaKind === "video"
+    ? ALLOWED_VIDEO_TYPES.has(mediaTypeForFile(file))
+    : ALLOWED_IMAGE_TYPES.has(mediaTypeForFile(file));
+  checks.push(mediaCheck("형식", typeOk ? "ok" : "missing", `${kindLabel} · ${mediaTypeForFile(file) || "알 수 없음"}`));
+
+  if (selectedMediaKind === "video") {
+    const sizeOk = file.size <= MAX_VIDEO_SIZE;
+    checks.push(mediaCheck("용량", sizeOk ? "ok" : "missing", `${Math.ceil(file.size / 1024 / 1024)}MB / 100MB 이하`));
+    checks.push(mediaCheck("길이", selectedVideoIssue(platforms) ? "missing" : "ok", selectedVideoInfo?.duration ? `${formatDuration(selectedVideoInfo.duration)} · Instagram 3초~15분, Threads 5분 이하 권장` : "영상 길이 확인 중"));
+  } else {
+    const sizeOk = file.size <= MAX_IMAGE_SIZE;
+    const ratioIssue = selectedInstagramImageIssue(platforms);
+    checks.push(mediaCheck("용량", sizeOk ? "ok" : "missing", `${Math.ceil(file.size / 1024)}KB / 8MB 이하`));
+    checks.push(mediaCheck("비율", ratioIssue ? "missing" : "ok", ratioIssue || `${formatImageDimensions(selectedImageInfo)} · Instagram 게시 가능`));
+  }
+
+  checks.push(mediaCheck("처리", selectedMediaIssue(platforms) ? "missing" : "ok", selectedImageAdjustment ? "원본 비율을 유지한 맞춤 파일을 사용합니다." : "원본을 왜곡하지 않고 게시합니다."));
+  mediaChecklist.innerHTML = checks.join("");
 }
 
 function announceSelectedImageIssue() {
@@ -618,6 +676,14 @@ function formValue(name) {
   return String(form.elements[name]?.value || "").trim();
 }
 
+function platformBodyValue(platform) {
+  return formValue(`${platform}_body`) || formValue("body");
+}
+
+function platformBodyPayload(platforms) {
+  return Object.fromEntries(platforms.map((platform) => [platform, formValue(`${platform}_body`)]));
+}
+
 function campaignMetadata(sourceFile = "") {
   return {
     campaign_name: formValue("campaign_name"),
@@ -625,6 +691,16 @@ function campaignMetadata(sourceFile = "") {
     campaign_goal: formValue("campaign_goal"),
     source_file: sourceFile,
   };
+}
+
+function campaignSummaryText() {
+  const parts = [
+    formValue("campaign_name") ? `캠페인 ${formValue("campaign_name")}` : "",
+    formValue("campaign_goal") ? `목표 ${formValue("campaign_goal")}` : "",
+    formValue("campaign_tags") ? `태그 ${formValue("campaign_tags")}` : "",
+    utmAuto?.checked ? "UTM 자동" : "",
+  ].filter(Boolean);
+  return parts.join(" · ");
 }
 
 function slugifyCampaign(value) {
@@ -1214,16 +1290,33 @@ function syncPlatformPicker() {
   renderBatchQueue();
 }
 
-function formatPublishTextFromForm() {
+function formatPublishTextForPlatform(platform, platforms = selectedPlatforms()) {
+  const title = formValue("title");
+  const link = applyAutoUtm(formValue("link_url"), platforms, title || platform);
   return [
-    form.elements.title.value || "",
-    form.elements.body.value || "",
-    form.elements.link_url.value || "",
-    form.elements.hashtags.value || "",
+    title,
+    platformBodyValue(platform),
+    link,
+    formValue("hashtags"),
   ]
     .map((part) => String(part).trim())
     .filter(Boolean)
     .join("\n\n");
+}
+
+function previewMediaLabel(platform) {
+  const file = imageFile.files?.[0];
+  if (platform === "instagram") {
+    if (!file) return "텍스트 이미지 자동 생성";
+    if (selectedMediaKind === "video") return "Reels 영상";
+    return selectedImageAdjustment ? "피드 이미지 맞춤 완료" : "피드 이미지";
+  }
+  if (platform === "threads") {
+    if (!file && selectedPlatforms().includes("instagram")) return "자동 생성 이미지 공유";
+    if (!file) return "텍스트 게시";
+    return selectedMediaKind === "video" ? "영상 첨부" : "이미지 첨부";
+  }
+  return "발송 경로 확인 필요";
 }
 
 function previewStatusFor(platform) {
@@ -1264,7 +1357,6 @@ function previewStatusFor(platform) {
 function renderPublishPreview() {
   if (!publishPreview) return;
   const platforms = selectedPlatforms();
-  const text = formatPublishTextFromForm();
   if (platforms.length === 0) {
     publishPreview.innerHTML = `
       <div class="emptyState compact">
@@ -1277,6 +1369,9 @@ function renderPublishPreview() {
 
   publishPreview.innerHTML = platforms.map((platform) => {
     const status = previewStatusFor(platform);
+    const text = formatPublishTextForPlatform(platform, platforms);
+    const override = formValue(`${platform}_body`);
+    const campaign = campaignSummaryText();
     const previewBody = text
       ? escapeHtml(text)
       : `<span class="previewEmpty">입력 대기</span>`;
@@ -1285,9 +1380,13 @@ function renderPublishPreview() {
         <div class="previewHeader">
           <div>
             <strong>${platformLabel(platform)}</strong>
-            <span>${text.length}자</span>
+            <span>${text.length}자 · ${escapeHtml(previewMediaLabel(platform))}</span>
           </div>
           <span class="previewStatus ${status.tone}">${status.label}</span>
+        </div>
+        <div class="previewMeta">
+          <span>${override ? "플랫폼별 문구 적용" : "기본 문구 사용"}</span>
+          ${campaign ? `<span>${escapeHtml(campaign)}</span>` : ""}
         </div>
         <pre class="previewText">${previewBody}</pre>
       </article>
@@ -1567,6 +1666,7 @@ function clearImagePreview() {
   form.elements.image_key.value = "";
   form.elements.image_url.value = "";
   form.elements.media_type.value = "";
+  renderMediaChecklist();
   renderPublishPreview();
 }
 
@@ -1578,6 +1678,7 @@ function updateFormMeta() {
   bodyCount.textContent = `${body.length}자`;
   scheduledAtGroup.classList.toggle("isHidden", mode !== "scheduled");
   form.elements.scheduled_at.required = mode === "scheduled";
+  renderMediaChecklist();
   renderPublishPreview();
   renderUtmPreview();
 }
@@ -1732,7 +1833,7 @@ function batchValidationState(items, platforms) {
 
 function skippedFixFor(reason) {
   return {
-    "날짜 폴더 없음": "YYYY-MM-DD 날짜 폴더 안에 넣기",
+    "날짜 폴더 없음": "YYYYMMDD 날짜 폴더 안에 넣기",
     "이미지 형식 제외": "JPG, PNG, WEBP로 저장",
     "이미지 크기 확인 실패": "이미지 파일을 다시 저장",
     "빈 파일": "파일을 다시 저장",
@@ -1760,6 +1861,44 @@ function renderSkippedDetails(skipped) {
   `;
 }
 
+function renderBatchFolderFeedback() {
+  if (!batchFolderFeedback) return;
+  const items = appState.batchItems;
+  const skipped = appState.batchSkipped;
+  if (items.length === 0 && skipped.length === 0) {
+    batchFolderFeedback.innerHTML = "";
+    batchFolderFeedback.className = "batchFolderFeedback";
+    return;
+  }
+
+  const dates = [...new Set(items.map((item) => item.dateKey))].sort();
+  const tone = skipped.length ? "warning" : "ready";
+  const validText = items.length
+    ? `${dates.length}개 예약일, ${items.length}개 이미지 확인`
+    : "예약 가능한 이미지를 찾지 못했습니다.";
+  const skippedText = skipped.length
+    ? `${skipped.length}개 파일 제외: ${skipped[0].reason} · ${skippedFixFor(skipped[0].reason)}${skipped.length > 1 ? ` 외 ${skipped.length - 1}개` : ""}`
+    : "폴더 형식이 맞습니다.";
+
+  batchFolderFeedback.className = `batchFolderFeedback ${tone}`;
+  batchFolderFeedback.innerHTML = `
+    <strong>${escapeHtml(validText)}</strong>
+    <span>${skippedText}</span>
+    ${dates.length ? `<small>예약일: ${dates.slice(0, 6).map((date) => escapeHtml(compactDateKey(date))).join(", ")}${dates.length > 6 ? ` 외 ${dates.length - 6}일` : ""}</small>` : ""}
+    ${skipped.length ? `
+      <details>
+        <summary>제외 파일 확인</summary>
+        <div>
+          ${skipped.slice(0, 6).map((entry) => `
+            <span>${escapeHtml(entry.name)} · ${escapeHtml(entry.reason)} · ${escapeHtml(skippedFixFor(entry.reason))}</span>
+          `).join("")}
+          ${skipped.length > 6 ? `<span>외 ${skipped.length - 6}개</span>` : ""}
+        </div>
+      </details>
+    ` : ""}
+  `;
+}
+
 function renderBatchPlan() {
   if (!batchPlan) return;
   const items = appState.batchItems;
@@ -1771,8 +1910,8 @@ function renderBatchPlan() {
     batchPlan.innerHTML = `
       <div class="batchPlanEmpty">
         <strong>폴더 구조</strong>
-        <span>상위폴더 / 2026-06-21 / 001.jpg</span>
-        <span>날짜 폴더별 파일명 숫자순으로 예약됩니다. 001.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
+        <span>상위폴더 / 20260621 / 001.jpg</span>
+        <span>날짜 폴더는 YYYYMMDD 형식입니다. 001.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
       </div>
     `;
     return;
@@ -1937,6 +2076,7 @@ function renderBatchQueue() {
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
 
+  renderBatchFolderFeedback();
   renderBatchPlan();
   renderScheduleCalendar();
 
@@ -1958,7 +2098,7 @@ function renderBatchQueue() {
     batchQueue.className = "batchQueue emptyState compact";
     batchQueue.innerHTML = skipped.length
       ? `<strong>폴더를 받지 않았습니다.</strong><span>${skipped.length}개 파일의 위치나 형식이 맞지 않습니다. 아래 항목을 고친 뒤 다시 선택하세요.</span>${renderSkippedDetails(skipped)}`
-      : `<strong>상위 폴더를 선택하세요.</strong><span>예: campaign / 2026-06-21 / 001.jpg</span>`;
+      : `<strong>상위 폴더를 선택하세요.</strong><span>예: campaign / 20260621 / 001.jpg</span>`;
     return;
   }
 
@@ -2011,7 +2151,7 @@ function renderBatchQueue() {
         return `
         <details class="batchDateGroup" data-date-key="${escapeHtml(dateKey)}"${openGroup}>
           <summary class="batchDateHeader">
-            <strong>${dateKey}</strong>
+            <strong>${escapeHtml(compactDateKey(dateKey))}</strong>
             <span>${group.length}개 이미지</span>
           </summary>
           ${group.map((item) => {
@@ -2314,19 +2454,90 @@ function renderEmptyJobs() {
   `;
 }
 
-async function loadJobs() {
-  if (!jobsEl) return;
-  jobsEl.innerHTML = `<div class="skeletonBlock"></div>`;
-  const data = await request("/api/jobs");
-  const jobs = data.jobs || [];
-  appState.jobs = jobs;
-  appState.jobsLoaded = true;
-  renderScheduleCalendar();
+function jobFilterOptions(jobs) {
+  const count = (status) => jobs.filter((job) => job.status === status).length;
+  return [
+    { value: "all", label: "전체", count: jobs.length },
+    { value: "scheduled", label: "예약", count: count("scheduled") },
+    { value: "queued", label: "대기", count: count("queued") },
+    { value: "success", label: "성공", count: count("success") },
+    { value: "failed", label: "실패", count: count("failed") },
+  ];
+}
+
+function renderJobsFilters(jobs) {
+  if (!jobsFilters) return;
+  jobsFilters.innerHTML = jobFilterOptions(jobs).map((filter) => `
+    <button
+      class="jobFilterButton ${appState.jobFilter === filter.value ? "isActive" : ""}"
+      type="button"
+      data-job-filter="${filter.value}"
+      aria-pressed="${appState.jobFilter === filter.value ? "true" : "false"}"
+    >
+      ${escapeHtml(filter.label)} <span>${filter.count}</span>
+    </button>
+  `).join("");
+}
+
+function jobMatchesFilter(job) {
+  return appState.jobFilter === "all" || job.status === appState.jobFilter;
+}
+
+function renderJobsOverview(jobs) {
+  if (!jobsOverview) return;
+  if (jobs.length === 0) {
+    jobsOverview.innerHTML = "";
+    return;
+  }
+  const scheduledJobs = jobs.filter((job) => job.status === "scheduled" && job.scheduled_at);
+  const scheduledCounts = new Map();
+  for (const job of scheduledJobs) {
+    const key = dateKeyFromDate(job.scheduled_at);
+    if (key) scheduledCounts.set(key, (scheduledCounts.get(key) || 0) + 1);
+  }
+  const upcomingKeys = [...scheduledCounts.keys()].sort().slice(0, 10);
+  const campaignCount = new Set(jobs.map((job) => job.campaign_name).filter(Boolean)).size;
+  jobsOverview.innerHTML = `
+    <div class="jobSummaryGrid">
+      <article><span>예약</span><strong>${scheduledJobs.length}</strong></article>
+      <article><span>실패</span><strong>${jobs.filter((job) => job.status === "failed").length}</strong></article>
+      <article><span>성공</span><strong>${jobs.filter((job) => job.status === "success").length}</strong></article>
+      <article><span>캠페인</span><strong>${campaignCount}</strong></article>
+    </div>
+    <div class="jobCalendarStrip">
+      <strong>콘텐츠 캘린더</strong>
+      <div>
+        ${upcomingKeys.length ? upcomingKeys.map((key) => `<span>${escapeHtml(compactDateKey(key))} · ${scheduledCounts.get(key)}개</span>`).join("") : "<span>예약된 작업이 없습니다.</span>"}
+      </div>
+    </div>
+  `;
+}
+
+function jobRecordAction(job) {
+  if (job.status === "running") return "";
+  const label = job.status === "scheduled" || job.status === "queued" ? "예약 취소" : "기록 삭제";
+  return `<button class="dangerButton" data-delete-job="${job.id}" data-job-status="${escapeHtml(job.status)}" type="button">${label}</button>`;
+}
+
+function renderJobs() {
+  const jobs = appState.jobs || [];
+  renderJobsOverview(jobs);
+  renderJobsFilters(jobs);
   if (jobs.length === 0) {
     renderEmptyJobs();
     return;
   }
-  jobsEl.innerHTML = jobs.map((job) => {
+  const visibleJobs = jobs.filter(jobMatchesFilter);
+  if (visibleJobs.length === 0) {
+    jobsEl.innerHTML = `
+      <div class="emptyState">
+        <strong>이 조건의 작업이 없습니다.</strong>
+        <span>다른 상태 필터를 선택하세요.</span>
+      </div>
+    `;
+    return;
+  }
+  jobsEl.innerHTML = visibleJobs.map((job) => {
     const retry = job.status === "failed" || job.status === "queued"
       ? `<button class="secondaryButton" data-retry="${job.id}" type="button">재시도</button>`
       : "";
@@ -2341,23 +2552,40 @@ async function loadJobs() {
         </details>
       `
       : "";
+    const campaignMeta = [
+      job.campaign_name ? `캠페인 ${job.campaign_name}` : "",
+      job.campaign_goal ? `목표 ${job.campaign_goal}` : "",
+      job.campaign_tags ? `태그 ${job.campaign_tags}` : "",
+      job.source_file ? `소스 ${job.source_file}` : "",
+    ].filter(Boolean).join(" · ");
     return `
       <article class="job">
         ${platformIcon(job.platform)}
         <div class="jobBody">
           <strong>${platformLabel(job.platform)}</strong>
           <p>${escapeHtml(job.title || "제목 없음")}</p>
-          ${job.campaign_name ? `<span class="jobCampaign">${escapeHtml(job.campaign_name)}</span>` : ""}
+          ${campaignMeta ? `<span class="jobCampaign">${escapeHtml(campaignMeta)}</span>` : ""}
         </div>
         <span class="status ${escapeHtml(job.status)}">${statusLabel(job.status)}</span>
         <div class="jobMeta">
-          <span>${formatDateTime(job.updated_at || job.created_at)}</span>
+          <span>${escapeHtml(job.scheduled_at ? `예약 ${formatDateTime(job.scheduled_at)}` : formatDateTime(job.updated_at || job.created_at))}</span>
           ${failureDetail}
         </div>
-        <div class="jobActions">${link}${retry}</div>
+        <div class="jobActions">${link}${retry}${jobRecordAction(job)}</div>
       </article>
     `;
   }).join("");
+}
+
+async function loadJobs() {
+  if (!jobsEl) return;
+  jobsEl.innerHTML = `<div class="skeletonBlock"></div>`;
+  const data = await request("/api/jobs");
+  const jobs = data.jobs || [];
+  appState.jobs = jobs;
+  appState.jobsLoaded = true;
+  renderScheduleCalendar();
+  renderJobs();
 }
 
 async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
@@ -2385,6 +2613,7 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
       image_url: uploadedImage.media_url || uploadedImage.image_url,
       media_type: uploadedImage.media_type || uploadedImage.content_type || uploadSource.type || "",
       platforms,
+      platform_bodies: item.captionBody ? {} : platformBodyPayload(platforms),
       ...campaignMetadata(item.relativePath),
     }),
   });
@@ -2572,6 +2801,7 @@ form.addEventListener("submit", async (event) => {
         image_url: uploadedMedia.media_url || uploadedMedia.image_url,
         media_type: uploadedMedia.media_type || uploadedMedia.content_type || form.elements.media_type.value || "",
         platforms,
+        platform_bodies: platformBodyPayload(platforms),
         ...campaignMetadata(imageFile.files?.[0]?.name || ""),
       }),
     });
@@ -2604,20 +2834,19 @@ submitPost?.addEventListener("click", requestSinglePostSubmit);
 batchFolderInput?.addEventListener("change", async () => {
   if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
-  const rejected = skipped.length > 0;
-  appState.batchItems = rejected ? [] : items;
+  appState.batchItems = items;
   appState.batchSkipped = skipped;
   appState.batchResults = {};
   appState.batchDateGroups = {};
   if (batchStatus) {
-    batchStatus.textContent = rejected
-      ? "폴더 수정 필요"
-      : items.length
+    batchStatus.textContent = items.length
       ? `${items.length}개 준비`
+      : skipped.length
+      ? "폴더 수정 필요"
       : "대기 중";
   }
-  if (rejected) {
-    showToast("폴더 구조나 파일 형식이 맞지 않아 예약 목록을 받지 않았습니다.", "error");
+  if (skipped.length) {
+    showToast(items.length ? "일부 파일은 제외했습니다. 상위 폴더 선택 아래 안내를 확인하세요." : "예약 가능한 날짜 폴더나 이미지가 없습니다.", "error");
   }
   renderBatchQueue();
 });
@@ -2752,7 +2981,33 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   }
 });
 
+jobsFilters?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-job-filter]");
+  if (!button) return;
+  appState.jobFilter = button.dataset.jobFilter || "all";
+  renderJobs();
+});
+
 jobsEl.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest("[data-delete-job]");
+  if (deleteButton) {
+    const status = deleteButton.dataset.jobStatus;
+    const message = status === "scheduled" || status === "queued"
+      ? "아직 발행되지 않은 작업을 취소하고 목록에서 숨길까요?"
+      : "작업 기록만 삭제합니다. Instagram/Threads에 이미 올라간 게시물은 삭제되지 않습니다.";
+    if (!window.confirm(message)) return;
+    setBusy(deleteButton, true, status === "scheduled" || status === "queued" ? "취소 중" : "삭제 중");
+    try {
+      const result = await request(`/api/jobs/${deleteButton.dataset.deleteJob}`, { method: "DELETE" });
+      showToast(result.action === "cancelled" ? "예약 작업을 취소했습니다." : "작업 기록을 삭제했습니다.");
+      await loadJobs();
+    } catch (error) {
+      showToast(error.message, "error");
+      setBusy(deleteButton, false, status === "scheduled" || status === "queued" ? "예약 취소" : "기록 삭제");
+    }
+    return;
+  }
+
   const button = event.target.closest("[data-retry]");
   if (!button) return;
   setBusy(button, true, "재시도 중");

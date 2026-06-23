@@ -1,5 +1,14 @@
 import { hasConfiguredMediaStore, serveAsset, uploadAsset } from "./assets";
-import { audit, createPost, createPublishJobs, ensurePostSchema, getPublishPayload, listPosts } from "./db";
+import {
+  audit,
+  createPost,
+  createPublishJobs,
+  ensurePostSchema,
+  ensurePublishJobSchema,
+  getPublishPayload,
+  hideOrCancelPublishJob,
+  listPosts,
+} from "./db";
 import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, serviceUnavailable, utcNow } from "./http";
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
@@ -63,6 +72,13 @@ async function markStaleRunningJobs(env: Env): Promise<void> {
 }
 
 async function executeJob(env: Env, jobId: number): Promise<Record<string, unknown>> {
+  await ensurePublishJobSchema(env);
+  const jobState = await env.DB.prepare("select status, hidden_at from publish_jobs where id = ?")
+    .bind(jobId)
+    .first<{ status: string; hidden_at: string | null }>();
+  if (!jobState) return { job_id: jobId, status: "missing" };
+  if (jobState.hidden_at || jobState.status === "cancelled") return { job_id: jobId, status: "skipped" };
+
   const job = await getPublishPayload(env, jobId);
   if (!job) return { job_id: jobId, status: "missing" };
 
@@ -156,13 +172,15 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && path === "/api/jobs") {
     if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     await ensurePostSchema(env);
+    await ensurePublishJobSchema(env);
     await markStaleRunningJobs(env);
     const jobs = await env.DB.prepare(
       `
-      select j.*, p.title, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.source_file
+      select j.*, p.title, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.campaign_goal, p.source_file
       from publish_jobs j
       join post_targets t on t.id = j.post_target_id
       join posts p on p.id = t.post_id
+      where j.hidden_at is null
       order by j.id desc
       `,
     ).all();
@@ -209,11 +227,23 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   const retryMatch = path.match(/^\/api\/jobs\/(\d+)\/retry$/);
   if (request.method === "POST" && retryMatch) {
     if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+    await ensurePublishJobSchema(env);
     const jobId = Number(retryMatch[1]);
-    await env.DB.prepare("update publish_jobs set status = 'queued', retry_count = retry_count + 1, error_message = null, updated_at = ? where id = ?")
+    const result = await env.DB.prepare("update publish_jobs set status = 'queued', retry_count = retry_count + 1, error_message = null, updated_at = ? where id = ? and hidden_at is null")
       .bind(utcNow(), jobId)
       .run();
+    if ((result.meta.changes ?? 0) === 0) return notFound();
     return jsonResponse(await executeJob(env, jobId));
+  }
+
+  const deleteJobMatch = path.match(/^\/api\/jobs\/(\d+)$/);
+  if (request.method === "DELETE" && deleteJobMatch) {
+    if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+    const jobId = Number(deleteJobMatch[1]);
+    const result = await hideOrCancelPublishJob(env, jobId);
+    if (!result) return notFound();
+    if (result.action === "blocked") return badRequest("발행 중인 작업은 삭제할 수 없습니다. 완료 또는 실패 후 다시 정리하세요.");
+    return jsonResponse({ job_id: jobId, action: result.action });
   }
 
   if (request.method === "POST" && path === "/api/scheduler/run") {

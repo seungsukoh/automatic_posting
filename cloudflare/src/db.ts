@@ -19,6 +19,11 @@ const postColumns = [
   "source_file text",
 ];
 
+let publishJobColumnsReady = false;
+const publishJobColumns = [
+  "hidden_at text",
+];
+
 export async function ensurePostSchema(env: Env): Promise<void> {
   if (postColumnsReady) return;
   for (const column of postColumns) {
@@ -29,6 +34,55 @@ export async function ensurePostSchema(env: Env): Promise<void> {
     }
   }
   postColumnsReady = true;
+}
+
+export async function ensurePublishJobSchema(env: Env): Promise<void> {
+  if (publishJobColumnsReady) return;
+  for (const column of publishJobColumns) {
+    try {
+      await env.DB.prepare(`alter table publish_jobs add column ${column}`).run();
+    } catch {
+      // Existing deployments may already have the column.
+    }
+  }
+  publishJobColumnsReady = true;
+}
+
+export async function hideOrCancelPublishJob(
+  env: Env,
+  jobId: number,
+): Promise<{ action: "cancelled" | "hidden" | "blocked"; status?: string } | null> {
+  await ensurePublishJobSchema(env);
+  const row = await env.DB.prepare("select id, status from publish_jobs where id = ? and hidden_at is null")
+    .bind(jobId)
+    .first<{ id: number; status: string }>();
+  if (!row) return null;
+  if (row.status === "running") return { action: "blocked", status: row.status };
+
+  const now = utcNow();
+  if (row.status === "scheduled" || row.status === "queued") {
+    await env.DB.prepare(
+      `
+      update publish_jobs
+      set status = 'cancelled',
+          finished_at = coalesce(finished_at, ?),
+          error_message = '',
+          hidden_at = ?,
+          updated_at = ?
+      where id = ?
+      `,
+    )
+      .bind(now, now, now, jobId)
+      .run();
+    await audit(env, "job.cancelled", "publish_job", jobId, { previous_status: row.status });
+    return { action: "cancelled", status: row.status };
+  }
+
+  await env.DB.prepare("update publish_jobs set hidden_at = ?, updated_at = ? where id = ?")
+    .bind(now, now, jobId)
+    .run();
+  await audit(env, "job.hidden", "publish_job", jobId, { previous_status: row.status });
+  return { action: "hidden", status: row.status };
 }
 
 export async function createPost(env: Env, input: CreatePostRequest): Promise<number> {
@@ -80,6 +134,7 @@ export async function listPosts(env: Env): Promise<unknown[]> {
 }
 
 export async function createPublishJobs(env: Env, postId: number, request: PublishRequest): Promise<Array<{ job_id: number; platform: string; status: string }>> {
+  await ensurePublishJobSchema(env);
   const mode = request.mode ?? "now";
   const status = mode === "scheduled" ? "scheduled" : "queued";
   const scheduledAt = mode === "scheduled" ? request.scheduled_at ?? null : null;

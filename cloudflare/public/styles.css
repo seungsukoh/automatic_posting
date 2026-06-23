@@ -896,6 +896,41 @@ button:disabled {
   margin-top: 10px;
 }
 
+.platformCopyDetails {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.platformCopyDetails summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.platformCopyDetails summary::-webkit-details-marker {
+  display: none;
+}
+
+.platformCopyDetails small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.platformCopyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
 .fileDrop:focus-within,
 .platformPicker input:focus-visible + span,
 .quickPlatformButton:focus-visible,
@@ -917,6 +952,61 @@ button:focus-visible,
 .folderDrop {
   min-height: 132px;
   background: #ffffff;
+}
+
+.batchFolderFeedback {
+  display: none;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.batchFolderFeedback.ready,
+.batchFolderFeedback.warning {
+  display: grid;
+}
+
+.batchFolderFeedback.ready {
+  border-color: #94d7bc;
+  background: var(--success-bg);
+}
+
+.batchFolderFeedback.warning {
+  border-color: #f2d36b;
+  background: var(--warning-bg);
+}
+
+.batchFolderFeedback span,
+.batchFolderFeedback small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.batchFolderFeedback details {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.batchFolderFeedback summary {
+  cursor: pointer;
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.batchFolderFeedback details div {
+  display: grid;
+  gap: 4px;
+}
+
+.batchTimeGrid {
+  grid-template-columns: minmax(160px, 0.55fr) minmax(220px, 1fr);
 }
 
 .batchGuide,
@@ -1387,6 +1477,48 @@ button:focus-visible,
   font-size: 12px;
 }
 
+.mediaChecklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.mediaCheckItem {
+  display: grid;
+  gap: 3px;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #ffffff;
+}
+
+.mediaCheckItem strong {
+  font-size: 12px;
+}
+
+.mediaCheckItem span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mediaCheckItem.ok {
+  border-color: #94d7bc;
+  background: var(--success-bg);
+}
+
+.mediaCheckItem.missing {
+  border-color: #f3b3ac;
+  background: var(--danger-bg);
+}
+
+.mediaCheckItem.pending {
+  border-color: #ead083;
+  background: #fff9e8;
+}
+
 .publishPreviewPanel {
   display: grid;
   gap: 10px;
@@ -1421,6 +1553,27 @@ button:focus-visible,
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.previewMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding: 8px 14px;
+  background: #ffffff;
+}
+
+.previewMeta span {
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #40515c;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .previewStatus {
@@ -1971,6 +2124,11 @@ button:focus-visible,
   color: var(--warning);
 }
 
+.status.cancelled {
+  background: #eef2f6;
+  color: var(--muted);
+}
+
 .statusBadge.missing,
 .readinessItem.missing span,
 .status.failed {
@@ -2075,6 +2233,8 @@ button:focus-visible,
   color: var(--primary-dark);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .jobLink {
@@ -2082,6 +2242,93 @@ button:focus-visible,
   font-weight: 700;
   text-decoration: none;
   overflow-wrap: anywhere;
+}
+
+.jobsOverview,
+.jobsFilters {
+  margin-top: 14px;
+}
+
+.jobsOverview {
+  display: grid;
+  gap: 10px;
+}
+
+.jobSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.jobSummaryGrid article,
+.jobCalendarStrip {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.jobSummaryGrid article {
+  display: grid;
+  gap: 4px;
+}
+
+.jobSummaryGrid span,
+.jobCalendarStrip span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.jobSummaryGrid strong {
+  font-size: 18px;
+}
+
+.jobCalendarStrip {
+  display: grid;
+  gap: 8px;
+}
+
+.jobCalendarStrip div,
+.jobsFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jobCalendarStrip span {
+  width: fit-content;
+  border-radius: 999px;
+  background: #eef2f6;
+  padding: 5px 9px;
+}
+
+.jobFilterButton {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--text);
+}
+
+.jobFilterButton.isActive {
+  border-color: #c5d0d7;
+  background: #eef4fb;
+  color: var(--primary-dark);
+}
+
+.jobFilterButton span {
+  color: var(--muted);
+}
+
+.dangerButton {
+  min-height: 36px;
+  border: 1px solid #f3b3ac;
+  background: #ffffff;
+  color: var(--danger);
+}
+
+.dangerButton:hover {
+  background: var(--danger-bg);
 }
 
 .emptyState {
@@ -2216,7 +2463,11 @@ button:focus-visible,
   .setupGrid,
   .schedulerBoard,
   .postExecutionGrid,
-  .postModeGrid {
+  .postModeGrid,
+  .platformCopyGrid,
+  .mediaChecklist,
+  .jobSummaryGrid,
+  .jobsFilters {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;

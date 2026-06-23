@@ -37,6 +37,7 @@ create table if not exists publish_jobs (
   retry_count integer not null default 0,
   error_message text,
   external_post_url text,
+  hidden_at text,
   created_at text not null,
   updated_at text not null,
   foreign key(post_target_id) references post_targets(id)

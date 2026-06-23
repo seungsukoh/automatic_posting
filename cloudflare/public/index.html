@@ -197,6 +197,22 @@
                       <input name="hashtags" placeholder="#campaign #update" />
                     </label>
                   </div>
+                  <details class="platformCopyDetails">
+                    <summary>
+                      <span>플랫폼별 문구 조정</span>
+                      <small>비워두면 기본 본문을 그대로 사용합니다.</small>
+                    </summary>
+                    <div class="platformCopyGrid">
+                      <label>
+                        Instagram 문구
+                        <textarea name="instagram_body" rows="4" placeholder="Instagram 캡션에만 다르게 넣을 문구"></textarea>
+                      </label>
+                      <label>
+                        Threads 문구
+                        <textarea name="threads_body" rows="4" placeholder="Threads 대화형 문구"></textarea>
+                      </label>
+                    </div>
+                  </details>
                 </div>
 
                 <details class="formSection marketingTools optionalSection">
@@ -253,6 +269,7 @@
                       <input name="image_url" type="hidden" />
                       <input name="media_type" type="hidden" />
                       <div id="imagePreview" class="imagePreview">선택된 파일이 없습니다.</div>
+                      <div id="mediaChecklist" class="mediaChecklist" aria-live="polite"></div>
                     </div>
                     <div class="publishPreviewPanel">
                       <div class="fieldLabelRow">
@@ -289,7 +306,7 @@
               <div>
                 <p class="eyebrow">예약</p>
                 <h2>날짜 폴더 예약</h2>
-                <span class="muted">날짜 폴더의 이미지를 번호순으로 예약합니다.</span>
+                <span class="muted">YYYYMMDD 폴더명을 예약일로 읽고, 폴더 안 이미지를 파일명 순서대로 예약합니다.</span>
               </div>
               <span id="batchStatus" class="formStatus">대기 중</span>
             </div>
@@ -299,12 +316,13 @@
                   <label class="fileDrop folderDrop">
                     <input id="batchFolderInput" type="file" accept="image/png,image/jpeg,image/webp,text/plain,text/markdown,.txt,.md,.csv" webkitdirectory directory multiple />
                     <span>상위 폴더 선택</span>
-                    <small>YYYY-MM-DD / 이미지 + 같은 이름 TXT·MD 또는 captions.csv</small>
+                    <small>예: campaign / 20260621 / 001.jpg + 001.txt 또는 captions.csv</small>
                   </label>
+                  <div id="batchFolderFeedback" class="batchFolderFeedback"></div>
                   <div class="batchGuide" aria-label="폴더 예약 규칙">
                     <article>
                       <strong>폴더</strong>
-                      <span>날짜 폴더명 기준</span>
+                      <span>20260621 형식</span>
                     </article>
                     <article>
                       <strong>순서</strong>
@@ -312,18 +330,19 @@
                     </article>
                     <article>
                       <strong>시간</strong>
-                      <span>시작 시간 + 간격</span>
+                      <span>시작 시간부터 간격만큼 배치</span>
                     </article>
                   </div>
-                  <div class="grid">
+                  <div class="grid batchTimeGrid">
                     <label>
                       시작 시간
                       <input id="batchStartTime" name="batch_start_time" type="time" value="09:00" />
-                      <span class="fieldHint">날짜 폴더 기준, 브라우저 현지 시간</span>
+                      <span class="fieldHint">각 날짜 폴더의 첫 이미지가 발행될 시간입니다.</span>
                     </label>
                     <label>
-                      간격(분)
+                      이미지 간격(분)
                       <input id="batchInterval" name="batch_interval" type="number" min="1" max="1440" step="1" value="30" />
+                      <span class="fieldHint">같은 날짜 폴더 안에서 다음 이미지를 몇 분 뒤에 예약할지 정합니다.</span>
                     </label>
                   </div>
                 </div>
@@ -354,6 +373,8 @@
                 작업 새로고침
               </button>
             </div>
+            <div id="jobsOverview" class="jobsOverview"></div>
+            <div id="jobsFilters" class="jobsFilters" aria-label="작업 필터"></div>
             <div id="jobs" class="jobs"></div>
           </section>
         </div>
