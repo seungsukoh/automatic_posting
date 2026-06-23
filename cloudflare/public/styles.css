@@ -1171,6 +1171,13 @@ button:focus-visible,
   padding: 0;
 }
 
+.imageActionHint {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .imageActions .secondaryButton {
   min-height: 32px;
   padding: 0 10px;

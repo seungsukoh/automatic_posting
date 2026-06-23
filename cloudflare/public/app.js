@@ -512,7 +512,7 @@ function renderSelectedImagePreview(statusText = "업로드 전") {
   const displayFile = adjustedImageFile || file;
   const issue = selectedMediaIssue();
   const adjustedLabel = selectedImageAdjustment
-    ? selectedImageAdjustment === "crop" ? "잘라서 맞춤 적용" : "여백 맞춤 적용"
+    ? selectedImageAdjustment === "crop" ? "중앙 자르기 적용 · 원본 비율 유지" : "여백 추가 적용 · 원본 비율 유지"
     : "";
   const imageMeta = selectedMediaKind === "video" ? [
     `${Math.ceil(displayFile.size / 1024 / 1024)} MB`,
@@ -533,8 +533,9 @@ function renderSelectedImagePreview(statusText = "업로드 전") {
   const adjustmentActions = issue && selectedMediaKind === "image"
     ? `
       <div class="imageActions" aria-label="Instagram 이미지 비율 맞춤">
-        <button class="secondaryButton" type="button" data-image-adjust="pad">여백으로 맞춤</button>
-        <button class="secondaryButton" type="button" data-image-adjust="crop">잘라서 맞춤</button>
+        <span class="imageActionHint">원본을 늘리거나 눌러서 왜곡하지 않습니다.</span>
+        <button class="secondaryButton" type="button" data-image-adjust="pad">여백 추가</button>
+        <button class="secondaryButton" type="button" data-image-adjust="crop">중앙 자르기</button>
       </div>
     `
     : "";
@@ -1682,7 +1683,7 @@ function renderBatchPlan() {
     state.noPlatforms ? "게시 채널을 하나 선택하세요." : "",
     state.hasKakao ? "Kakao는 발송 경로가 아직 구성되지 않아 배치 예약에서 제외해야 합니다." : "",
     state.jpgBlockCount ? `Instagram 선택 시 JPG가 아닌 이미지 ${state.jpgBlockCount}개를 교체해야 합니다.` : "",
-    state.instagramRatioBlockCount ? `Instagram 비율에 맞지 않는 이미지 ${state.instagramRatioBlockCount}개는 여백으로 자동 맞춤됩니다.` : "",
+    state.instagramRatioBlockCount ? `Instagram 비율에 맞지 않는 이미지 ${state.instagramRatioBlockCount}개는 원본 비율을 유지하고 흰 여백만 추가합니다.` : "",
     state.pastCount ? `이미 지난 예약 시간 ${state.pastCount}개가 있습니다.` : "",
     state.overflowCount ? `간격 때문에 날짜 폴더 다음 날로 넘어가는 이미지 ${state.overflowCount}개가 있습니다.` : "",
     state.duplicate.fileConflictCount ? `같은 날짜의 같은 파일명 ${state.duplicate.fileConflictCount}개를 확인하세요.` : "",
@@ -1878,7 +1879,7 @@ function renderBatchQueue() {
     ? `<div class="batchWarning">Instagram 예약은 JPG 이미지만 사용할 수 있습니다.</div>`
     : "";
   const instagramRatioNotice = hasInstagramRatioIssue
-    ? `<div class="batchWarning">Instagram 비율을 벗어난 이미지는 게시 직전에 흰 여백으로 자동 맞춤됩니다.</div>`
+    ? `<div class="batchWarning">Instagram 비율을 벗어난 이미지는 게시 직전에 원본을 왜곡하지 않고 흰 여백만 추가합니다.</div>`
     : "";
   const pastNotice = hasPastItems
     ? `<div class="batchWarning">이미 지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.</div>`
@@ -1926,7 +1927,7 @@ function renderBatchQueue() {
             const badgeLabel = needsJpeg
               ? "JPG 필요"
               : imageRatioIssue
-              ? "자동 맞춤"
+              ? "여백 추가"
               : scheduleIssue === "past"
               ? "지난 시간"
               : scheduleIssue === "overflow"
@@ -1986,7 +1987,7 @@ async function applySelectedImageAdjustment(mode) {
   const file = imageFile.files?.[0];
   if (!file || selectedMediaKind !== "image") return;
   imagePreview.classList.add("uploading");
-  imagePreview.textContent = mode === "crop" ? "이미지 자르는 중" : "이미지 여백 맞춤 중";
+  imagePreview.textContent = mode === "crop" ? "이미지 중앙 자르기 중" : "이미지 여백 추가 중";
   try {
     const adjusted = await createInstagramAdjustedImageFile(file, mode, selectedImageInfo);
     if (adjusted.size > MAX_IMAGE_SIZE) {
@@ -2002,7 +2003,7 @@ async function applySelectedImageAdjustment(mode) {
     clearImage.disabled = false;
     renderSelectedImagePreview("게시 가능");
     renderPublishPreview();
-    showToast(mode === "crop" ? "Instagram 비율에 맞게 잘랐습니다." : "Instagram 비율에 맞게 여백을 추가했습니다.");
+    showToast(mode === "crop" ? "원본 비율을 유지하고 중앙을 잘랐습니다." : "원본 비율을 유지하고 흰 여백을 추가했습니다.");
   } catch {
     showToast("이미지 맞춤에 실패했습니다. 다른 이미지로 다시 선택해 주세요.", "error");
     renderSelectedImagePreview();
