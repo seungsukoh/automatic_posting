@@ -4,9 +4,11 @@ import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, ser
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
 import { getAdminSettingsStatus, saveAdminSettings } from "./settings";
-import type { CreatePostRequest, Env, Platform, PublishRequest, PublishQueueMessage } from "./types";
+import type { CreatePostRequest, Env, Platform, PublishRequest, PublishQueueMessage, PublishResult } from "./types";
 
 const supportedPlatforms = ["instagram", "threads", "kakao"] as const satisfies readonly Platform[];
+const staleRunningJobMinutes = 15;
+const staleRunningJobMessage = "작업 처리 시간이 초과되었습니다. 재시도해주세요.";
 
 function hasD1(env: Env): boolean {
   return typeof (env as Partial<Env>).DB?.prepare === "function";
@@ -43,6 +45,23 @@ async function systemReadiness(env: Env): Promise<Response> {
   });
 }
 
+async function markStaleRunningJobs(env: Env): Promise<void> {
+  const now = utcNow();
+  const cutoff = new Date(Date.now() - staleRunningJobMinutes * 60 * 1000).toISOString();
+  await env.DB.prepare(
+    `
+    update publish_jobs
+    set status = 'failed',
+        finished_at = coalesce(finished_at, ?),
+        error_message = coalesce(nullif(error_message, ''), ?),
+        updated_at = ?
+    where status = 'running' and updated_at < ?
+    `,
+  )
+    .bind(now, staleRunningJobMessage, now, cutoff)
+    .run();
+}
+
 async function executeJob(env: Env, jobId: number): Promise<Record<string, unknown>> {
   const job = await getPublishPayload(env, jobId);
   if (!job) return { job_id: jobId, status: "missing" };
@@ -52,7 +71,16 @@ async function executeJob(env: Env, jobId: number): Promise<Record<string, unkno
     .bind(started, started, jobId)
     .run();
 
-  const result = await publishToPlatform(env, job.platform, job.payload);
+  let result: PublishResult;
+  try {
+    result = await publishToPlatform(env, job.platform, job.payload);
+  } catch (error) {
+    result = {
+      status: "failed",
+      error_message: error instanceof Error ? error.message : "Publishing job failed unexpectedly.",
+      external_post_url: "",
+    };
+  }
   const finished = utcNow();
   await env.DB.prepare(
     "update publish_jobs set status = ?, finished_at = ?, error_message = ?, external_post_url = ?, updated_at = ? where id = ?",
@@ -128,6 +156,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && path === "/api/jobs") {
     if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
     await ensurePostSchema(env);
+    await markStaleRunningJobs(env);
     const jobs = await env.DB.prepare(
       `
       select j.*, p.title, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.source_file

@@ -396,7 +396,7 @@ def main() -> None:
     host = "127.0.0.1"
     port = 8000
     server = ThreadingHTTPServer((host, port), AppHandler)
-    print(f"Automatic Posting MVP running at http://{host}:{port}")
+    print(f"Social Publisher MVP running at http://{host}:{port}")
     server.serve_forever()
 
 

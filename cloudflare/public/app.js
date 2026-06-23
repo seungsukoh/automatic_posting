@@ -152,9 +152,9 @@ function setBusy(button, busy, label) {
 
 function platformLabel(platform) {
   return {
-    instagram: "인스타그램",
-    threads: "스레드",
-    kakao: "카카오",
+    instagram: "Instagram",
+    threads: "Threads",
+    kakao: "Kakao",
   }[platform] || platform;
 }
 
@@ -2176,7 +2176,7 @@ async function generateTextPostImageFile() {
   context.fillStyle = "#0f172a";
   context.textBaseline = "top";
   context.font = "700 62px Arial, sans-serif";
-  const titleLines = wrapCanvasText(context, title || "소셜 게시 자동화", 800).slice(0, 3);
+  const titleLines = wrapCanvasText(context, title || "Social Publisher", 800).slice(0, 3);
   let y = 168;
   for (const line of titleLines) {
     context.fillText(line, 140, y);
@@ -2286,7 +2286,7 @@ async function loadJobs() {
     return `
       <article class="job">
         ${platformIcon(job.platform)}
-        <div>
+        <div class="jobBody">
           <strong>${platformLabel(job.platform)}</strong>
           <p>${escapeHtml(job.title || "제목 없음")}</p>
           ${job.campaign_name ? `<span class="jobCampaign">${escapeHtml(job.campaign_name)}</span>` : ""}

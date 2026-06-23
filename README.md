@@ -1,4 +1,4 @@
-# 소셜 게시 자동화
+# Social Publisher
 
 Instagram Business와 Threads 계정용 자동 게시 도구입니다. 현재 MVP는 Cloudflare Pages, Pages Functions, D1, MEDIA_KV 저장소를 사용하며 공식 OAuth/API 방식만 사용합니다.
 
@@ -32,7 +32,7 @@ Instagram Business와 Threads 계정용 자동 게시 도구입니다. 현재 MV
 
 ## 배포 후 확인 순서
 
-1. 배포 화면에서 제목이 `소셜 게시 자동화`로 표시되는지 확인합니다.
+1. 배포 화면에서 제목이 `Social Publisher`로 표시되는지 확인합니다.
 2. `계정 연결` 영역에서 Instagram과 Threads가 각각 `연결됨`인지 확인합니다.
 3. `단건 게시`에서 Instagram과 Threads가 둘 다 선택되는지 확인합니다.
 4. 글만 입력해 게시 작업을 만들고 `작업 현황`에서 플랫폼별 작업이 생성되는지 확인합니다.

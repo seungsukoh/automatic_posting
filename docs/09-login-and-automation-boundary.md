@@ -10,7 +10,7 @@
 
 ### 2.1 우리 서비스 로그인
 
-사용자가 Automatic Posting 서비스에 로그인하는 것이다.
+사용자가 Social Publisher 서비스에 로그인하는 것이다.
 
 가능한 기능:
 

@@ -49,6 +49,7 @@ interface MediaContainerStatusResponse extends GraphError {
 
 const facebookGraphBaseUrl = "https://graph.facebook.com/v25.0";
 const threadsGraphBaseUrl = "https://graph.threads.net/v1.0";
+const graphFetchTimeoutMs = 25000;
 
 function base64UrlDecode(value: string): Uint8Array {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
@@ -98,6 +99,21 @@ async function readJsonResponse<T extends GraphError>(response: Response, fallba
   return data;
 }
 
+async function fetchGraph(url: URL, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), graphFetchTimeoutMs);
+  try {
+    return await fetch(url.toString(), { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Meta API request timed out.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -107,7 +123,7 @@ async function waitForContainerReady(baseUrl: string, containerId: string, acces
     const url = new URL(`${baseUrl}/${containerId}`);
     url.searchParams.set("fields", "status_code,status,error_message");
     url.searchParams.set("access_token", accessToken);
-    const data = await readJsonResponse<MediaContainerStatusResponse>(await fetch(url.toString()), fallback);
+    const data = await readJsonResponse<MediaContainerStatusResponse>(await fetchGraph(url), fallback);
     const status = String(data.status_code || data.status || "").toUpperCase();
     if (status === "FINISHED" || status === "PUBLISHED") return;
     if (status === "ERROR" || status === "FAILED") throw new Error(data.error_message || fallback);
@@ -157,7 +173,7 @@ class InstagramPublisher implements Publisher {
       createUrl.searchParams.set("access_token", accessToken);
 
       const container = await readJsonResponse<InstagramContainerResponse>(
-        await fetch(createUrl.toString(), { method: "POST" }),
+        await fetchGraph(createUrl, { method: "POST" }),
         "Instagram media container creation failed.",
       );
       if (!container.id) throw new Error("Instagram did not return a media container id.");
@@ -169,7 +185,7 @@ class InstagramPublisher implements Publisher {
       publishUrl.searchParams.set("creation_id", container.id);
       publishUrl.searchParams.set("access_token", accessToken);
       const published = await readJsonResponse<InstagramPublishResponse>(
-        await fetch(publishUrl.toString(), { method: "POST" }),
+        await fetchGraph(publishUrl, { method: "POST" }),
         "Instagram media publish failed.",
       );
       if (!published.id) throw new Error("Instagram did not return a published media id.");
@@ -178,7 +194,7 @@ class InstagramPublisher implements Publisher {
       mediaUrl.searchParams.set("fields", "id,permalink");
       mediaUrl.searchParams.set("access_token", accessToken);
       const media = await readJsonResponse<InstagramMediaResponse>(
-        await fetch(mediaUrl.toString()),
+        await fetchGraph(mediaUrl),
         "Instagram permalink lookup failed.",
       );
 
@@ -231,7 +247,7 @@ class ThreadsPublisher implements Publisher {
       createUrl.searchParams.set("access_token", accessToken);
 
       const container = await readJsonResponse<ThreadsContainerResponse>(
-        await fetch(createUrl.toString(), { method: "POST" }),
+        await fetchGraph(createUrl, { method: "POST" }),
         "Threads media container creation failed.",
       );
       if (!container.id) throw new Error("Threads did not return a media container id.");
@@ -243,7 +259,7 @@ class ThreadsPublisher implements Publisher {
       publishUrl.searchParams.set("creation_id", container.id);
       publishUrl.searchParams.set("access_token", accessToken);
       const published = await readJsonResponse<ThreadsPublishResponse>(
-        await fetch(publishUrl.toString(), { method: "POST" }),
+        await fetchGraph(publishUrl, { method: "POST" }),
         "Threads publish failed.",
       );
       if (!published.id) throw new Error("Threads did not return a published media id.");
@@ -252,7 +268,7 @@ class ThreadsPublisher implements Publisher {
       mediaUrl.searchParams.set("fields", "id,permalink");
       mediaUrl.searchParams.set("access_token", accessToken);
       const media = await readJsonResponse<ThreadsMediaResponse>(
-        await fetch(mediaUrl.toString()),
+        await fetchGraph(mediaUrl),
         "Threads permalink lookup failed.",
       );
 

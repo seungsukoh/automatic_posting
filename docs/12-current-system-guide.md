@@ -1,10 +1,10 @@
 # 현재 시스템 운영 가이드
 
-이 문서는 현재 구현된 소셜 게시 자동화 MVP의 실제 상태와 운영 방법을 정리합니다.
+이 문서는 현재 구현된 Social Publisher MVP의 실제 상태와 운영 방법을 정리합니다.
 
 ## 1. 시스템 개요
 
-소셜 게시 자동화는 Instagram Business와 Threads 계정에 공식 API로 게시 작업을 생성하는 Cloudflare 기반 웹앱입니다.
+Social Publisher는 Instagram Business와 Threads 계정에 공식 API로 게시 작업을 생성하는 Cloudflare 기반 웹앱입니다.
 
 ```text
 Frontend: Cloudflare Pages + Vite static assets
