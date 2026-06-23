@@ -1004,20 +1004,6 @@ function setSelectedPlatform(value) {
   input.checked = !input.checked;
 }
 
-function enforceSinglePlatformSelection(preferredValue = "") {
-  const inputs = platformInputs();
-  const checkedInputs = inputs.filter((input) => input.checked && !input.disabled);
-  if (checkedInputs.length <= 1) return checkedInputs[0]?.value || "";
-
-  const preferred = checkedInputs.find((input) => input.value === preferredValue)
-    || checkedInputs.find((input) => input.value === "threads")
-    || checkedInputs[0];
-  inputs.forEach((input) => {
-    input.checked = input === preferred;
-  });
-  return preferred?.value || "";
-}
-
 function accountForPlatform(platform) {
   return appState.accounts.find((account) => account.platform === platform && account.status !== "disconnected") || null;
 }
@@ -1051,7 +1037,7 @@ function platformStatus(platform) {
     return {
       selectable: true,
       connected,
-      label: "글 게시 가능",
+      label: "게시 가능",
       detail: account.username || account.account_id || "연결된 Threads 계정",
       tone: "ok",
     };
@@ -1086,7 +1072,7 @@ function platformStatus(platform) {
   return {
     selectable: true,
     connected: true,
-    label: "예약 가능",
+    label: "게시 가능",
     detail: account.username || account.account_id || "연결된 계정",
     tone: "ok",
   };

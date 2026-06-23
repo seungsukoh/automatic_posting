@@ -1402,11 +1402,12 @@ button:focus-visible,
 }
 
 .quickPlatformButton {
-  min-height: 58px;
+  min-height: 64px;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr) 72px;
   gap: 4px 10px;
   align-content: center;
+  align-items: center;
   justify-items: start;
   text-align: left;
   border: 1px solid #c5d0d7;
@@ -1418,8 +1419,8 @@ button:focus-visible,
 }
 
 .quickPlatformButton .platformMark {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   grid-row: 1 / span 2;
   align-self: center;
 }
@@ -1434,27 +1435,37 @@ button:focus-visible,
   color: var(--text);
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.25;
+  min-width: 0;
 }
 
 .quickPlatformState {
-  width: fit-content;
-  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  min-height: 26px;
+  padding: 3px 8px;
   border-radius: 999px;
   background: #eef3f6;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   grid-column: 3;
   grid-row: 1 / span 2;
   align-self: center;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .quickPlatformButton small {
   grid-column: 2;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .quickPlatformButton.selected {
