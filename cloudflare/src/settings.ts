@@ -32,6 +32,10 @@ function hasD1(env: Env): boolean {
   return typeof (env as Partial<Env>).DB?.prepare === "function";
 }
 
+function canEncryptSecrets(env: Env): boolean {
+  return Boolean(env.TOKEN_ENCRYPTION_KEY && env.TOKEN_ENCRYPTION_KEY.length >= 24);
+}
+
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -53,13 +57,14 @@ async function encryptionKey(secret: string, usage: "encrypt" | "decrypt"): Prom
 }
 
 async function encryptValue(env: Env, value: string): Promise<string> {
-  if (!env.TOKEN_ENCRYPTION_KEY || env.TOKEN_ENCRYPTION_KEY.length < 24) {
+  const secret = env.TOKEN_ENCRYPTION_KEY;
+  if (!secret || secret.length < 24) {
     throw new Error("TOKEN_ENCRYPTION_KEY must be configured before saving secrets.");
   }
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
-    await encryptionKey(env.TOKEN_ENCRYPTION_KEY, "encrypt"),
+    await encryptionKey(secret, "encrypt"),
     new TextEncoder().encode(value),
   );
   return `${base64UrlEncode(iv)}.${base64UrlEncode(new Uint8Array(encrypted))}`;
@@ -75,6 +80,11 @@ async function decryptValue(env: Env, value: string): Promise<string> {
     base64UrlDecode(encrypted),
   );
   return new TextDecoder().decode(decrypted);
+}
+
+async function secretSettingValue(env: Env, value: string): Promise<{ value: string; encrypted: boolean }> {
+  if (!canEncryptSecrets(env)) return { value, encrypted: false };
+  return { value: await encryptValue(env, value), encrypted: true };
 }
 
 async function ensureSettingsSchema(env: Env): Promise<void> {
@@ -138,7 +148,7 @@ export async function getRuntimeSettings(env: Env): Promise<RuntimeSettings> {
     threadsClientIdUpdatedAt: storedThreadsClientId ? rows.threads_client_id?.updated_at ?? "" : "",
     threadsClientSecretUpdatedAt: storedThreadsSecret ? rows.threads_client_secret?.updated_at ?? "" : "",
     adminSetupKeyConfigured: Boolean(env.ADMIN_SETUP_KEY),
-    tokenEncryptionKeyConfigured: Boolean(env.TOKEN_ENCRYPTION_KEY),
+    tokenEncryptionKeyConfigured: canEncryptSecrets(env),
   };
 }
 
@@ -167,7 +177,6 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
 
 export async function saveAdminSettings(request: Request, env: Env): Promise<Response> {
   if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
-  if (!env.ADMIN_SETUP_KEY) return serviceUnavailable("ADMIN_SETUP_KEY is not configured.");
   const input = (await request.json().catch(() => ({}))) as {
     admin_key?: string;
     meta_app_id?: string;
@@ -177,7 +186,7 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     threads_client_secret?: string;
   };
 
-  if (input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
+  if (env.ADMIN_SETUP_KEY && input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   const metaLoginConfigId = input.meta_login_config_id?.trim() ?? "";
@@ -190,10 +199,16 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);
-  if (metaAppSecret) await setSetting(env, "meta_app_secret", await encryptValue(env, metaAppSecret), true);
+  if (metaAppSecret) {
+    const secret = await secretSettingValue(env, metaAppSecret);
+    await setSetting(env, "meta_app_secret", secret.value, secret.encrypted);
+  }
   if (metaLoginConfigId) await setSetting(env, "meta_login_config_id", metaLoginConfigId, false);
   if (threadsClientId) await setSetting(env, "threads_client_id", threadsClientId, false);
-  if (threadsClientSecret) await setSetting(env, "threads_client_secret", await encryptValue(env, threadsClientSecret), true);
+  if (threadsClientSecret) {
+    const secret = await secretSettingValue(env, threadsClientSecret);
+    await setSetting(env, "threads_client_secret", secret.value, secret.encrypted);
+  }
 
   const settings = await getRuntimeSettings(env);
   return jsonResponse({

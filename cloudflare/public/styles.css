@@ -1423,6 +1423,139 @@ button:focus-visible,
   margin-top: 16px;
 }
 
+.adminSettingsPanel {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.adminSettingsPanel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+
+.adminSettingsPanel summary::-webkit-details-marker {
+  display: none;
+}
+
+.adminSettingsPanel summary::after {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.adminSettingsPanel[open] summary::after {
+  content: "-";
+}
+
+.adminSettingsPanel small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.adminSettingsForm {
+  padding: 0 14px 14px;
+}
+
+.adminSettingsGrid,
+.adminStatusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.adminSettingsStatus {
+  display: grid;
+  gap: 10px;
+}
+
+.adminStatusSummary {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #ffffff;
+}
+
+.adminStatusSummary.ready {
+  border-color: #94d7bc;
+  background: var(--success-bg);
+}
+
+.adminStatusSummary.missing {
+  border-color: #f2d36b;
+  background: var(--warning-bg);
+}
+
+.adminStatusSummary span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.adminStatusItem {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.adminStatusItem span {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.adminStatusItem.ready span {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.adminStatusItem.missing span {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.adminStatusItem small {
+  overflow-wrap: anywhere;
+}
+
+.redirectUriBox {
+  display: grid;
+  gap: 7px;
+  border: 1px solid #dbe3e8;
+  border-radius: 6px;
+  padding: 10px 11px;
+  background: #ffffff;
+}
+
+.redirectUriBox code {
+  color: var(--primary-dark);
+  font: 700 13px Consolas, "Courier New", monospace;
+  overflow-wrap: anywhere;
+}
+
 .connectionGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1680,6 +1813,8 @@ button:focus-visible,
   .platformPicker,
   .connectionCard,
   .job,
+  .adminSettingsGrid,
+  .adminStatusGrid,
   .setupGrid,
   .schedulerBoard {
     grid-template-columns: 1fr;

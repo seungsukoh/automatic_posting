@@ -40,6 +40,11 @@ const submitBatch = document.querySelector("#submitBatch");
 const clearBatch = document.querySelector("#clearBatch");
 const utmAuto = document.querySelector("#utmAuto");
 const utmPreview = document.querySelector("#utmPreview");
+const adminSettingsPanel = document.querySelector("#adminSettingsPanel");
+const adminSettingsForm = document.querySelector("#adminSettingsForm");
+const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
+const refreshAdminSettings = document.querySelector("#refreshAdminSettings");
+const saveAdminSettings = document.querySelector("#saveAdminSettings");
 const redirectUriValue = document.querySelector("#redirectUriValue");
 const redirectUriMirrors = document.querySelectorAll(".redirectUriMirror");
 
@@ -51,6 +56,7 @@ const appState = {
   readiness: null,
   system: null,
   jobs: [],
+  adminSettings: null,
   batchItems: [],
   batchSkipped: [],
   batchResults: {},
@@ -175,6 +181,24 @@ function localTimezoneLabel() {
   return new Intl.DateTimeFormat("ko-KR", { timeZoneName: "short" })
     .formatToParts(new Date())
     .find((part) => part.type === "timeZoneName")?.value || "브라우저 시간";
+}
+
+function settingSourceLabel(source) {
+  return {
+    admin_settings: "관리자 설정",
+    "Cloudflare secret": "Cloudflare secret",
+    META_APP_ID: "Cloudflare META_APP_ID",
+    META_APP_SECRET: "Cloudflare META_APP_SECRET",
+    INSTAGRAM_CLIENT_ID: "Cloudflare INSTAGRAM_CLIENT_ID",
+    INSTAGRAM_CLIENT_SECRET: "Cloudflare INSTAGRAM_CLIENT_SECRET",
+    META_LOGIN_CONFIG_ID: "Cloudflare META_LOGIN_CONFIG_ID",
+    THREADS_CLIENT_ID: "Cloudflare THREADS_CLIENT_ID",
+    THREADS_CLIENT_SECRET: "Cloudflare THREADS_CLIENT_SECRET",
+  }[source] || "미설정";
+}
+
+function settingStatusLabel(configured) {
+  return configured ? "설정됨" : "미설정";
 }
 
 function dateKeyFromDate(value) {
@@ -845,6 +869,113 @@ function renderPublishPreview() {
   }).join("");
 }
 
+function adminSettingRows(settings) {
+  return [
+    {
+      label: "관리자 설정 키",
+      configured: settings.admin_setup_key_configured,
+      source: settings.admin_setup_key_configured ? "Cloudflare secret" : "",
+    },
+    {
+      label: "Secret 암호화 키",
+      configured: settings.token_encryption_key_configured,
+      source: settings.token_encryption_key_configured ? "Cloudflare secret" : "",
+    },
+    {
+      label: "Meta App ID",
+      configured: settings.meta_app_id_configured,
+      source: settings.meta_app_id_source,
+      updatedAt: settings.meta_app_id_updated_at,
+    },
+    {
+      label: "Meta App Secret",
+      configured: settings.meta_app_secret_configured,
+      source: settings.meta_app_secret_source,
+      updatedAt: settings.meta_app_secret_updated_at,
+    },
+    {
+      label: "Facebook Login Configuration ID",
+      configured: settings.meta_login_config_id_configured,
+      source: settings.meta_login_config_id_source,
+      updatedAt: settings.meta_login_config_id_updated_at,
+    },
+    {
+      label: "Threads App ID",
+      configured: settings.threads_client_id_configured,
+      source: settings.threads_client_id_source,
+      updatedAt: settings.threads_client_id_updated_at,
+    },
+    {
+      label: "Threads App Secret",
+      configured: settings.threads_client_secret_configured,
+      source: settings.threads_client_secret_source,
+      updatedAt: settings.threads_client_secret_updated_at,
+    },
+  ];
+}
+
+function renderAdminSettingsStatus(settings) {
+  if (!adminSettingsStatus) return;
+  const rows = adminSettingRows(settings);
+  const storesPlainSecrets = !settings.token_encryption_key_configured;
+  const readyCount = rows.filter((row) => row.configured).length;
+  adminSettingsStatus.innerHTML = `
+    <div class="adminStatusSummary ${storesPlainSecrets ? "missing" : "ready"}">
+      <strong>${readyCount}/${rows.length}개 설정됨</strong>
+      <span>${storesPlainSecrets ? "암호화 키가 없어서 Secret은 입력값 그대로 저장됩니다." : "입력한 Secret은 암호화되어 저장됩니다."}</span>
+    </div>
+    <div class="adminStatusGrid">
+      ${rows.map((row) => `
+        <article class="adminStatusItem ${row.configured ? "ready" : "missing"}">
+          <strong>${escapeHtml(row.label)}</strong>
+          <span>${settingStatusLabel(row.configured)}</span>
+          <small>${escapeHtml(settingSourceLabel(row.source))}${row.updatedAt ? ` · ${formatDateTime(row.updatedAt)}` : ""}</small>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function loadAdminSettings() {
+  if (!adminSettingsStatus) return;
+  adminSettingsStatus.innerHTML = `<div class="skeletonBlock"></div>`;
+  try {
+    const settings = await request("/api/admin/settings");
+    appState.adminSettings = settings;
+    renderAdminSettingsStatus(settings);
+  } catch (error) {
+    adminSettingsStatus.innerHTML = `
+      <div class="emptyState error">
+        <strong>관리자 설정 상태를 불러오지 못했습니다.</strong>
+        <span>${escapeHtml(error.message)}</span>
+      </div>
+    `;
+    throw error;
+  }
+}
+
+function adminSettingsPayload() {
+  const fields = [
+    "admin_key",
+    "meta_app_id",
+    "meta_app_secret",
+    "meta_login_config_id",
+    "threads_client_id",
+    "threads_client_secret",
+  ];
+  return Object.fromEntries(fields.map((name) => [name, String(adminSettingsForm.elements[name]?.value || "").trim()]));
+}
+
+function hasAdminSettingValue(payload) {
+  return [
+    "meta_app_id",
+    "meta_app_secret",
+    "meta_login_config_id",
+    "threads_client_id",
+    "threads_client_secret",
+  ].some((name) => Boolean(payload[name]));
+}
+
 function renderConnectionCard(platform, readiness, account) {
   const configured = Boolean(readiness?.configured);
   const missing = readiness?.missing || [];
@@ -868,7 +999,7 @@ function renderConnectionCard(platform, readiness, account) {
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
-      : `<button class="secondaryButton" type="button" disabled>사용 불가</button>`;
+      : `<a class="linkButton secondaryButton" href="#adminSettingsPanel" data-open-settings>설정하기</a>`;
   const fallbackAction = platform === "instagram" && configured && !connected
     ? `<a class="secondaryButton" href="/api/auth/meta/start?platform=instagram&variant=basic">대체 연결 시도</a>`
     : "";
@@ -1720,6 +1851,58 @@ platformQuickPicker?.addEventListener("click", (event) => {
   syncPlatformPicker();
 });
 
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-open-settings]");
+  if (!target || !adminSettingsPanel) return;
+  adminSettingsPanel.open = true;
+  loadAdminSettings().catch(() => {});
+});
+
+adminSettingsPanel?.addEventListener("toggle", () => {
+  if (adminSettingsPanel.open) loadAdminSettings().catch(() => {});
+});
+
+refreshAdminSettings?.addEventListener("click", async () => {
+  setBusy(refreshAdminSettings, true, "확인 중");
+  try {
+    await loadAdminSettings();
+    showToast("관리자 설정 상태를 새로고침했습니다.");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(refreshAdminSettings, false, "설정 상태 새로고침");
+  }
+});
+
+adminSettingsForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = adminSettingsPayload();
+  if (appState.adminSettings?.admin_setup_key_configured && !payload.admin_key) {
+    showToast("관리자 설정 키를 입력하세요.", "error");
+    return;
+  }
+  if (!hasAdminSettingValue(payload)) {
+    showToast("저장할 Meta 또는 Threads 설정값을 하나 이상 입력하세요.", "error");
+    return;
+  }
+
+  setBusy(saveAdminSettings, true, "저장 중");
+  try {
+    await request("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    adminSettingsForm.elements.meta_app_secret.value = "";
+    adminSettingsForm.elements.threads_client_secret.value = "";
+    showToast("관리자 설정을 저장했습니다.");
+    await Promise.all([loadAdminSettings(), loadConnections()]);
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(saveAdminSettings, false, "관리자 설정 저장");
+  }
+});
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const explicitSinglePostSubmit = singlePostSubmitRequested;
@@ -2024,6 +2207,7 @@ redirectUriMirrors.forEach((element) => {
 loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
+loadAdminSettings().catch(() => {});
 loadJobs().catch((error) => {
   jobsEl.innerHTML = `<div class="emptyState error"><strong>작업을 불러오지 못했습니다.</strong><span>${escapeHtml(error.message)}</span></div>`;
 });

@@ -16,6 +16,7 @@
         </div>
         <div class="topActions">
           <a class="linkButton secondaryButton" href="#accountStep">계정 확인</a>
+          <a class="linkButton secondaryButton" href="#adminSettingsPanel" data-open-settings>관리자 설정</a>
           <a class="linkButton secondaryButton" href="#composeStep">글 작성</a>
           <a class="linkButton secondaryButton" href="#jobsStep">결과 확인</a>
         </div>
@@ -40,6 +41,78 @@
             </div>
           </div>
           <div id="accountConnections" class="connections">연결 상태를 확인하고 있습니다.</div>
+          <details id="adminSettingsPanel" class="adminSettingsPanel">
+            <summary>
+              <span>관리자 설정</span>
+              <small>Instagram / Threads 연결값을 운영자가 저장합니다.</small>
+            </summary>
+            <form id="adminSettingsForm" class="adminSettingsForm">
+              <div id="adminSettingsStatus" class="adminSettingsStatus" aria-live="polite">설정 상태를 확인하고 있습니다.</div>
+              <div class="adminSettingsGrid">
+                <div class="formSection">
+                  <div class="formSectionHead">
+                    <span class="stepNumber">A</span>
+                    <div>
+                      <strong>인증</strong>
+                      <span>ADMIN_SETUP_KEY가 설정된 환경에서만 입력합니다.</span>
+                    </div>
+                  </div>
+                  <label>
+                    관리자 설정 키
+                    <input name="admin_key" type="password" autocomplete="current-password" placeholder="설정된 경우에만 입력" />
+                  </label>
+                  <div class="redirectUriBox">
+                    <strong>OAuth Redirect URI</strong>
+                    <code id="redirectUriValue"></code>
+                  </div>
+                </div>
+
+                <div class="formSection">
+                  <div class="formSectionHead">
+                    <span class="stepNumber">M</span>
+                    <div>
+                      <strong>Meta / Instagram</strong>
+                      <span>Instagram Business 연결에 사용하는 Meta 앱 설정입니다.</span>
+                    </div>
+                  </div>
+                  <label>
+                    Meta App ID
+                    <input name="meta_app_id" inputmode="numeric" placeholder="숫자 App ID" />
+                  </label>
+                  <label>
+                    Meta App Secret
+                    <input name="meta_app_secret" type="password" autocomplete="new-password" placeholder="기존 Secret 유지 시 비워두기" />
+                  </label>
+                  <label>
+                    Facebook Login Configuration ID
+                    <input name="meta_login_config_id" inputmode="numeric" placeholder="Facebook Login for Business 설정 ID" />
+                  </label>
+                </div>
+
+                <div class="formSection">
+                  <div class="formSectionHead">
+                    <span class="stepNumber">T</span>
+                    <div>
+                      <strong>Threads</strong>
+                      <span>Threads 계정 연결과 글 게시에 사용하는 앱 설정입니다.</span>
+                    </div>
+                  </div>
+                  <label>
+                    Threads App ID
+                    <input name="threads_client_id" inputmode="numeric" placeholder="숫자 App ID" />
+                  </label>
+                  <label>
+                    Threads App Secret
+                    <input name="threads_client_secret" type="password" autocomplete="new-password" placeholder="기존 Secret 유지 시 비워두기" />
+                  </label>
+                </div>
+              </div>
+              <div class="formActions">
+                <button id="refreshAdminSettings" class="secondaryButton" type="button">설정 상태 새로고침</button>
+                <button id="saveAdminSettings" type="submit">관리자 설정 저장</button>
+              </div>
+            </form>
+          </details>
         </section>
 
         <div class="mainColumn">
