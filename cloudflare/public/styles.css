@@ -3,14 +3,14 @@
   font-family: "Segoe UI", system-ui, sans-serif;
   color: #172026;
   background: #edf1f3;
-  --bg: #f3f6f8;
+  --bg: #f5f7f9;
   --panel: #ffffff;
-  --line: #d8e0e6;
+  --line: #dce3e8;
   --muted: #66737c;
   --text: #14212a;
   --ink: #13202a;
-  --primary: #1d5fbf;
-  --primary-dark: #164f9f;
+  --primary: #245f9e;
+  --primary-dark: #174a82;
   --accent: #8a6a16;
   --success: #0f766e;
   --success-bg: #e0f2ef;
@@ -19,7 +19,7 @@
   --danger: #b42318;
   --danger-bg: #fde7e4;
   --focus: #7aa7ff;
-  --shadow: 0 8px 24px rgba(20, 33, 42, 0.055);
+  --shadow: 0 1px 2px rgba(20, 33, 42, 0.04), 0 8px 22px rgba(20, 33, 42, 0.035);
 }
 
 * {
@@ -33,9 +33,9 @@ body {
 }
 
 .shell {
-  width: min(1240px, calc(100% - 32px));
+  width: min(1220px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 40px;
+  padding: 20px 0 36px;
 }
 
 .topbar,
@@ -58,8 +58,8 @@ body {
 }
 
 .topbar {
-  margin-bottom: 14px;
-  padding: 18px 20px;
+  margin-bottom: 12px;
+  padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -70,6 +70,11 @@ body {
 .topActions {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.topbar > div,
+.topActions .linkButton {
+  min-width: 0;
 }
 
 .topbar p {
@@ -84,18 +89,18 @@ p {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1.15;
   letter-spacing: 0;
 }
 
 h2 {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.3;
 }
 
 h3 {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.3;
 }
 
@@ -108,7 +113,7 @@ p {
 .eyebrow {
   color: var(--accent);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -120,50 +125,40 @@ p {
   font-size: 13px;
 }
 
-.flowRail {
+.workspaceNav {
   position: sticky;
   top: 0;
   z-index: 10;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 5px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 4px 14px rgba(20, 33, 42, 0.05);
+  background: rgba(248, 250, 251, 0.94);
+  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.04);
   backdrop-filter: blur(8px);
 }
 
-.flowRail a {
+.workspaceNav a {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
+  justify-content: center;
+  min-height: 34px;
   border-radius: 6px;
+  border: 1px solid transparent;
   padding: 6px 10px;
-  color: var(--text);
+  color: #40515c;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 700;
   text-decoration: none;
 }
 
-.flowRail a:hover {
-  background: #eef4fb;
-}
-
-.flowRail span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 900;
+.workspaceNav a:hover {
+  border-color: #ccd8e0;
+  background: #ffffff;
+  color: var(--text);
 }
 
 .summaryGrid {
@@ -194,6 +189,57 @@ p {
   background: #e8eef8;
   color: #204264;
   font-weight: 800;
+}
+
+.platformMark svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.platformMark--instagram {
+  background:
+    radial-gradient(circle at 30% 108%, #fdf497 0 18%, #fd5949 42%, transparent 43%),
+    linear-gradient(135deg, #405de6 0%, #833ab4 32%, #c13584 55%, #e1306c 72%, #fd1d1d 100%);
+  color: #ffffff;
+}
+
+.platformMark--instagram svg rect,
+.platformMark--instagram svg circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.platformMark--instagram svg circle:last-child {
+  fill: currentColor;
+  stroke: none;
+}
+
+.platformMark--threads {
+  background: #111111;
+  color: #ffffff;
+}
+
+.platformMark--threads svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.platformMark--kakao {
+  background: #fee500;
+  color: #1f1b10;
+}
+
+.platformMark--kakao svg path {
+  fill: currentColor;
+}
+
+.platformMark--fallback {
+  font-size: 12px;
 }
 
 .summaryIcon {
@@ -313,38 +359,13 @@ p {
   gap: 18px;
 }
 
-.accountPanel {
-  border-color: #bfd0dc;
-}
-
 .panel {
   position: relative;
-  padding: 20px;
+  padding: 18px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
-}
-
-.stepPanel {
-  padding-left: 26px;
-}
-
-.stepPanel::before {
-  content: attr(data-step);
-  position: absolute;
-  left: -1px;
-  top: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 42px;
-  border-radius: 0 8px 8px 0;
-  background: var(--primary);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 900;
 }
 
 .composePanel {
@@ -362,7 +383,7 @@ fieldset {
   display: grid;
   gap: 7px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 fieldset {
@@ -373,14 +394,14 @@ fieldset {
 
 legend {
   margin-bottom: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 input,
 textarea,
 select {
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
   border: 1px solid #c5d0d7;
   border-radius: 6px;
   padding: 10px 11px;
@@ -396,16 +417,16 @@ textarea {
 
 .setupGrid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.72fr) minmax(360px, 1.35fr) minmax(240px, 0.72fr);
-  gap: 14px;
+  grid-template-columns: minmax(210px, 0.68fr) minmax(420px, 1.5fr) minmax(220px, 0.7fr);
+  gap: 12px;
   align-items: start;
 }
 
 .formSection {
   display: grid;
-  gap: 12px;
+  gap: 11px;
   min-width: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -417,7 +438,7 @@ textarea {
 
 .formSectionHead {
   display: grid;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: start;
 }
@@ -431,24 +452,29 @@ textarea {
   font-size: 14px;
 }
 
-.formSectionHead span:not(.stepNumber) {
+.formSectionHead span:not(.sectionToken) {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
 }
 
-.stepNumber {
+.sectionToken {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  min-height: 24px;
+  width: fit-content;
+  max-width: 72px;
   border-radius: 999px;
-  background: #e9f0ff;
-  color: var(--primary-dark);
-  font-size: 12px;
-  font-weight: 900;
+  border: 1px solid #d7e2ea;
+  background: #f4f7fa;
+  color: #40515c;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
 input:focus,
@@ -460,13 +486,13 @@ select:focus {
 
 button,
 .linkButton {
-  min-height: 42px;
+  min-height: 40px;
   border: 0;
   border-radius: 6px;
   background: var(--primary);
   color: #ffffff;
   padding: 0 14px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -494,7 +520,7 @@ button:disabled {
 }
 
 .secondaryButton {
-  min-height: 38px;
+  min-height: 36px;
 }
 
 .topbar .secondaryButton {
@@ -530,7 +556,7 @@ button:disabled {
   color: #40515c;
   padding: 5px 11px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -539,7 +565,7 @@ button:disabled {
 }
 
 .fileDrop {
-  min-height: 96px;
+  min-height: 88px;
   place-items: center;
   text-align: center;
   border: 1px dashed #a9b8c1;
@@ -558,7 +584,7 @@ button:disabled {
 }
 
 .fileDrop span {
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fileDrop small {
@@ -574,14 +600,14 @@ button:disabled {
 .marketingTools {
   display: grid;
   gap: 12px;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
 }
 
 .formSection.marketingTools {
-  padding: 14px;
+  padding: 12px;
 }
 
 .toggleRow {
@@ -608,6 +634,26 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.campaignHelp {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #e1e8ed;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #f8fafb;
+}
+
+.campaignHelp strong {
+  font-size: 13px;
+}
+
+.campaignHelp span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .manualPostDetails {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -619,10 +665,10 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 50px;
-  padding: 0 14px;
+  min-height: 46px;
+  padding: 0 12px;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 700;
   list-style: none;
 }
 
@@ -654,14 +700,14 @@ button:disabled {
 
 .manualPostContent {
   display: grid;
-  gap: 14px;
-  padding: 0 14px 14px;
+  gap: 12px;
+  padding: 0 12px 12px;
 }
 
 .schedulerBoard {
   display: grid;
   grid-template-columns: minmax(300px, 0.76fr) minmax(0, 1.24fr);
-  gap: 14px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -685,7 +731,7 @@ button:disabled {
   cursor: pointer;
   color: var(--primary-dark);
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .trackingFields {
@@ -713,7 +759,7 @@ button:focus-visible,
 }
 
 .folderDrop {
-  min-height: 150px;
+  min-height: 132px;
   background: #ffffff;
 }
 
@@ -733,7 +779,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
-  padding: 10px 12px;
+  padding: 9px 11px;
 }
 
 .batchGuide article,
@@ -780,7 +826,7 @@ button:focus-visible,
 .batchMetricGrid span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .batchMetricGrid strong {
@@ -801,7 +847,7 @@ button:focus-visible,
   background: var(--warning-bg);
   color: var(--warning);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .batchChecks.ok {
@@ -818,7 +864,7 @@ button:focus-visible,
 .batchSkipped summary {
   cursor: pointer;
   color: var(--warning);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .batchSkipped div {
@@ -841,7 +887,7 @@ button:focus-visible,
 }
 
 .batchSummary {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fafb;
@@ -862,7 +908,7 @@ button:focus-visible,
 }
 
 .batchDateHeader {
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: #f8fafb;
   cursor: pointer;
   list-style: none;
@@ -882,7 +928,7 @@ button:focus-visible,
   justify-content: center;
   background: #eef2f6;
   color: var(--muted);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .batchDateGroup[open] .batchDateHeader::after {
@@ -896,7 +942,7 @@ button:focus-visible,
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -910,7 +956,7 @@ button:focus-visible,
   grid-template-columns: 30px minmax(0, 1fr) minmax(190px, auto);
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-top: 1px solid var(--line);
 }
 
@@ -924,7 +970,7 @@ button:focus-visible,
   background: #eef2f6;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .batchFile strong {
@@ -997,7 +1043,7 @@ button:focus-visible,
   background: #eef2f6;
   color: #40515c;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .batchCaptionPreview {
@@ -1027,7 +1073,7 @@ button:focus-visible,
 .calendarLegend span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .calendarLegend span {
@@ -1061,7 +1107,7 @@ button:focus-visible,
 .calendarWeekday {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -1104,7 +1150,7 @@ button:focus-visible,
 .calendarDay span {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -1160,7 +1206,7 @@ button:focus-visible,
 .imageIssue {
   color: var(--danger);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -1175,7 +1221,7 @@ button:focus-visible,
   flex-basis: 100%;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .imageActions .secondaryButton {
@@ -1225,7 +1271,7 @@ button:focus-visible,
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -1295,7 +1341,7 @@ button:focus-visible,
   border: 1px solid #c5d0d7;
   border-radius: 6px;
   background: #ffffff;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .platformPicker input:checked + span {
@@ -1356,9 +1402,9 @@ button:focus-visible,
 }
 
 .quickPlatformButton {
-  min-height: 64px;
+  min-height: 58px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   gap: 4px 10px;
   align-content: center;
   justify-items: start;
@@ -1368,13 +1414,26 @@ button:focus-visible,
   background: #ffffff;
   color: var(--text);
   cursor: pointer;
-  padding: 12px;
+  padding: 10px;
+}
+
+.quickPlatformButton .platformMark {
+  width: 34px;
+  height: 34px;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.quickPlatformButton .platformMark svg {
+  width: 20px;
+  height: 20px;
 }
 
 .quickPlatformName {
+  grid-column: 2;
   color: var(--text);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .quickPlatformState {
@@ -1384,13 +1443,14 @@ button:focus-visible,
   background: #eef3f6;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 800;
-  grid-column: 2;
+  font-weight: 700;
+  grid-column: 3;
   grid-row: 1 / span 2;
   align-self: center;
 }
 
 .quickPlatformButton small {
+  grid-column: 2;
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
@@ -1438,7 +1498,7 @@ button:focus-visible,
 .inlineNotice span {
   color: var(--muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .inlineNotice.pending {
@@ -1462,14 +1522,14 @@ button:focus-visible,
 .jobs {
   display: grid;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .adminSettingsPanel {
-  margin-top: 14px;
+  margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: #ffffff;
 }
 
 .adminSettingsHeader {
@@ -1477,8 +1537,8 @@ button:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 52px;
-  padding: 12px 14px 0;
+  min-height: 48px;
+  padding: 12px 12px 0;
 }
 
 .adminSettingsHeader div {
@@ -1489,11 +1549,11 @@ button:focus-visible,
 .adminSettingsPanel small {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .adminSettingsForm {
-  padding: 0 14px 14px;
+  padding: 0 12px 12px;
 }
 
 .adminSettingsGrid,
@@ -1503,7 +1563,7 @@ button:focus-visible,
 }
 
 .adminSettingsGrid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .adminStatusGrid {
@@ -1518,19 +1578,19 @@ button:focus-visible,
 .settingsGuide {
   border: 1px solid #dbe3e8;
   border-radius: 8px;
-  background: #ffffff;
+  background: #f8fafb;
   overflow: hidden;
 }
 
 .settingsGuide summary {
-  min-height: 44px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px;
+  padding: 0 10px;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 700;
   list-style: none;
 }
 
@@ -1557,10 +1617,10 @@ button:focus-visible,
 
 .settingsGuideGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
   border-top: 1px solid var(--line);
-  padding: 12px;
+  padding: 10px;
 }
 
 .settingsGuideGrid article {
@@ -1569,8 +1629,8 @@ button:focus-visible,
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 10px;
-  background: #f8fafb;
+  padding: 9px;
+  background: #ffffff;
 }
 
 .settingsGuideGrid strong {
@@ -1580,7 +1640,7 @@ button:focus-visible,
 .settingsGuideGrid span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -1606,7 +1666,7 @@ button:focus-visible,
 .adminStatusSummary span {
   color: var(--muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .adminStatusItem {
@@ -1615,7 +1675,7 @@ button:focus-visible,
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 9px 11px;
   background: #ffffff;
 }
 
@@ -1624,7 +1684,7 @@ button:focus-visible,
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .adminStatusItem.ready span {
@@ -1669,13 +1729,13 @@ button:focus-visible,
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   background: #ffffff;
 }
 
 .connectionCard {
-  grid-template-columns: 42px minmax(0, 1fr) auto;
-  min-height: 82px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-height: 74px;
 }
 
 .connectionCard.connected {
@@ -1684,8 +1744,8 @@ button:focus-visible,
 }
 
 .platformMark {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   font-size: 12px;
 }
 
@@ -1702,7 +1762,7 @@ button:focus-visible,
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .statusBadge.ok,
@@ -1756,7 +1816,7 @@ button:focus-visible,
 }
 
 .job {
-  grid-template-columns: 42px minmax(180px, 1fr) auto minmax(190px, 0.82fr) auto;
+  grid-template-columns: 38px minmax(180px, 1fr) auto minmax(190px, 0.82fr) auto;
 }
 
 .jobMeta {
@@ -1798,12 +1858,12 @@ button:focus-visible,
 .jobCampaign {
   color: var(--primary-dark);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .jobLink {
   color: var(--primary);
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -1853,7 +1913,7 @@ button:focus-visible,
   box-shadow: var(--shadow);
   background: #172026;
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 700;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
@@ -1886,7 +1946,7 @@ button:focus-visible,
     grid-template-columns: 1fr;
   }
 
-  .flowRail {
+  .workspaceNav {
     position: static;
   }
 }
@@ -1899,7 +1959,6 @@ button:focus-visible,
 
   .topbar,
   .sectionHead,
-  .flowRail,
   .startActions,
   .batchGuide,
   .batchMetricGrid,
@@ -1922,11 +1981,13 @@ button:focus-visible,
     align-items: stretch;
   }
 
-  .flowRail {
+  .workspaceNav {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .flowRail a {
+  .workspaceNav a {
     min-height: 34px;
   }
 
@@ -1946,7 +2007,7 @@ button:focus-visible,
   }
 
   .topbar {
-    padding: 18px;
+    padding: 16px;
   }
 
   .startStep {
@@ -1959,15 +2020,7 @@ button:focus-visible,
 
   .panel,
   .composePanel {
-    padding: 16px;
-  }
-
-  .stepPanel {
-    padding-left: 18px;
-  }
-
-  .stepPanel::before {
-    display: none;
+    padding: 14px;
   }
 
   .imagePreview:has(img),
@@ -1988,14 +2041,17 @@ button:focus-visible,
 
   .jobActions,
   .formActions,
-  .topActions,
   .previewHeader {
     justify-content: stretch;
     display: grid;
   }
 
+  .topbar .topActions {
+    display: none;
+  }
+
   .formActions > button,
-  .topActions > button,
+  .topbar .topActions > .linkButton,
   .jobActions > button,
   .jobActions > .linkButton,
   .startActions button,

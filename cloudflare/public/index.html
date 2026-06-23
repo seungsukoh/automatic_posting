@@ -10,31 +10,32 @@
     <main class="shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Instagram / Threads publishing</p>
+          <p class="eyebrow">소셜 게시 관리</p>
           <h1>Automatic Posting</h1>
           <p>Instagram과 Threads에 이미지와 글을 게시하고 날짜 폴더 예약도 만듭니다.</p>
         </div>
         <div class="topActions">
-          <a class="linkButton secondaryButton" href="#accountStep">계정 확인</a>
-          <a class="linkButton secondaryButton" href="#composeStep">글 작성</a>
-          <a class="linkButton secondaryButton" href="#jobsStep">결과 확인</a>
+          <a class="linkButton secondaryButton" href="#accountStep">계정</a>
+          <a class="linkButton secondaryButton" href="#composeStep">작성</a>
+          <a class="linkButton secondaryButton" href="#batchStep">예약</a>
+          <a class="linkButton secondaryButton" href="#jobsStep">작업</a>
         </div>
       </header>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-      <nav class="flowRail" aria-label="게시 진행 단계">
-        <a href="#accountStep"><span>1</span>계정 연결</a>
-        <a href="#composeStep"><span>2</span>글 작성</a>
-        <a href="#batchStep"><span>3</span>예약</a>
-        <a href="#jobsStep"><span>4</span>결과</a>
+      <nav class="workspaceNav" aria-label="작업 영역">
+        <a href="#accountStep">계정 연결</a>
+        <a href="#composeStep">단건 게시</a>
+        <a href="#batchStep">날짜 예약</a>
+        <a href="#jobsStep">작업 현황</a>
       </nav>
 
       <section class="postingFlow">
-        <section id="accountStep" class="panel accountPanel stepPanel" data-step="1">
+        <section id="accountStep" class="panel accountPanel">
           <div class="sectionHead">
             <div>
-              <p class="eyebrow">Step 1</p>
+              <p class="eyebrow">계정</p>
               <h2>게시 계정 연결</h2>
               <span class="muted">Instagram과 Threads 계정을 연결해 이미지와 글을 게시합니다.</span>
             </div>
@@ -50,7 +51,7 @@
             </div>
             <form id="adminSettingsForm" class="adminSettingsForm">
               <div id="adminSettingsStatus" class="adminSettingsStatus" aria-live="polite">설정 상태를 확인하고 있습니다.</div>
-              <details class="settingsGuide" open>
+              <details class="settingsGuide">
                 <summary>입력값 확인 가이드</summary>
                 <div class="settingsGuideGrid">
                   <article>
@@ -78,7 +79,7 @@
               <div class="adminSettingsGrid">
                 <div id="connectionInfoSection" class="formSection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">A</span>
+                    <span class="sectionToken">URL</span>
                     <div>
                       <strong>Callback URL</strong>
                       <span>Meta 앱의 Valid OAuth Redirect URIs에 등록할 주소입니다.</span>
@@ -95,7 +96,7 @@
 
                 <div id="metaSettingsSection" class="formSection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">M</span>
+                    <span class="sectionToken">Meta</span>
                     <div>
                       <strong>Meta / Instagram</strong>
                       <span>Instagram Business 연결에 사용하는 Meta 앱 설정입니다.</span>
@@ -117,7 +118,7 @@
 
                 <div id="threadsSettingsSection" class="formSection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">T</span>
+                    <span class="sectionToken">Threads</span>
                     <div>
                       <strong>Threads</strong>
                       <span>Threads 계정 연결과 게시에 사용하는 앱 설정입니다.</span>
@@ -142,10 +143,10 @@
         </section>
 
         <div class="mainColumn">
-          <section id="composeStep" class="panel composePanel workspaceSetupPanel stepPanel" data-step="2">
+          <section id="composeStep" class="panel composePanel workspaceSetupPanel">
             <div class="sectionHead">
               <div>
-                <p class="eyebrow">Step 2</p>
+                <p class="eyebrow">작성</p>
                 <h2>글 작성</h2>
                 <span class="muted">이미지나 영상을 선택하지 않으면 글 내용을 기반으로 Instagram용 JPG 이미지를 자동 생성합니다.</span>
               </div>
@@ -155,7 +156,7 @@
               <div class="setupGrid">
                 <div class="formSection channelSection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">1</span>
+                    <span class="sectionToken">채널</span>
                     <div>
                       <strong>게시 채널</strong>
                       <span>연결된 계정만 선택할 수 있습니다.</span>
@@ -163,16 +164,16 @@
                   </div>
                   <fieldset class="platformPicker nativePlatformPicker">
                     <legend>플랫폼</legend>
-                    <label><input type="radio" name="platforms" value="instagram" /> <span>Instagram</span></label>
-                    <label><input type="radio" name="platforms" value="threads" /> <span>Threads</span></label>
-                    <label><input type="radio" name="platforms" value="kakao" /> <span>Kakao</span></label>
+                    <label><input type="checkbox" name="platforms" value="instagram" /> <span>Instagram</span></label>
+                    <label><input type="checkbox" name="platforms" value="threads" /> <span>Threads</span></label>
+                    <label><input type="checkbox" name="platforms" value="kakao" /> <span>Kakao</span></label>
                   </fieldset>
                   <div id="platformQuickPicker" class="platformQuickPicker" aria-live="polite"></div>
                 </div>
 
                 <div class="formSection copySection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">2</span>
+                    <span class="sectionToken">문구</span>
                     <div>
                       <strong>기본 문구</strong>
                       <span>캡션 파일이 없는 이미지에 적용됩니다.</span>
@@ -202,18 +203,23 @@
 
                 <div class="formSection marketingTools optionalSection">
                   <div class="formSectionHead">
-                    <span class="stepNumber">3</span>
+                    <span class="sectionToken">추적</span>
                     <div>
-                      <strong>캠페인 추적</strong>
-                      <span>필요할 때만 입력합니다.</span>
+                      <strong>캠페인 추적(선택)</strong>
+                      <span>게시물을 묶어 보고 링크에는 UTM을 붙입니다.</span>
                     </div>
                   </div>
                   <label>
                     캠페인명
                     <input name="campaign_name" maxlength="80" placeholder="summer_launch" />
+                    <span class="fieldHint">예: 이벤트, 광고, 리타겟팅 게시물만 입력합니다. 일반 게시물은 비워도 됩니다.</span>
                   </label>
+                  <div class="campaignHelp">
+                    <strong>활용 방식</strong>
+                    <span>작업 목록에 캠페인명이 남고, 링크가 있으면 utm_campaign 값으로 자동 반영됩니다.</span>
+                  </div>
                   <details class="trackingDetails">
-                    <summary>태그, 목표, UTM 설정</summary>
+                    <summary>성과 추적 설정</summary>
                     <div class="trackingFields">
                       <label>
                         캠페인 태그
@@ -283,10 +289,10 @@
             </form>
           </section>
 
-          <section id="batchStep" class="panel batchPanel stepPanel" data-step="3">
+          <section id="batchStep" class="panel batchPanel">
             <div class="sectionHead">
               <div>
-                <p class="eyebrow">Step 3</p>
+                <p class="eyebrow">예약</p>
                 <h2>날짜 폴더 예약</h2>
                 <span class="muted">날짜 폴더의 이미지를 번호순으로 예약합니다.</span>
               </div>
@@ -339,10 +345,10 @@
             </form>
           </section>
 
-          <section id="jobsStep" class="panel jobsPanel stepPanel" data-step="4">
+          <section id="jobsStep" class="panel jobsPanel">
             <div class="sectionHead">
               <div>
-                <p class="eyebrow">Step 4</p>
+                <p class="eyebrow">작업</p>
                 <h2>발행 작업</h2>
                 <span class="muted">최근 작업 상태와 실패 사유를 확인합니다.</span>
               </div>

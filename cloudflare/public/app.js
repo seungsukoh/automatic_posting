@@ -152,9 +152,9 @@ function setBusy(button, busy, label) {
 
 function platformLabel(platform) {
   return {
-    instagram: "Instagram Business",
-    threads: "Threads",
-    kakao: "Kakao",
+    instagram: "인스타그램",
+    threads: "스레드",
+    kakao: "카카오",
   }[platform] || platform;
 }
 
@@ -166,6 +166,42 @@ function platformInitial(platform) {
   }[platform] || platform.slice(0, 2).toUpperCase();
 }
 
+function platformIcon(platform) {
+  if (platform === "instagram") {
+    return `
+      <span class="platformMark platformMark--instagram" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <rect x="4.25" y="4.25" width="15.5" height="15.5" rx="4.2"></rect>
+          <circle cx="12" cy="12" r="3.7"></circle>
+          <circle cx="17" cy="7" r="1.1"></circle>
+        </svg>
+      </span>
+    `;
+  }
+  if (platform === "threads") {
+    return `
+      <span class="platformMark platformMark--threads" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M12 3.25c5.05 0 8.25 3.45 8.25 8.82 0 5.27-3.3 8.68-8.28 8.68-5.05 0-8.22-3.42-8.22-8.75 0-5.3 3.2-8.75 8.25-8.75Z"></path>
+          <path d="M8.25 13.7c.38 1.9 1.82 3.05 3.95 3.05 2.32 0 3.8-1.2 3.8-3.03 0-1.8-1.45-2.9-3.85-2.9h-1.28"></path>
+          <path d="M15.12 10.8c-.35-2.02-1.48-3.08-3.25-3.08-1.58 0-2.72.9-3.12 2.42"></path>
+          <path d="M15.95 11.15l2.28.42"></path>
+        </svg>
+      </span>
+    `;
+  }
+  if (platform === "kakao") {
+    return `
+      <span class="platformMark platformMark--kakao" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M12 5c4.45 0 8 2.62 8 5.85 0 3.24-3.55 5.86-8 5.86-.55 0-1.08-.04-1.6-.12L7.2 18.7c-.32.2-.72-.1-.6-.46l.9-2.72C5.38 14.45 4 12.75 4 10.85 4 7.62 7.55 5 12 5Z"></path>
+        </svg>
+      </span>
+    `;
+  }
+  return `<span class="platformMark platformMark--fallback" aria-hidden="true">${escapeHtml(platformInitial(platform))}</span>`;
+}
+
 function missingLabel(key) {
   return {
     client_id: "앱 연결 준비",
@@ -173,6 +209,18 @@ function missingLabel(key) {
     oauth_state_secret: "앱 연결 준비",
     token_encryption_key: "앱 연결 준비",
   }[key] || key;
+}
+
+function missingConnectionSummary(platform, missing = []) {
+  if (!missing.length) return "연결 정보 입력 필요";
+  const needsAppCredentials = missing.includes("client_id") || missing.includes("client_secret");
+  const needsLoginConfig = missing.includes("login_config_id");
+  const parts = [];
+  if (needsAppCredentials) {
+    parts.push(platform === "threads" ? "Threads App ID/Secret 입력 필요" : "Meta App ID/Secret 입력 필요");
+  }
+  if (needsLoginConfig) parts.push("Login Configuration ID 입력 필요");
+  return parts.length ? parts.join(" · ") : "연결 정보 입력 필요";
 }
 
 function statusLabel(status) {
@@ -951,9 +999,9 @@ function platformInputs() {
 }
 
 function setSelectedPlatform(value) {
-  platformInputs().forEach((input) => {
-    input.checked = Boolean(value) && input.value === value && !input.disabled;
-  });
+  const input = platformInputs().find((item) => item.value === value);
+  if (!input || input.disabled) return;
+  input.checked = !input.checked;
 }
 
 function enforceSinglePlatformSelection(preferredValue = "") {
@@ -1046,7 +1094,6 @@ function platformStatus(platform) {
 
 function validatePublishablePlatforms(platforms) {
   if (platforms.length === 0) return "먼저 게시할 계정을 연결하고 플랫폼을 선택하세요.";
-  if (platforms.length > 1) return "게시 채널은 하나만 선택하세요.";
   const blocked = platforms
     .map((platform) => ({ platform, status: platformStatus(platform) }))
     .filter(({ status }) => !status.selectable);
@@ -1071,8 +1118,6 @@ function syncPlatformPicker() {
     if (status.selectable) readyInputs.push(input);
   });
 
-  enforceSinglePlatformSelection(selectedPlatforms()[0] || "threads");
-
   if (selectedPlatforms().length === 0 && readyInputs.length > 0) {
     const preferred = readyInputs.find((input) => input.value === "threads")
       || readyInputs.find((input) => input.value === "instagram")
@@ -1081,13 +1126,11 @@ function syncPlatformPicker() {
     appState.platformSelectionInitialized = true;
   }
 
-  enforceSinglePlatformSelection(selectedPlatforms()[0] || "threads");
-
   if (platformQuickPicker) {
     const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
     platformQuickPicker.innerHTML = visibleInputs.length
       ? `
-        <div class="quickPickerButtons" role="radiogroup" aria-label="게시 채널">
+        <div class="quickPickerButtons" role="group" aria-label="게시 채널">
           ${visibleInputs.map((input) => {
             const status = platformStatus(input.value);
             const checked = input.checked;
@@ -1096,11 +1139,12 @@ function syncPlatformPicker() {
                 class="quickPlatformButton ${checked ? "selected" : ""}"
                 type="button"
                 data-platform-select="${escapeHtml(input.value)}"
-                role="radio"
+                role="checkbox"
                 aria-checked="${checked ? "true" : "false"}"
                 ${status.selectable ? "" : "disabled"}
                 title="${escapeHtml(status.detail)}"
               >
+                ${platformIcon(input.value)}
                 <span class="quickPlatformName">${platformLabel(input.value)}</span>
                 <span class="quickPlatformState">${escapeHtml(checked ? "선택됨" : status.label)}</span>
                 <small>${escapeHtml(status.detail)}</small>
@@ -1393,7 +1437,7 @@ function renderConnectionCard(platform, readiness, account) {
       ? `${escapeHtml(account.username || account.account_id || platformLabel(platform))} 계정 토큰이 해제됐습니다. 다시 승인하세요.`
     : configured
       ? "계정 승인 대기"
-      : missing.map(missingLabel).join(", ");
+      : missingConnectionSummary(platform, missing);
   const primaryAction = connected
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
@@ -1406,7 +1450,7 @@ function renderConnectionCard(platform, readiness, account) {
 
   return `
     <article class="connectionCard ${connected ? "connected" : ""}">
-      <div class="platformMark" aria-hidden="true">${platformInitial(platform)}</div>
+      ${platformIcon(platform)}
       <div class="connectionBody">
         <div class="cardTitleRow">
           <h3>${platformLabel(platform)}</h3>
@@ -2243,7 +2287,7 @@ async function loadJobs() {
       : "";
     return `
       <article class="job">
-        <div class="platformMark" aria-hidden="true">${platformInitial(job.platform)}</div>
+        ${platformIcon(job.platform)}
         <div>
           <strong>${platformLabel(job.platform)}</strong>
           <p>${escapeHtml(job.title || "제목 없음")}</p>
@@ -2341,7 +2385,6 @@ form.addEventListener("input", () => {
 });
 form.addEventListener("change", (event) => {
   if (event.target?.name === "platforms") {
-    if (event.target.checked) setSelectedPlatform(event.target.value);
     appState.platformSelectionInitialized = true;
     syncPlatformPicker();
     announceSelectedImageIssue();
