@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Instagram / Threads publishing</p>
           <h1>Automatic Posting</h1>
-          <p>이미지가 있으면 Instagram에, 글만 있으면 Threads에 게시하고 Instagram 날짜 폴더 예약도 만듭니다.</p>
+          <p>Instagram과 Threads에 이미지와 글을 게시하고 날짜 폴더 예약도 만듭니다.</p>
         </div>
         <div class="topActions">
           <a class="linkButton secondaryButton" href="#accountStep">계정 확인</a>
@@ -36,36 +36,39 @@
             <div>
               <p class="eyebrow">Step 1</p>
               <h2>게시 계정 연결</h2>
-              <span class="muted">Instagram은 이미지와 글 게시, Threads는 글 전용 게시용으로 연결합니다.</span>
+              <span class="muted">Instagram과 Threads 계정을 연결해 이미지와 글을 게시합니다.</span>
             </div>
           </div>
           <div id="accountConnections" class="connections">연결 상태를 확인하고 있습니다.</div>
           <section id="adminSettingsPanel" class="adminSettingsPanel isHidden" aria-hidden="true">
             <div class="adminSettingsHeader">
               <div>
-                <strong>연결 설정</strong>
-                <small>Instagram / Threads 연결값을 입력한 뒤 계정을 연결합니다.</small>
+                <strong id="connectionSettingsTitle">연결 정보 입력</strong>
+                <small id="connectionSettingsSubtitle">필요한 앱 연결값만 입력합니다.</small>
               </div>
               <button id="closeAdminSettings" class="ghostButton" type="button">닫기</button>
             </div>
             <form id="adminSettingsForm" class="adminSettingsForm">
               <div id="adminSettingsStatus" class="adminSettingsStatus" aria-live="polite">설정 상태를 확인하고 있습니다.</div>
               <div class="adminSettingsGrid">
-                <div class="formSection">
+                <div id="connectionInfoSection" class="formSection">
                   <div class="formSectionHead">
                     <span class="stepNumber">A</span>
                     <div>
-                      <strong>연결 정보</strong>
-                      <span>연결에 필요한 Redirect URI와 설정 상태를 확인합니다.</span>
+                      <strong>Callback URL</strong>
+                      <span>Meta 앱의 Valid OAuth Redirect URIs에 등록할 주소입니다.</span>
                     </div>
                   </div>
                   <div class="redirectUriBox">
-                    <strong>OAuth Redirect URI</strong>
+                    <div class="fieldLabelRow">
+                      <strong>OAuth Redirect URI</strong>
+                      <button id="copyRedirectUri" class="ghostButton" type="button">복사</button>
+                    </div>
                     <code id="redirectUriValue"></code>
                   </div>
                 </div>
 
-                <div class="formSection">
+                <div id="metaSettingsSection" class="formSection">
                   <div class="formSectionHead">
                     <span class="stepNumber">M</span>
                     <div>
@@ -87,12 +90,12 @@
                   </label>
                 </div>
 
-                <div class="formSection">
+                <div id="threadsSettingsSection" class="formSection">
                   <div class="formSectionHead">
                     <span class="stepNumber">T</span>
                     <div>
                       <strong>Threads</strong>
-                      <span>Threads 계정 연결과 글 게시에 사용하는 앱 설정입니다.</span>
+                      <span>Threads 계정 연결과 게시에 사용하는 앱 설정입니다.</span>
                     </div>
                   </div>
                   <label>

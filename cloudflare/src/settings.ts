@@ -177,6 +177,7 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
 
 export async function saveAdminSettings(request: Request, env: Env): Promise<Response> {
   if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
+  const currentSettings = await getRuntimeSettings(env);
   const input = (await request.json().catch(() => ({}))) as {
     meta_app_id?: string;
     meta_app_secret?: string;
@@ -194,6 +195,11 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
   if (metaAppId && !/^\d+$/.test(metaAppId)) return badRequest("Meta App ID must contain digits only.");
   if (metaLoginConfigId && !/^\d+$/.test(metaLoginConfigId)) return badRequest("Facebook Login Configuration ID must contain digits only.");
   if (threadsClientId && !/^\d+$/.test(threadsClientId)) return badRequest("Threads App ID must contain digits only.");
+  if (metaAppId && currentSettings.metaAppId) return badRequest("Meta App ID is already configured.");
+  if (metaAppSecret && currentSettings.metaAppSecret) return badRequest("Meta App Secret is already configured.");
+  if (metaLoginConfigId && currentSettings.metaLoginConfigId) return badRequest("Facebook Login Configuration ID is already configured.");
+  if (threadsClientId && currentSettings.threadsClientId) return badRequest("Threads App ID is already configured.");
+  if (threadsClientSecret && currentSettings.threadsClientSecret) return badRequest("Threads App Secret is already configured.");
 
   await ensureSettingsSchema(env);
   if (metaAppId) await setSetting(env, "meta_app_id", metaAppId, false);

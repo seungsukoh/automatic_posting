@@ -43,6 +43,11 @@ const utmPreview = document.querySelector("#utmPreview");
 const adminSettingsPanel = document.querySelector("#adminSettingsPanel");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
+const connectionSettingsTitle = document.querySelector("#connectionSettingsTitle");
+const connectionSettingsSubtitle = document.querySelector("#connectionSettingsSubtitle");
+const metaSettingsSection = document.querySelector("#metaSettingsSection");
+const threadsSettingsSection = document.querySelector("#threadsSettingsSection");
+const copyRedirectUri = document.querySelector("#copyRedirectUri");
 const closeAdminSettings = document.querySelector("#closeAdminSettings");
 const refreshAdminSettings = document.querySelector("#refreshAdminSettings");
 const saveAdminSettings = document.querySelector("#saveAdminSettings");
@@ -58,6 +63,7 @@ const appState = {
   system: null,
   jobs: [],
   adminSettings: null,
+  settingsPlatform: "",
   batchItems: [],
   batchSkipped: [],
   batchResults: {},
@@ -683,7 +689,7 @@ function platformStatus(platform) {
         selectable: false,
         connected: false,
         label: "계정 연결 필요",
-        detail: "Threads 연결하기를 눌러 글 전용 게시 계정을 승인하세요.",
+        detail: "Threads 연결하기를 눌러 게시 계정을 승인하세요.",
         tone: "pending",
       };
     }
@@ -831,7 +837,11 @@ function previewStatusFor(platform) {
       tone: "ok",
     };
   }
-  if (platform === "threads") return { label: "텍스트 게시", tone: "ok" };
+  if (platform === "threads") {
+    const file = imageFile.files?.[0];
+    const hasImage = Boolean(file || form.elements.image_url.value);
+    return { label: hasImage ? "이미지 포함" : "텍스트 게시", tone: "ok" };
+  }
   if (platform === "kakao") return { label: "경로 미구성", tone: "missing" };
   return { label: "확인 필요", tone: "pending" };
 }
@@ -916,6 +926,7 @@ function adminSettingRows(settings) {
 
 function renderAdminSettingsStatus(settings) {
   if (!adminSettingsStatus) return;
+  syncAdminSettingsFields(settings);
   const rows = adminSettingRows(settings);
   const storesPlainSecrets = !settings.token_encryption_key_configured;
   const readyCount = rows.filter((row) => row.configured).length;
@@ -934,6 +945,30 @@ function renderAdminSettingsStatus(settings) {
       `).join("")}
     </div>
   `;
+}
+
+function syncAdminSettingsFields(settings) {
+  if (!adminSettingsForm) return;
+  const fieldStates = {
+    meta_app_id: settings.meta_app_id_configured,
+    meta_app_secret: settings.meta_app_secret_configured,
+    meta_login_config_id: settings.meta_login_config_id_configured,
+    threads_client_id: settings.threads_client_id_configured,
+    threads_client_secret: settings.threads_client_secret_configured,
+  };
+  let editableCount = 0;
+  Object.entries(fieldStates).forEach(([name, configured]) => {
+    const field = adminSettingsForm.elements[name];
+    if (!field) return;
+    const section = field.closest(".formSection");
+    const visible = !section?.classList.contains("isHidden");
+    field.disabled = configured;
+    if (!field.dataset.placeholder) field.dataset.placeholder = field.placeholder;
+    field.placeholder = configured ? "이미 설정됨" : field.dataset.placeholder;
+    field.closest("label")?.classList.toggle("disabled", configured);
+    if (!configured && visible) editableCount += 1;
+  });
+  if (saveAdminSettings) saveAdminSettings.disabled = editableCount === 0;
 }
 
 async function loadAdminSettings() {
@@ -962,7 +997,12 @@ function adminSettingsPayload() {
     "threads_client_id",
     "threads_client_secret",
   ];
-  return Object.fromEntries(fields.map((name) => [name, String(adminSettingsForm.elements[name]?.value || "").trim()]));
+  return Object.fromEntries(fields.map((name) => {
+    const field = adminSettingsForm.elements[name];
+    const section = field?.closest(".formSection");
+    const visible = !section?.classList.contains("isHidden");
+    return [name, visible ? String(field?.value || "").trim() : ""];
+  }));
 }
 
 function hasAdminSettingValue(payload) {
@@ -975,8 +1015,32 @@ function hasAdminSettingValue(payload) {
   ].some((name) => Boolean(payload[name]));
 }
 
-function openAdminSettingsPanel() {
+function updateConnectionSettingsScope(platform = "") {
+  appState.settingsPlatform = platform;
+  const isThreads = platform === "threads";
+  const isInstagram = platform === "instagram";
+  if (connectionSettingsTitle) {
+    connectionSettingsTitle.textContent = isThreads
+      ? "Threads 연결 정보"
+      : isInstagram
+      ? "Instagram 연결 정보"
+      : "연결 정보 입력";
+  }
+  if (connectionSettingsSubtitle) {
+    connectionSettingsSubtitle.textContent = isThreads
+      ? "Threads App ID와 Secret을 저장한 뒤 계정을 연결합니다."
+      : isInstagram
+      ? "Meta App ID와 Secret을 저장한 뒤 계정을 연결합니다."
+      : "필요한 앱 연결값만 입력합니다.";
+  }
+  metaSettingsSection?.classList.toggle("isHidden", isThreads);
+  threadsSettingsSection?.classList.toggle("isHidden", isInstagram);
+  if (appState.adminSettings) syncAdminSettingsFields(appState.adminSettings);
+}
+
+function openAdminSettingsPanel(platform = "") {
   if (!adminSettingsPanel) return;
+  updateConnectionSettingsScope(platform);
   adminSettingsPanel.classList.remove("isHidden");
   adminSettingsPanel.setAttribute("aria-hidden", "false");
   loadAdminSettings().catch(() => {});
@@ -1012,7 +1076,7 @@ function renderConnectionCard(platform, readiness, account) {
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
-      : `<a class="linkButton secondaryButton" href="#adminSettingsPanel" data-open-settings>설정하기</a>`;
+      : `<a class="linkButton secondaryButton" href="#adminSettingsPanel" data-open-settings="${platform}">연결 정보 입력</a>`;
   const fallbackAction = platform === "instagram" && configured && !connected
     ? `<a class="secondaryButton" href="/api/auth/meta/start?platform=instagram&variant=basic">대체 연결 시도</a>`
     : "";
@@ -1216,7 +1280,6 @@ function batchValidationState(items, platforms) {
     lastDate: scheduledDates[scheduledDates.length - 1] || null,
     noPlatforms: platforms.length === 0,
     hasKakao: platforms.includes("kakao"),
-    hasThreads: platforms.includes("threads"),
     jpgBlockCount,
     pastCount: issues.filter((issue) => issue === "past").length,
     overflowCount: issues.filter((issue) => issue === "overflow").length,
@@ -1282,7 +1345,6 @@ function renderBatchPlan() {
     state.duplicate.existingConflictCount ? `기존 예약과 시간이 겹치는 후보 ${state.duplicate.existingConflictCount}개가 있습니다.` : "",
     state.missingCaptionCount ? `캡션 파일이 없는 이미지 ${state.missingCaptionCount}개는 공통 문구를 사용합니다.` : "",
     state.missingCopyCount ? `본문 없이 예약될 이미지 ${state.missingCopyCount}개가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.` : "",
-    state.hasThreads ? "Threads는 글만 바로 게시할 때 사용하세요. 날짜 폴더 예약은 Instagram 이미지 예약만 지원합니다." : "",
   ].filter(Boolean);
 
   const titleTemplate = String(form.elements.title.value || "").trim();
@@ -1424,7 +1486,7 @@ function renderBatchQueue() {
   const hasOverflowItems = state.overflowCount > 0;
   const hasDuplicateWarnings = state.duplicate.warningCount > 0;
   const hasMissingCopy = state.missingCopyCount > 0;
-  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || state.hasThreads || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
+  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
   const allSucceeded = items.length > 0 && items.every((item) => batchResultFor(item)?.status === "success");
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
@@ -1701,7 +1763,7 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
   formStatus.textContent = shouldGenerateTextImage ? "텍스트 이미지 생성 중" : "이미지 업로드 중";
   let result;
   try {
-    result = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") });
+    result = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") || platforms.includes("threads") });
   } finally {
     imagePreview.classList.remove("uploading");
   }
@@ -1773,7 +1835,7 @@ async function loadJobs() {
 
 async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
   onStage("uploading", "업로드 중");
-  const uploadedImage = await uploadImageFileToAssets(item.file, { forceJpeg: platforms.includes("instagram") });
+  const uploadedImage = await uploadImageFileToAssets(item.file, { forceJpeg: platforms.includes("instagram") || platforms.includes("threads") });
   const fallbackTitle = fileStem(item.fileName);
   const titleTemplate = item.captionTitle || formValue("title");
   const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
@@ -1868,10 +1930,21 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-open-settings]");
   if (!target || !adminSettingsPanel) return;
   event.preventDefault();
-  openAdminSettingsPanel();
+  openAdminSettingsPanel(target.dataset.openSettings || "");
 });
 
 closeAdminSettings?.addEventListener("click", closeAdminSettingsPanel);
+
+copyRedirectUri?.addEventListener("click", async () => {
+  const value = redirectUriValue?.textContent?.trim();
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast("Callback URL을 복사했습니다.");
+  } catch {
+    showToast("Callback URL을 선택해서 복사하세요.", "error");
+  }
+});
 
 refreshAdminSettings?.addEventListener("click", async () => {
   setBusy(refreshAdminSettings, true, "확인 중");
@@ -2046,11 +2119,6 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   }
   if (state.hasKakao) {
     showToast("Kakao는 아직 배치 예약 발송 경로가 구성되지 않았습니다.", "error");
-    renderBatchQueue();
-    return;
-  }
-  if (state.hasThreads) {
-    showToast("Threads는 글만 바로 게시할 때 사용하세요. 날짜 폴더 예약은 Instagram 이미지 예약만 지원합니다.", "error");
     renderBatchQueue();
     return;
   }

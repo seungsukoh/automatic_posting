@@ -1457,8 +1457,15 @@ button:focus-visible,
 .adminSettingsGrid,
 .adminStatusGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.adminSettingsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.adminStatusGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .adminSettingsStatus {

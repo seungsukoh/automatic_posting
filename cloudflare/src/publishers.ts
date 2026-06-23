@@ -182,8 +182,13 @@ class ThreadsPublisher implements Publisher {
 
       const accessToken = await decryptToken(env, account.accessTokenCiphertext);
       const createUrl = new URL(`${threadsGraphBaseUrl}/${account.accountId}/threads`);
-      createUrl.searchParams.set("media_type", "TEXT");
       createUrl.searchParams.set("text", text);
+      if (payload.imageUrl) {
+        createUrl.searchParams.set("media_type", "IMAGE");
+        createUrl.searchParams.set("image_url", payload.imageUrl);
+      } else {
+        createUrl.searchParams.set("media_type", "TEXT");
+      }
       createUrl.searchParams.set("access_token", accessToken);
 
       const container = await readJsonResponse<ThreadsContainerResponse>(
