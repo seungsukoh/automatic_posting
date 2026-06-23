@@ -50,6 +50,31 @@
             </div>
             <form id="adminSettingsForm" class="adminSettingsForm">
               <div id="adminSettingsStatus" class="adminSettingsStatus" aria-live="polite">설정 상태를 확인하고 있습니다.</div>
+              <details class="settingsGuide" open>
+                <summary>입력값 확인 가이드</summary>
+                <div class="settingsGuideGrid">
+                  <article>
+                    <strong>Threads만 연결할 때</strong>
+                    <span>아래 Callback URL을 Meta 앱의 Valid OAuth Redirect URIs에 그대로 추가합니다.</span>
+                    <span>Threads App ID와 Threads App Secret은 Meta for Developers의 해당 Threads 앱, 앱 설정, 기본 화면에서 확인합니다.</span>
+                  </article>
+                  <article>
+                    <strong>Instagram도 연결할 때</strong>
+                    <span>Meta App ID와 Meta App Secret은 Instagram Business 연결에 쓰는 Meta 앱의 앱 설정, 기본 화면 값입니다.</span>
+                    <span>Facebook Login Configuration ID는 Facebook Login for Business 설정 화면의 Configuration ID입니다.</span>
+                  </article>
+                  <article>
+                    <strong>입력하지 않는 값</strong>
+                    <span>Threads 표시 이름은 Meta 콘솔 표시용이라 이 앱에 저장하지 않습니다.</span>
+                    <span>제거 콜백 URL과 삭제 콜백 URL은 이 연결 흐름에 필요하지 않습니다. Meta가 필수로 요구할 때만 별도 콜백을 준비합니다.</span>
+                  </article>
+                  <article>
+                    <strong>연결 전 확인</strong>
+                    <span>Callback URL은 끝에 슬래시 없이 정확히 등록해야 합니다.</span>
+                    <span>앱이 테스트 모드이면 연결할 Threads 계정이 앱 역할 또는 테스터 초대를 수락해야 합니다.</span>
+                  </article>
+                </div>
+              </details>
               <div class="adminSettingsGrid">
                 <div id="connectionInfoSection" class="formSection">
                   <div class="formSectionHead">
@@ -138,9 +163,9 @@
                   </div>
                   <fieldset class="platformPicker nativePlatformPicker">
                     <legend>플랫폼</legend>
-                    <label><input type="checkbox" name="platforms" value="instagram" /> <span>Instagram</span></label>
-                    <label><input type="checkbox" name="platforms" value="threads" /> <span>Threads</span></label>
-                    <label><input type="checkbox" name="platforms" value="kakao" /> <span>Kakao</span></label>
+                    <label><input type="radio" name="platforms" value="instagram" /> <span>Instagram</span></label>
+                    <label><input type="radio" name="platforms" value="threads" /> <span>Threads</span></label>
+                    <label><input type="radio" name="platforms" value="kakao" /> <span>Kakao</span></label>
                   </fieldset>
                   <div id="platformQuickPicker" class="platformQuickPicker" aria-live="polite"></div>
                 </div>

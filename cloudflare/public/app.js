@@ -1,5 +1,7 @@
 ﻿const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
+const INSTAGRAM_MIN_IMAGE_RATIO = 0.8;
+const INSTAGRAM_MAX_IMAGE_RATIO = 1.91;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const TEXT_CAPTION_EXTENSIONS = new Set(["txt", "md"]);
 const CSV_CAPTION_EXTENSIONS = new Set(["csv"]);
@@ -55,6 +57,8 @@ const redirectUriValue = document.querySelector("#redirectUriValue");
 const redirectUriMirrors = document.querySelectorAll(".redirectUriMirror");
 
 let previewUrl = "";
+let selectedImageInfo = null;
+let imageSelectionVersion = 0;
 let singlePostSubmitRequested = false;
 let batchSubmitRequested = false;
 const appState = {
@@ -283,6 +287,82 @@ async function convertImageToJpeg(file) {
   } finally {
     bitmap.close?.();
   }
+}
+
+async function readImageDimensions(file) {
+  const source = normalizedImageFile(file);
+  if ("createImageBitmap" in window) {
+    const bitmap = await createImageBitmap(source);
+    try {
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        ratio: bitmap.width / bitmap.height,
+      };
+    } finally {
+      bitmap.close?.();
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(source);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        ratio: image.naturalWidth / image.naturalHeight,
+      });
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Image dimensions could not be read."));
+    };
+    image.src = url;
+  });
+}
+
+function formatImageDimensions(info) {
+  if (!info?.width || !info?.height || !Number.isFinite(info.ratio)) return "";
+  return `${info.width}x${info.height} · ${info.ratio.toFixed(2)}:1`;
+}
+
+function instagramImageRatioIssue(info) {
+  if (!info?.width || !info?.height || !Number.isFinite(info.ratio)) return "";
+  if (info.ratio >= INSTAGRAM_MIN_IMAGE_RATIO && info.ratio <= INSTAGRAM_MAX_IMAGE_RATIO) return "";
+  return `Instagram은 4:5~1.91:1 이미지만 게시할 수 있습니다. 현재 ${formatImageDimensions(info)}입니다.`;
+}
+
+function selectedInstagramImageIssue(platforms = selectedPlatforms()) {
+  if (!platforms.includes("instagram")) return "";
+  return instagramImageRatioIssue(selectedImageInfo);
+}
+
+function renderSelectedImagePreview(statusText = "업로드 전") {
+  const file = imageFile.files?.[0];
+  if (!file || !previewUrl) return;
+  const issue = selectedInstagramImageIssue();
+  const imageMeta = [
+    `${Math.ceil(file.size / 1024)} KB`,
+    formatImageDimensions(selectedImageInfo),
+    statusText,
+  ].filter(Boolean).join(" · ");
+  imagePreview.classList.toggle("hasError", Boolean(issue));
+  imagePreview.innerHTML = `
+    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
+    <div>
+      <strong>${escapeHtml(file.name)}</strong>
+      <span class="imageMeta">${escapeHtml(imageMeta)}</span>
+      ${issue ? `<span class="imageIssue">${escapeHtml(issue)}</span>` : ""}
+    </div>
+  `;
+}
+
+function announceSelectedImageIssue() {
+  const issue = selectedInstagramImageIssue();
+  if (issue) showToast(issue, "error");
+  return issue;
 }
 
 function formValue(name) {
@@ -675,6 +755,30 @@ function selectedPlatforms() {
   return [...form.querySelectorAll("input[name='platforms']:checked")].map((input) => input.value);
 }
 
+function platformInputs() {
+  return [...form.querySelectorAll("input[name='platforms']")];
+}
+
+function setSelectedPlatform(value) {
+  platformInputs().forEach((input) => {
+    input.checked = Boolean(value) && input.value === value && !input.disabled;
+  });
+}
+
+function enforceSinglePlatformSelection(preferredValue = "") {
+  const inputs = platformInputs();
+  const checkedInputs = inputs.filter((input) => input.checked && !input.disabled);
+  if (checkedInputs.length <= 1) return checkedInputs[0]?.value || "";
+
+  const preferred = checkedInputs.find((input) => input.value === preferredValue)
+    || checkedInputs.find((input) => input.value === "threads")
+    || checkedInputs[0];
+  inputs.forEach((input) => {
+    input.checked = input === preferred;
+  });
+  return preferred?.value || "";
+}
+
 function accountForPlatform(platform) {
   return appState.accounts.find((account) => account.platform === platform && account.status !== "disconnected") || null;
 }
@@ -718,7 +822,7 @@ function platformStatus(platform) {
       selectable: false,
       connected: false,
       label: "사용 불가",
-      detail: "현재 Instagram 게시만 사용할 수 있습니다.",
+      detail: "현재 이 채널은 사용할 수 없습니다.",
       tone: "missing",
     };
   }
@@ -751,16 +855,19 @@ function platformStatus(platform) {
 
 function validatePublishablePlatforms(platforms) {
   if (platforms.length === 0) return "먼저 게시할 계정을 연결하고 플랫폼을 선택하세요.";
+  if (platforms.length > 1) return "게시 채널은 하나만 선택하세요.";
   const blocked = platforms
     .map((platform) => ({ platform, status: platformStatus(platform) }))
     .filter(({ status }) => !status.selectable);
-  if (blocked.length === 0) return "";
-  const first = blocked[0];
-  return `${platformLabel(first.platform)}: ${first.status.detail}`;
+  if (blocked.length > 0) {
+    const first = blocked[0];
+    return `${platformLabel(first.platform)}: ${first.status.detail}`;
+  }
+  return selectedInstagramImageIssue(platforms);
 }
 
 function syncPlatformPicker() {
-  const inputs = [...form.querySelectorAll("input[name='platforms']")];
+  const inputs = platformInputs();
   const readyInputs = [];
 
   inputs.forEach((input) => {
@@ -773,36 +880,38 @@ function syncPlatformPicker() {
     if (status.selectable) readyInputs.push(input);
   });
 
-  if (!appState.platformSelectionInitialized && selectedPlatforms().length === 0 && readyInputs.length === 1) {
-    readyInputs[0].checked = true;
+  enforceSinglePlatformSelection(selectedPlatforms()[0] || "threads");
+
+  if (selectedPlatforms().length === 0 && readyInputs.length > 0) {
+    const preferred = readyInputs.find((input) => input.value === "threads")
+      || readyInputs.find((input) => input.value === "instagram")
+      || readyInputs[0];
+    preferred.checked = true;
     appState.platformSelectionInitialized = true;
   }
 
-  if (!appState.platformSelectionInitialized && selectedPlatforms().length === 0 && readyInputs.length > 1) {
-    const preferred = imageFile.files?.[0]
-      ? readyInputs.find((input) => input.value === "instagram")
-      : readyInputs.find((input) => input.value === "threads") || readyInputs.find((input) => input.value === "instagram");
-    if (preferred) preferred.checked = true;
-    appState.platformSelectionInitialized = true;
-  }
+  enforceSinglePlatformSelection(selectedPlatforms()[0] || "threads");
 
   if (platformQuickPicker) {
     const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
     platformQuickPicker.innerHTML = visibleInputs.length
       ? `
-        <div class="quickPickerButtons">
+        <div class="quickPickerButtons" role="radiogroup" aria-label="게시 채널">
           ${visibleInputs.map((input) => {
             const status = platformStatus(input.value);
+            const checked = input.checked;
             return `
               <button
-                class="quickPlatformButton ${input.checked ? "selected" : ""}"
+                class="quickPlatformButton ${checked ? "selected" : ""}"
                 type="button"
-                data-platform-toggle="${escapeHtml(input.value)}"
+                data-platform-select="${escapeHtml(input.value)}"
+                role="radio"
+                aria-checked="${checked ? "true" : "false"}"
                 ${status.selectable ? "" : "disabled"}
                 title="${escapeHtml(status.detail)}"
               >
                 <span class="quickPlatformName">${platformLabel(input.value)}</span>
-                <span class="quickPlatformState">${escapeHtml(status.label)}</span>
+                <span class="quickPlatformState">${escapeHtml(checked ? "선택됨" : status.label)}</span>
                 <small>${escapeHtml(status.detail)}</small>
               </button>
             `;
@@ -812,11 +921,12 @@ function syncPlatformPicker() {
       : `
         <div class="inlineNotice pending">
           <strong>게시 채널 대기</strong>
-          <span>Step 1에서 Instagram 계정을 먼저 연결하세요.</span>
+          <span>연결 카드에서 사용할 채널을 먼저 연결하세요.</span>
         </div>
       `;
   }
 
+  renderSelectedImagePreview();
   renderPublishPreview();
   renderBatchQueue();
 }
@@ -844,6 +954,13 @@ function previewStatusFor(platform) {
   if (platform === "instagram") {
     const file = imageFile.files?.[0];
     const hasImage = Boolean(file || form.elements.image_url.value);
+    const imageIssue = selectedInstagramImageIssue([platform]);
+    if (imageIssue) {
+      return {
+        label: "비율 확인 필요",
+        tone: "missing",
+      };
+    }
     return {
       label: hasImage ? "이미지 포함" : "텍스트 이미지 자동 생성",
       tone: "ok",
@@ -1147,6 +1264,8 @@ async function loadConnections() {
 function clearImagePreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = "";
+  selectedImageInfo = null;
+  imagePreview.classList.remove("hasError", "uploading");
   imagePreview.textContent = "선택된 이미지가 없습니다.";
   clearImage.disabled = true;
   form.elements.image_key.value = "";
@@ -1213,7 +1332,15 @@ async function buildBatchItems(fileList) {
       continue;
     }
 
-    imageFiles.push({ file, relativePath, segments, dateFolder, detectedType });
+    let imageInfo;
+    try {
+      imageInfo = await readImageDimensions(file);
+    } catch {
+      skipped.push({ name: relativePath, reason: "이미지 크기 확인 실패" });
+      continue;
+    }
+
+    imageFiles.push({ file, relativePath, segments, dateFolder, detectedType, imageInfo });
   }
 
   const csvCaptions = new Map();
@@ -1281,6 +1408,9 @@ function batchValidationState(items, platforms) {
     .sort((a, b) => a.getTime() - b.getTime());
   const issues = items.map((item) => batchItemScheduleIssue(item));
   const duplicate = batchDuplicateState(items, platforms);
+  const instagramRatioItems = platforms.includes("instagram")
+    ? items.filter((item) => instagramImageRatioIssue(item.imageInfo))
+    : [];
   const jpgBlockCount = 0;
   return {
     dateCount: new Set(items.map((item) => item.dateKey)).size,
@@ -1294,6 +1424,8 @@ function batchValidationState(items, platforms) {
     noPlatforms: platforms.length === 0,
     hasKakao: platforms.includes("kakao"),
     jpgBlockCount,
+    instagramRatioBlockCount: instagramRatioItems.length,
+    instagramRatioBlockPaths: new Set(instagramRatioItems.map((item) => item.relativePath)),
     pastCount: issues.filter((issue) => issue === "past").length,
     overflowCount: issues.filter((issue) => issue === "overflow").length,
     duplicate,
@@ -1304,6 +1436,7 @@ function skippedFixFor(reason) {
   return {
     "날짜 폴더 없음": "YYYY-MM-DD 날짜 폴더 안에 넣기",
     "이미지 형식 제외": "JPG, PNG, WEBP로 저장",
+    "이미지 크기 확인 실패": "이미지 파일을 다시 저장",
     "빈 파일": "파일을 다시 저장",
     "8MB 초과": "8MB 이하로 압축",
     "캡션 파일 읽기 실패": "TXT/MD 인코딩 확인",
@@ -1348,9 +1481,10 @@ function renderBatchPlan() {
   }
 
   const warnings = [
-    state.noPlatforms ? "플랫폼을 하나 이상 선택하세요." : "",
+    state.noPlatforms ? "게시 채널을 하나 선택하세요." : "",
     state.hasKakao ? "Kakao는 발송 경로가 아직 구성되지 않아 배치 예약에서 제외해야 합니다." : "",
     state.jpgBlockCount ? `Instagram 선택 시 JPG가 아닌 이미지 ${state.jpgBlockCount}개를 교체해야 합니다.` : "",
+    state.instagramRatioBlockCount ? `Instagram 비율에 맞지 않는 이미지 ${state.instagramRatioBlockCount}개를 교체하세요.` : "",
     state.pastCount ? `이미 지난 예약 시간 ${state.pastCount}개가 있습니다.` : "",
     state.overflowCount ? `간격 때문에 날짜 폴더 다음 날로 넘어가는 이미지 ${state.overflowCount}개가 있습니다.` : "",
     state.duplicate.fileConflictCount ? `같은 날짜의 같은 파일명 ${state.duplicate.fileConflictCount}개를 확인하세요.` : "",
@@ -1494,12 +1628,13 @@ function renderBatchQueue() {
   const platforms = selectedPlatforms();
   const state = batchValidationState(items, platforms);
   const needsInstagramJpeg = false;
+  const hasInstagramRatioIssue = state.instagramRatioBlockCount > 0;
   const hasPastItems = state.pastCount > 0;
   const hasKakao = state.hasKakao;
   const hasOverflowItems = state.overflowCount > 0;
   const hasDuplicateWarnings = state.duplicate.warningCount > 0;
   const hasMissingCopy = state.missingCopyCount > 0;
-  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
+  const hasBlockingIssue = needsInstagramJpeg || hasInstagramRatioIssue || hasPastItems || hasKakao || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
   const allSucceeded = items.length > 0 && items.every((item) => batchResultFor(item)?.status === "success");
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
@@ -1544,6 +1679,9 @@ function renderBatchQueue() {
   const instagramNotice = needsInstagramJpeg
     ? `<div class="batchWarning">Instagram 예약은 JPG 이미지만 사용할 수 있습니다.</div>`
     : "";
+  const instagramRatioNotice = hasInstagramRatioIssue
+    ? `<div class="batchWarning">Instagram은 4:5~1.91:1 이미지 비율만 게시할 수 있습니다. 표시된 이미지를 교체하세요.</div>`
+    : "";
   const pastNotice = hasPastItems
     ? `<div class="batchWarning">이미 지난 예약 시간이 포함되어 있습니다. 날짜 폴더나 시작 시간을 조정하세요.</div>`
     : "";
@@ -1559,14 +1697,16 @@ function renderBatchQueue() {
     </div>
     ${skippedNotice}
     ${instagramNotice}
+    ${instagramRatioNotice}
     ${pastNotice}
     ${duplicateNotice}
     <div class="batchDateGroups">
       ${[...groups.entries()].map(([dateKey, group]) => {
         const groupHasBlockingIssue = group.some((item) => {
           const itemNeedsJpeg = false;
+          const itemRatioIssue = state.instagramRatioBlockPaths.has(item.relativePath);
           const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
-          return itemNeedsJpeg || batchItemScheduleIssue(item) || state.missingCopyPaths.has(item.relativePath) || itemWarnings.length;
+          return itemNeedsJpeg || itemRatioIssue || batchItemScheduleIssue(item) || state.missingCopyPaths.has(item.relativePath) || itemWarnings.length;
         });
         const preferredOpen = appState.batchDateGroups[dateKey];
         const openGroup = (groupHasBlockingIssue || (typeof preferredOpen === "boolean" ? preferredOpen : groups.size <= 2 && group.length <= 6)) ? " open" : "";
@@ -1578,12 +1718,17 @@ function renderBatchQueue() {
           </summary>
           ${group.map((item) => {
             const needsJpeg = false;
+            const imageRatioIssue = state.instagramRatioBlockPaths.has(item.relativePath)
+              ? instagramImageRatioIssue(item.imageInfo)
+              : "";
             const result = batchResultFor(item);
             const itemWarnings = state.duplicate.itemWarnings.get(item.relativePath) || [];
             const scheduleIssue = batchItemScheduleIssue(item);
             const missingCopy = state.missingCopyPaths.has(item.relativePath);
             const badgeLabel = needsJpeg
               ? "JPG 필요"
+              : imageRatioIssue
+              ? "비율 확인"
               : scheduleIssue === "past"
               ? "지난 시간"
               : scheduleIssue === "overflow"
@@ -1602,12 +1747,13 @@ function renderBatchQueue() {
                   <small>${escapeHtml(item.relativePath)}</small>
                   ${item.captionSource ? `<span class="captionBadge">캡션 매칭: ${escapeHtml(item.captionSource)}</span>` : ""}
                   ${captionPreview ? `<span class="batchCaptionPreview">${escapeHtml(captionPreview)}</span>` : ""}
+                  ${imageRatioIssue ? `<span class="batchCaptionPreview">${escapeHtml(imageRatioIssue)}</span>` : ""}
                   ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
                   ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
                 </div>
                 <div class="batchFileSchedule">
                   <strong>${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</strong>
-                  <span class="batchBadge ${needsJpeg || scheduleIssue || missingCopy || itemWarnings.length ? "warning" : ""}">
+                  <span class="batchBadge ${needsJpeg || imageRatioIssue || scheduleIssue || missingCopy || itemWarnings.length ? "warning" : ""}">
                     ${badgeLabel}
                   </span>
                   ${result ? `<span class="batchProgress ${result.status}">${escapeHtml(result.label)}</span>` : ""}
@@ -1638,7 +1784,9 @@ function resetBatchResultsForPlanChange() {
   if (batchStatus && appState.batchItems.length) batchStatus.textContent = `${appState.batchItems.length}개 준비`;
 }
 
-imageFile.addEventListener("change", () => {
+imageFile.addEventListener("change", async () => {
+  imageSelectionVersion += 1;
+  const selectionVersion = imageSelectionVersion;
   const file = imageFile.files?.[0];
   clearImagePreview();
   if (!file) return;
@@ -1653,19 +1801,27 @@ imageFile.addEventListener("change", () => {
     return;
   }
 
+  imagePreview.textContent = "이미지 크기 확인 중";
+  try {
+    selectedImageInfo = await readImageDimensions(file);
+  } catch {
+    if (selectionVersion !== imageSelectionVersion) return;
+    showToast("이미지 크기를 확인할 수 없습니다. 다른 파일로 다시 선택해 주세요.", "error");
+    imageFile.value = "";
+    clearImagePreview();
+    return;
+  }
+  if (selectionVersion !== imageSelectionVersion) return;
+
   previewUrl = URL.createObjectURL(file);
   clearImage.disabled = false;
-  imagePreview.innerHTML = `
-    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
-    <div>
-      <strong>${escapeHtml(file.name)}</strong>
-      <span>${Math.ceil(file.size / 1024)} KB · 업로드 전</span>
-    </div>
-  `;
+  renderSelectedImagePreview();
+  announceSelectedImageIssue();
   renderPublishPreview();
 });
 
 clearImage.addEventListener("click", () => {
+  imageSelectionVersion += 1;
   imageFile.value = "";
   clearImagePreview();
 });
@@ -1768,6 +1924,11 @@ async function generateTextPostImageFile() {
 
 async function uploadSelectedImage(platforms = selectedPlatforms()) {
   const file = imageFile.files?.[0];
+  const imageIssue = selectedInstagramImageIssue(platforms);
+  if (imageIssue) {
+    renderSelectedImagePreview();
+    throw new Error(imageIssue);
+  }
   const shouldGenerateTextImage = !file && platforms.includes("instagram");
   if (!file && !shouldGenerateTextImage) return { image_key: "", image_url: "" };
   const uploadSource = file || await generateTextPostImageFile();
@@ -1782,6 +1943,7 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
   }
   form.elements.image_key.value = result.image_key;
   form.elements.image_url.value = result.image_url;
+  imagePreview.classList.remove("hasError");
   imagePreview.innerHTML = `
     <img src="${shouldGenerateTextImage ? result.image_url : previewUrl}" alt="게시 이미지 미리보기" />
     <div>
@@ -1921,22 +2083,28 @@ form.addEventListener("input", () => {
   renderBatchQueue();
 });
 form.addEventListener("change", (event) => {
-  if (event.target?.name === "platforms") appState.platformSelectionInitialized = true;
+  if (event.target?.name === "platforms") {
+    if (event.target.checked) setSelectedPlatform(event.target.value);
+    appState.platformSelectionInitialized = true;
+    syncPlatformPicker();
+    announceSelectedImageIssue();
+  }
   updateFormMeta();
   resetBatchResultsForPlanChange();
   renderBatchQueue();
 });
 
 platformQuickPicker?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-platform-toggle]");
+  const button = event.target.closest("[data-platform-select]");
   if (!button || button.disabled) return;
-  const input = form.querySelector(`input[name="platforms"][value="${button.dataset.platformToggle}"]`);
+  const input = form.querySelector(`input[name="platforms"][value="${button.dataset.platformSelect}"]`);
   if (!input || input.disabled) return;
-  input.checked = !input.checked;
+  setSelectedPlatform(input.value);
   appState.platformSelectionInitialized = true;
   updateFormMeta();
   resetBatchResultsForPlanChange();
   syncPlatformPicker();
+  announceSelectedImageIssue();
 });
 
 document.addEventListener("click", (event) => {
@@ -2132,6 +2300,11 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   }
   if (state.hasKakao) {
     showToast("Kakao는 아직 배치 예약 발송 경로가 구성되지 않았습니다.", "error");
+    renderBatchQueue();
+    return;
+  }
+  if (state.instagramRatioBlockCount > 0) {
+    showToast(`Instagram 이미지 비율에 맞지 않는 파일 ${state.instagramRatioBlockCount}개를 교체하세요.`, "error");
     renderBatchQueue();
     return;
   }

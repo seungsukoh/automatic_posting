@@ -1123,6 +1123,12 @@ button:focus-visible,
   opacity: 0.7;
 }
 
+.imagePreview.hasError {
+  border-color: rgba(192, 57, 43, 0.45);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
 .imagePreview:has(img) {
   grid-template-columns: 180px 1fr;
   place-items: stretch;
@@ -1140,6 +1146,19 @@ button:focus-visible,
   display: grid;
   gap: 5px;
   padding: 14px;
+}
+
+.imageMeta {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.imageIssue {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
 }
 
 .publishPreviewPanel {
@@ -1309,7 +1328,7 @@ button:focus-visible,
 
 .quickPickerButtons {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
 }
 
@@ -1471,6 +1490,75 @@ button:focus-visible,
 .adminSettingsStatus {
   display: grid;
   gap: 10px;
+}
+
+.settingsGuide {
+  border: 1px solid #dbe3e8;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.settingsGuide summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+
+.settingsGuide summary::-webkit-details-marker {
+  display: none;
+}
+
+.settingsGuide summary::after {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.settingsGuide[open] summary::after {
+  content: "-";
+}
+
+.settingsGuideGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+.settingsGuideGrid article {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  background: #f8fafb;
+}
+
+.settingsGuideGrid strong {
+  color: var(--text);
+}
+
+.settingsGuideGrid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .adminStatusSummary {

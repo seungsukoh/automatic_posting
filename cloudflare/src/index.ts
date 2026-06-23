@@ -4,7 +4,9 @@ import { badRequest, internalError, isDue, jsonResponse, notFound, readJson, ser
 import { disconnectConnectedAccount, handleMetaCallback, listConnectedAccounts, oauthReadiness, startMetaOAuth } from "./oauth";
 import { publishToPlatform } from "./publishers";
 import { getAdminSettingsStatus, saveAdminSettings } from "./settings";
-import type { CreatePostRequest, Env, PublishRequest, PublishQueueMessage } from "./types";
+import type { CreatePostRequest, Env, Platform, PublishRequest, PublishQueueMessage } from "./types";
+
+const supportedPlatforms = ["instagram", "threads", "kakao"] as const satisfies readonly Platform[];
 
 function hasD1(env: Env): boolean {
   return typeof (env as Partial<Env>).DB?.prepare === "function";
@@ -143,6 +145,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const input = await readJson<CreatePostRequest>(request);
     if (!input.title?.trim()) return badRequest("title is required");
     if (!Array.isArray(input.platforms) || input.platforms.length === 0) return badRequest("at least one platform is required");
+    if (input.platforms.some((platform) => !supportedPlatforms.includes(platform))) {
+      return badRequest("platform must be instagram, threads, or kakao");
+    }
+    const platforms = [...new Set(input.platforms)];
+    if (platforms.length !== 1) return badRequest("select exactly one platform");
+    input.platforms = platforms;
     const postId = await createPost(env, input);
     return jsonResponse({ post_id: postId }, 201);
   }
