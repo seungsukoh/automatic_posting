@@ -187,7 +187,7 @@ function localTimezoneLabel() {
 
 function settingSourceLabel(source) {
   return {
-    admin_settings: "관리자 설정",
+    admin_settings: "입력 저장값",
     "Cloudflare secret": "Cloudflare secret",
     META_APP_ID: "Cloudflare META_APP_ID",
     META_APP_SECRET: "Cloudflare META_APP_SECRET",
@@ -872,17 +872,23 @@ function renderPublishPreview() {
 }
 
 function adminSettingRows(settings) {
-  return [
-    {
-      label: "관리자 설정 키",
+  const rows = [];
+  if (settings.admin_setup_key_configured) {
+    rows.push({
+      label: "설정 보호 키",
       configured: settings.admin_setup_key_configured,
-      source: settings.admin_setup_key_configured ? "Cloudflare secret" : "",
-    },
-    {
-      label: "Secret 암호화 키",
+      source: "Cloudflare secret",
+    });
+  }
+  if (settings.token_encryption_key_configured) {
+    rows.push({
+      label: "Secret 보호",
       configured: settings.token_encryption_key_configured,
-      source: settings.token_encryption_key_configured ? "Cloudflare secret" : "",
-    },
+      source: "Cloudflare secret",
+    });
+  }
+  return [
+    ...rows,
     {
       label: "Meta App ID",
       configured: settings.meta_app_id_configured,
@@ -950,7 +956,7 @@ async function loadAdminSettings() {
   } catch (error) {
     adminSettingsStatus.innerHTML = `
       <div class="emptyState error">
-        <strong>관리자 설정 상태를 불러오지 못했습니다.</strong>
+        <strong>연결 설정 상태를 불러오지 못했습니다.</strong>
         <span>${escapeHtml(error.message)}</span>
       </div>
     `;
@@ -1882,7 +1888,7 @@ refreshAdminSettings?.addEventListener("click", async () => {
   setBusy(refreshAdminSettings, true, "확인 중");
   try {
     await loadAdminSettings();
-    showToast("관리자 설정 상태를 새로고침했습니다.");
+    showToast("연결 설정 상태를 새로고침했습니다.");
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -1894,7 +1900,7 @@ adminSettingsForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = adminSettingsPayload();
   if (appState.adminSettings?.admin_setup_key_configured && !payload.admin_key) {
-    showToast("관리자 설정 키를 입력하세요.", "error");
+    showToast("설정 보호 키를 입력하세요.", "error");
     return;
   }
   if (!hasAdminSettingValue(payload)) {
@@ -1910,12 +1916,12 @@ adminSettingsForm?.addEventListener("submit", async (event) => {
     });
     adminSettingsForm.elements.meta_app_secret.value = "";
     adminSettingsForm.elements.threads_client_secret.value = "";
-    showToast("관리자 설정을 저장했습니다.");
+    showToast("연결 정보를 저장했습니다.");
     await Promise.all([loadAdminSettings(), loadConnections()]);
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(saveAdminSettings, false, "관리자 설정 저장");
+    setBusy(saveAdminSettings, false, "연결 정보 저장");
   }
 });
 
