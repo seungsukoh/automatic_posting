@@ -31,6 +31,8 @@ const imagePreview = document.querySelector("#imagePreview");
 const clearImage = document.querySelector("#clearImage");
 const accountConnections = document.querySelector("#accountConnections");
 const platformQuickPicker = document.querySelector("#platformQuickPicker");
+const workspaceTabs = document.querySelectorAll("[data-workspace-tab]");
+const workspacePanels = document.querySelectorAll("[data-workspace-panel]");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
 const manualPostDetails = document.querySelector(".manualPostDetails");
@@ -79,6 +81,8 @@ const appState = {
   readiness: null,
   system: null,
   jobs: [],
+  activeWorkspaceTab: "",
+  jobsLoaded: false,
   adminSettings: null,
   settingsPlatform: "",
   batchItems: [],
@@ -1010,6 +1014,58 @@ function setSelectedPlatform(value) {
   input.checked = !input.checked;
 }
 
+const workspaceHashByTab = {
+  compose: "#composeStep",
+  batch: "#batchStep",
+  account: "#accountStep",
+  jobs: "#jobsStep",
+};
+
+function normalizeWorkspaceTab(value) {
+  return Object.hasOwn(workspaceHashByTab, value) ? value : "compose";
+}
+
+function workspaceTabFromHash(hashValue) {
+  const hash = String(hashValue || "").replace(/^#/, "");
+  if (hash === "accountStep" || hash === "adminSettingsPanel") return "account";
+  if (hash === "batchStep") return "batch";
+  if (hash === "jobsStep") return "jobs";
+  return "compose";
+}
+
+function renderJobsLoadError(error) {
+  if (!jobsEl) return;
+  jobsEl.innerHTML = `<div class="emptyState error"><strong>작업을 불러오지 못했습니다.</strong><span>${escapeHtml(error.message)}</span></div>`;
+}
+
+function setActiveWorkspaceTab(value, options = {}) {
+  const tab = normalizeWorkspaceTab(value);
+  appState.activeWorkspaceTab = tab;
+
+  workspaceTabs.forEach((button) => {
+    const active = button.dataset.workspaceTab === tab;
+    button.classList.toggle("isActive", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  workspacePanels.forEach((panel) => {
+    const active = panel.dataset.workspacePanel === tab;
+    panel.classList.toggle("isWorkspaceActive", active);
+    panel.setAttribute("aria-hidden", active ? "false" : "true");
+  });
+
+  if (options.updateHash) {
+    const nextHash = workspaceHashByTab[tab] || workspaceHashByTab.compose;
+    if (window.location.hash !== nextHash) history.replaceState({}, "", nextHash);
+  }
+
+  if ((tab === "batch" || tab === "jobs") && !appState.jobsLoaded) {
+    loadJobs().catch((error) => {
+      if (tab === "jobs") renderJobsLoadError(error);
+    });
+  }
+}
+
 function accountForPlatform(platform) {
   return appState.accounts.find((account) => account.platform === platform && account.status !== "disconnected") || null;
 }
@@ -1399,6 +1455,7 @@ function updateConnectionSettingsScope(platform = "") {
 
 function openAdminSettingsPanel(platform = "") {
   if (!adminSettingsPanel) return;
+  setActiveWorkspaceTab("account", { updateHash: true });
   updateConnectionSettingsScope(platform);
   adminSettingsPanel.classList.remove("isHidden");
   adminSettingsPanel.setAttribute("aria-hidden", "false");
@@ -2263,6 +2320,7 @@ async function loadJobs() {
   const data = await request("/api/jobs");
   const jobs = data.jobs || [];
   appState.jobs = jobs;
+  appState.jobsLoaded = true;
   renderScheduleCalendar();
   if (jobs.length === 0) {
     renderEmptyJobs();
@@ -2403,6 +2461,16 @@ platformQuickPicker?.addEventListener("click", (event) => {
   resetBatchResultsForPlanChange();
   syncPlatformPicker();
   announceSelectedImageIssue();
+});
+
+workspaceTabs.forEach((button) => {
+  button.addEventListener("click", () => {
+    setActiveWorkspaceTab(button.dataset.workspaceTab, { updateHash: true });
+  });
+});
+
+window.addEventListener("hashchange", () => {
+  setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash));
 });
 
 document.addEventListener("click", (event) => {
@@ -2742,8 +2810,11 @@ runScheduler.addEventListener("click", async () => {
   }
 });
 
+setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash));
+
 const oauthResult = new URLSearchParams(window.location.search);
 if (oauthResult.get("connected")) {
+  setActiveWorkspaceTab("account", { updateHash: true });
   showToast("계정 연결이 완료됐습니다.");
   history.replaceState({}, "", window.location.pathname);
 }
@@ -2763,6 +2834,3 @@ loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
 loadAdminSettings().catch(() => {});
-loadJobs().catch((error) => {
-  jobsEl.innerHTML = `<div class="emptyState error"><strong>작업을 불러오지 못했습니다.</strong><span>${escapeHtml(error.message)}</span></div>`;
-});

@@ -158,28 +158,44 @@ p {
 }
 
 .workspaceNav {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 16px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.04);
-  backdrop-filter: blur(8px);
 }
 
-.workspaceNav a {
+.workspaceMainTabs,
+.workspaceUtilityTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workspaceMainTabs {
+  width: min(420px, 100%);
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.04);
+}
+
+.workspaceUtilityTabs {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.workspaceNav button {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  border-radius: 0;
-  border-right: 1px solid var(--line);
+  flex: 1 1 0;
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
   padding: 8px 10px;
   color: #40515c;
   font-size: 13px;
@@ -187,13 +203,38 @@ p {
   text-decoration: none;
 }
 
-.workspaceNav a:last-child {
-  border-right: 0;
+.workspaceUtilityTabs button {
+  flex: 0 1 auto;
+  min-width: 108px;
+  border-color: var(--line);
+  background: #ffffff;
+  color: #4f5f68;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.03);
 }
 
-.workspaceNav a:hover {
+.workspaceNav button:hover {
   background: #f5f8fa;
   color: var(--text);
+}
+
+.workspaceNav button.isActive {
+  border-color: #c5d0d7;
+  background: #eef4fb;
+  color: var(--primary-dark);
+}
+
+.workspaceUtilityTabs button.isActive {
+  border-color: #c5d0d7;
+  background: #eef4fb;
+}
+
+[data-workspace-panel] {
+  display: none;
+}
+
+[data-workspace-panel].isWorkspaceActive {
+  display: block;
 }
 
 .summaryGrid {
@@ -2131,6 +2172,20 @@ button:focus-visible,
 
   .workspaceNav {
     position: static;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspaceMainTabs {
+    width: 100%;
+  }
+
+  .workspaceUtilityTabs {
+    justify-content: stretch;
+  }
+
+  .workspaceUtilityTabs button {
+    flex: 1 1 0;
   }
 }
 
@@ -2201,13 +2256,18 @@ button:focus-visible,
 
   .workspaceNav {
     position: static;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .workspaceNav a {
+  .workspaceMainTabs,
+  .workspaceUtilityTabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .workspaceNav button {
     min-height: 34px;
-    border-right: 0;
   }
 
   .batchMetricGrid article {
