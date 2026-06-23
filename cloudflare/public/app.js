@@ -43,6 +43,7 @@ const utmPreview = document.querySelector("#utmPreview");
 const adminSettingsPanel = document.querySelector("#adminSettingsPanel");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
+const adminKeyGroup = document.querySelector("#adminKeyGroup");
 const closeAdminSettings = document.querySelector("#closeAdminSettings");
 const refreshAdminSettings = document.querySelector("#refreshAdminSettings");
 const saveAdminSettings = document.querySelector("#saveAdminSettings");
@@ -917,6 +918,8 @@ function adminSettingRows(settings) {
 
 function renderAdminSettingsStatus(settings) {
   if (!adminSettingsStatus) return;
+  adminKeyGroup?.classList.toggle("isHidden", !settings.admin_setup_key_configured);
+  adminKeyGroup?.setAttribute("aria-hidden", settings.admin_setup_key_configured ? "false" : "true");
   const rows = adminSettingRows(settings);
   const storesPlainSecrets = !settings.token_encryption_key_configured;
   const readyCount = rows.filter((row) => row.configured).length;
