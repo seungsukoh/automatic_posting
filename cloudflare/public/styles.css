@@ -1418,8 +1418,33 @@ button:disabled {
   font-size: 13px;
 }
 
-.jobMeta small {
+.jobMeta small,
+.jobErrorDetail pre {
   color: var(--danger);
+}
+
+.jobErrorDetail {
+  display: grid;
+  gap: 6px;
+}
+
+.jobErrorDetail summary {
+  cursor: pointer;
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.jobErrorDetail pre {
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid #f3b3ac;
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--danger-bg);
+  font: inherit;
 }
 
 .jobCampaign {
