@@ -1,68 +1,46 @@
 # Automatic Posting
 
-Instagram Business, Threads, Kakao 공식 채널을 대상으로 하는 자동 포스팅 도구입니다. 현재 MVP는 Cloudflare Pages, Functions, D1, R2 기반으로 배포되어 있으며, 공식 OAuth/API 방식만 사용합니다.
+Instagram Business 계정용 자동 포스팅 도구입니다. 현재 MVP는 Cloudflare Pages, Pages Functions, D1, MEDIA_KV 저장소를 사용하며 공식 OAuth/API 방식만 사용합니다.
 
 ## 현재 상태
 
-- Cloudflare Pages 앱 배포 완료
-- D1 데이터베이스 생성 및 스키마 적용 완료
-- R2 이미지 저장소 바인딩 확인 완료
-- `ADMIN_SETUP_KEY`, `TOKEN_ENCRYPTION_KEY` Secret 등록 완료
-- 앱 내 관리자 설정 화면 구현 완료
-- Meta App ID/Secret은 나중에 앱에서 입력 가능
-- Instagram OAuth 연결 및 단일 이미지 게시 API 코드 구현 완료
-- Threads는 OAuth 연결 뼈대와 mock 게시 상태
-- Kakao는 공식 발송 경로 확정 전까지 실제 발송 제외
+- Production URL: `https://automatic-posting.pages.dev`
+- Instagram 계정 연결 확인 완료
+- Instagram 실제 발행 확인 완료
+- 글만 입력해도 Instagram 발행용 JPG 이미지를 자동 생성
+- 이미지 업로드 저장소는 현재 `MEDIA_KV` 사용
+- Meta App ID/Secret은 서버 설정에 저장됨
+- 관리자 설정 키는 일반 사용자 흐름에서 사용하지 않음
+- Threads와 Kakao는 일반 사용자 게시 채널에서 숨김 처리
 
-프로덕션 URL:
+## 사용자 흐름
 
-```text
-https://automatic-posting.pages.dev
-```
+일반 사용자가 알아야 하는 것은 두 가지입니다.
 
-시스템 준비 상태 확인:
+1. 계정 연결
+   - 앱에서 `Instagram 연결하기`를 누릅니다.
+   - Facebook/Instagram 승인 화면에서 게시할 Instagram Business 계정을 선택합니다.
+   - 앱으로 돌아와 연결된 계정명이 표시되면 준비 완료입니다.
 
-```text
-https://automatic-posting.pages.dev/api/system/readiness
-```
+2. 게시 또는 예약
+   - 게시 채널을 확인합니다.
+   - 제목, 본문, 해시태그를 입력합니다.
+   - 이미지는 선택 사항입니다. 이미지를 선택하지 않으면 본문 기반 JPG가 자동 생성됩니다.
+   - 바로 게시하거나 날짜 폴더 예약을 만듭니다.
 
-## 핵심 원칙
+## 운영자 흐름
 
-- 공식 OAuth/API 기반 자동화만 허용합니다.
-- Instagram/Threads 비밀번호나 브라우저 세션 쿠키를 저장하지 않습니다.
-- 브라우저 화면 자동 클릭 방식은 사용하지 않습니다.
-- Kakao 일반 채팅방 자동 발송은 제외하고, Kakao 공식 채널/비즈메시지 계열만 검토합니다.
+운영자가 관리하는 값은 일반 사용자 UI에 노출하지 않습니다.
 
-## 주요 기능
+- Meta App ID
+- Meta App Secret
+- `ADMIN_SETUP_KEY`
+- `TOKEN_ENCRYPTION_KEY`
+- Cloudflare D1/KV 바인딩
 
-- 게시글 제목, 본문, 링크, 해시태그 작성
-- 이미지 선택, 미리보기, R2 업로드
-- Instagram/Threads/Kakao 대상 선택
-- 즉시 발행 및 예약 발행 작업 생성
-- 발행 작업 상태 조회
-- 실패 작업 재시도
-- 계정 연결 준비 마법사
-- 관리자 설정 화면에서 Meta App ID/Secret 저장
-- 시스템 준비 상태 패널
-
-## 현재 남은 설정
-
-Meta Developer App을 만든 뒤 앱의 관리자 설정 화면에 아래 값을 입력해야 Instagram/Threads 연결 버튼이 활성화됩니다.
-
-```text
-Meta App ID
-Meta App Secret
-```
-
-관리자 설정 화면에서 사용할 키:
-
-```text
-ADMIN_SETUP_KEY = Cloudflare Pages Secret에서 관리합니다. 값은 문서나 채팅에 기록하지 않습니다.
-```
+일반적인 계정 연결, 게시, 예약에는 관리자 키 입력이 필요하지 않습니다. 드물게 Meta 앱 설정을 바꿔야 할 때만 운영자가 Cloudflare 또는 운영자 전용 설정 절차로 처리합니다.
 
 ## Cloudflare 리소스
-
-사용 중인 리소스:
 
 ```text
 Pages project: automatic-posting
@@ -74,53 +52,26 @@ Required secrets:
   TOKEN_ENCRYPTION_KEY
 ```
 
-`wrangler.toml`에는 Pages 빌드 출력과 D1 바인딩이 정의되어 있습니다.
-
 ## 개발 명령
 
 ```powershell
 npm run typecheck
 npm run build
-```
-
-수동 Pages 배포:
-
-```powershell
 npm run deploy:pages
 ```
 
-Cloudflare 리소스 보조 명령:
+Cloudflare 보조 명령:
 
 ```powershell
-npm run cf:d1:create
 npm run cf:d1:schema
-npm run cf:r2:create
 npm run cf:secret:admin
 npm run cf:secret:token
 ```
 
-## 문서
+## 주요 문서
 
 - [현재 시스템 운영 가이드](docs/12-current-system-guide.md)
-- [전문가 그룹 검토 및 다음 실행 계획](docs/13-expert-group-review-next-plan.md)
-- [제품 요구사항 정의서](docs/01-prd.md)
-- [플랫폼 가능성 검토](docs/02-platform-feasibility.md)
-- [아키텍처](docs/03-architecture.md)
-- [데이터 모델](docs/04-data-model.md)
-- [MVP 백로그](docs/05-mvp-backlog.md)
-- [검증 전략](docs/06-test-strategy.md)
-- [리스크 관리](docs/07-risk-register.md)
-- [전문가 그룹과 운영 모델](docs/08-team-and-operating-model.md)
-- [로그인/자동화 경계](docs/09-login-and-automation-boundary.md)
-- [프로젝트 실행 계획](docs/10-project-execution-plan.md)
+- [사용자 매뉴얼](docs/15-user-manual.md)
+- [진행 상황과 다음 계획](docs/14-progress-and-plan.md)
 - [계정 준비 체크리스트](docs/11-account-readiness-checklist.md)
-
-## 다음 개발 단계
-
-1. Meta Developer App 생성
-2. Redirect URI 등록
-3. 앱 관리자 설정에 Meta App ID/Secret 저장
-4. Instagram 계정 연결 테스트
-5. 이미지 포함 Instagram 실제 게시 테스트
-6. Threads 실제 게시 API 구현
-7. Kakao 공식 발송 경로 확정 후 연동
+- [제품 요구사항 정의서](docs/01-prd.md)

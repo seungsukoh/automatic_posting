@@ -4,18 +4,18 @@
 
 ## 1. 시스템 개요
 
-Automatic Posting은 하나의 작성 화면에서 텍스트와 이미지를 준비하고, 공식 API를 통해 Instagram Business, Threads, Kakao 공식 발송 경로에 게시하는 것을 목표로 합니다.
-
-현재 구현의 중심은 Cloudflare 기반 웹앱입니다.
+Automatic Posting은 Instagram Business 계정에 공식 API로 게시 작업을 생성하는 Cloudflare 기반 웹앱입니다.
 
 ```text
 Frontend: Cloudflare Pages + Vite static assets
 API: Cloudflare Pages Functions
 Database: Cloudflare D1
-Image storage: Cloudflare R2
+Media storage: Cloudflare MEDIA_KV
 Auth: Meta OAuth
 Secrets: Cloudflare Pages Secrets
 ```
+
+R2는 현재 Cloudflare 계정에서 사용하지 않습니다. 이미지와 자동 생성된 텍스트 이미지는 `MEDIA_KV`에 저장합니다.
 
 ## 2. 배포 URL
 
@@ -30,7 +30,6 @@ GET  /api/health
 GET  /api/system/readiness
 GET  /api/oauth/meta/readiness
 GET  /api/admin/settings
-POST /api/admin/settings
 GET  /api/social-accounts
 POST /api/social-accounts/disconnect
 GET  /api/auth/meta/start?platform=instagram
@@ -40,204 +39,136 @@ GET  /api/assets/:key
 POST /api/posts
 GET  /api/jobs
 POST /api/jobs/:id/retry
+POST /api/scheduler/run
 ```
 
 ## 3. 현재 완료된 작업
 
 - Cloudflare Pages 배포 구성
 - Pages Functions 라우팅 구성
-- D1 데이터베이스 생성
-- D1 스키마 적용
-- R2 이미지 업로드 API 구현
-- 앱에서 이미지 선택 및 업로드 연결
-- OAuth Redirect URI 표시
+- D1 데이터베이스와 스키마 적용
+- `MEDIA_KV` 기반 이미지 업로드와 공개 URL 제공
 - Meta OAuth 시작/콜백 API 구현
-- 연결된 계정 저장 구조 구현
-- Meta App ID/Secret 관리자 설정 화면 구현
-- Meta App Secret 암호화 저장 구현
-- Instagram Graph API 단일 이미지 게시 코드 구현
-- 시스템 준비 상태 패널 구현
-- Cloudflare CLI 보조 스크립트 추가
+- Instagram Business 계정 연결 저장
+- Meta App ID/Secret 저장
+- Page access token 암호화 저장
+- Instagram Graph API 발행 구현
+- PNG/JPG/WEBP 업로드 지원
+- Instagram 발행 시 JPG 변환 지원
+- 이미지 없이 글만 입력하면 본문 기반 JPG 자동 생성
+- 일반 사용자 화면에서 관리자 설정과 시스템 상세 상태 숨김
 
-## 4. Cloudflare 설정 상태
-
-현재 확인된 상태:
-
-```text
-D1 binding DB: 준비됨
-D1 schema: 준비됨
-R2 binding ASSETS: 준비됨
-ADMIN_SETUP_KEY: 준비됨
-TOKEN_ENCRYPTION_KEY: 준비됨
-Meta App ID: 미입력
-Meta App Secret: 미입력
-```
-
-시스템 준비 상태는 앱 화면의 `시스템 준비 상태` 섹션 또는 아래 API로 확인합니다.
+## 4. 현재 운영 상태
 
 ```text
-https://automatic-posting.pages.dev/api/system/readiness
+Instagram connection: working
+Instagram publishing: working
+Media storage: MEDIA_KV
+Meta App ID: configured
+Meta App Secret: configured
+Facebook Login Configuration ID: optional / not configured
 ```
 
-## 5. 관리자 설정
+관리자 설정 API는 실제 App ID, Secret, 관리자 키 값을 반환하지 않고 설정 여부만 반환해야 합니다.
 
-Meta App ID/Secret은 Cloudflare 콘솔에 직접 넣지 않고 앱 화면에서 나중에 입력할 수 있습니다.
+## 5. 역할 분리
 
-앱 화면의 `관리자 설정` 섹션에서 입력합니다.
+### 일반 사용자
 
-```text
-관리자 설정 키
-Meta App ID
-Meta App Secret
-```
+일반 사용자는 다음만 수행합니다.
 
-현재 관리자 설정 키:
+- Instagram 계정 연결
+- 게시글 작성
+- 이미지 선택 또는 텍스트만 작성
+- 바로 게시 작업 생성
+- 날짜 폴더 예약 작업 생성
+- 발행 작업 상태 확인
 
-```text
-ADMIN_SETUP_KEY = Cloudflare Pages Secret에서 관리합니다. 값은 문서나 채팅에 기록하지 않습니다.
-```
+일반 사용자는 다음 값을 입력하지 않습니다.
 
-주의:
+- 관리자 설정 키
+- Meta App ID
+- Meta App Secret
+- Cloudflare Secret
 
-- `ADMIN_SETUP_KEY`는 관리자 설정 저장 권한 확인용입니다.
-- `TOKEN_ENCRYPTION_KEY`는 DB에 저장되는 Secret과 OAuth 토큰 암호화에 사용됩니다.
-- `TOKEN_ENCRYPTION_KEY`를 바꾸면 기존에 저장된 Meta App Secret과 계정 토큰을 복호화할 수 없습니다.
+### 운영자
 
-## 6. Meta 설정 절차
+운영자는 다음을 관리합니다.
 
-Meta Developer App을 만든 뒤 아래 Redirect URI를 등록합니다.
+- Meta Developer App 설정
+- OAuth Redirect URI
+- Meta App ID/Secret
+- Cloudflare Secrets
+- D1/KV 바인딩
+- 관리자 전용 설정 변경
 
-```text
-https://automatic-posting.pages.dev/api/auth/meta/callback
-```
+## 6. 새 사용자 계정 연결 절차
 
-앱에 필요한 권한:
+새 사용자가 자신의 Instagram 계정을 연결하려면 프로그래밍이나 관리자 키가 필요하지 않습니다.
 
-Instagram:
+1. 앱에 접속합니다.
+2. `계정 연결` 영역에서 `Instagram 연결하기`를 누릅니다.
+3. Facebook 로그인 화면에서 본인 계정으로 로그인합니다.
+4. 게시에 사용할 Facebook Page와 Instagram Business 계정을 승인합니다.
+5. 앱으로 돌아왔을 때 연결된 Instagram username이 표시되는지 확인합니다.
+6. 게시 채널에 Instagram이 활성화되면 바로 게시 또는 예약을 진행합니다.
 
-```text
-pages_show_list
-pages_read_engagement
-instagram_basic
-instagram_content_publish
-```
+전제 조건:
 
-Threads:
+- Instagram 계정은 프로페셔널 계정이어야 합니다.
+- Instagram 계정은 Facebook Page에 연결되어 있어야 합니다.
+- 로그인한 Facebook 계정은 해당 Page와 Instagram 자산에 충분한 권한이 있어야 합니다.
 
-```text
-threads_basic
-threads_content_publish
-```
+## 7. 게시 흐름
 
-Meta App ID/Secret을 받은 뒤 앱의 관리자 설정 화면에 저장합니다. 저장이 성공하면 계정 연결 카드가 `설정값 필요`에서 `연결 준비 완료`로 바뀌어야 합니다.
+Instagram 발행 흐름:
 
-## 7. Instagram 게시 흐름
+1. 사용자가 제목/본문/해시태그를 입력합니다.
+2. 이미지가 있으면 업로드합니다.
+3. 이미지가 없으면 브라우저에서 본문 기반 JPG를 자동 생성합니다.
+4. 업로드된 이미지 URL과 caption으로 Instagram media container를 생성합니다.
+5. `media_publish`를 호출합니다.
+6. permalink를 조회합니다.
+7. 발행 작업에 성공/실패 결과를 저장합니다.
 
-현재 Instagram 게시 흐름은 다음과 같습니다.
+Instagram 공식 Content Publishing API는 순수 텍스트 피드 게시를 지원하지 않으므로, 텍스트만 입력한 경우에도 앱이 자동으로 JPG 이미지를 만들어 발행합니다.
 
-1. 앱에서 Instagram 연결하기 클릭
-2. Meta OAuth 승인
-3. Facebook Page 목록 조회
-4. 연결된 Instagram Business 계정 확인
-5. Page access token 암호화 저장
-6. 게시글 작성
-7. 이미지 R2 업로드
-8. Instagram media container 생성
-9. `media_publish` 호출
-10. permalink 조회
-11. 발행 작업에 성공/실패 결과 저장
+## 8. 예약 흐름
 
-## 8. 데이터 모델
+날짜 폴더 예약은 다음 규칙을 사용합니다.
 
-주요 테이블:
+- 날짜 폴더명: `YYYY-MM-DD`
+- 이미지 순서: 파일명 숫자순
+- 예약 시간: 날짜 폴더 + 시작 시간 + 간격
+- 시간 기준: 브라우저 현지 시간
+- 캡션: 같은 이름의 `.txt`/`.md` 또는 `captions.csv` 우선, 없으면 기본 문구 사용
 
-```text
-posts
-post_targets
-publish_jobs
-social_accounts
-app_settings
-audit_logs
-```
+## 9. 운영 중 확인 항목
 
-`app_settings`에는 Meta App ID와 암호화된 Meta App Secret이 저장됩니다.
+일반 사용자는 앱 화면의 계정 연결, 게시 작업 상태만 확인하면 됩니다.
 
-`social_accounts`에는 연결된 Instagram/Threads 계정 정보와 암호화된 access token이 저장됩니다.
-
-## 9. 개발 및 배포 명령
-
-검증:
-
-```powershell
-npm run typecheck
-npm run build
-```
-
-수동 배포:
-
-```powershell
-npm run deploy:pages
-```
-
-D1 스키마 적용:
-
-```powershell
-npm run cf:d1:schema
-```
-
-## 10. 운영 중 확인할 항목
-
-앱 화면에서 먼저 확인할 섹션:
-
-```text
-시스템 준비 상태
-관리자 설정
-계정 연결
-발행 작업
-```
-
-문제 발생 시 우선 확인할 API:
+운영자는 필요할 때 다음 API를 확인합니다.
 
 ```text
 /api/system/readiness
 /api/oauth/meta/readiness
 /api/admin/settings
+/api/social-accounts
 /api/jobs
 ```
 
-## 11. 현재 남은 작업
+## 10. 주의 사항
 
-필수:
+- `TOKEN_ENCRYPTION_KEY`를 바꾸면 기존 Meta App Secret과 OAuth token을 복호화할 수 없습니다.
+- `ADMIN_SETUP_KEY`는 일반 사용자가 기억하거나 입력할 값이 아닙니다.
+- Meta App ID와 Instagram 계정 ID를 혼동하면 안 됩니다. OAuth에는 Meta Developer App ID를 사용합니다.
+- `instagram_content_publish` 권한 이름을 사용합니다. `instagram_content_publishing`이 아닙니다.
 
-1. Meta Developer App 생성
-2. Redirect URI 등록
-3. 앱 관리자 설정에 Meta App ID/Secret 저장
-4. Instagram 계정 연결 테스트
-5. Instagram 실제 게시 테스트
+## 11. 후속 작업
 
-후속:
-
-1. Threads 실제 게시 API 구현
-2. Kakao 공식 발송 경로 확정
-3. Kakao API 연동
-4. 예약 발행 자동 실행 방식 고도화
-5. 토큰 만료/재연결 UX 개선
-6. 게시 결과 상세 로그 화면 개선
-
-## 12. 자동화 경계
-
-이 프로젝트는 공식 API 기반 자동화만 지원합니다.
-
-제외하는 방식:
-
-- Instagram/Threads/Kakao 비밀번호 저장
-- 브라우저 로그인 세션 탈취
-- 브라우저 화면 자동 클릭
-- 일반 카카오톡 채팅방 임의 자동 전송
-
-지원하는 방식:
-
-- Meta OAuth
-- Instagram Graph API
-- Threads API
-- Kakao 공식 채널/비즈메시지 계열 API
+1. 운영자 전용 설정 경로를 Cloudflare Access 또는 계정 기반 admin auth로 대체
+2. 새 사용자 온보딩 매뉴얼 보강
+3. 단건 게시 전 확인 요약 추가
+4. 발행 작업 상세 로그 화면 개선
+5. Threads 실제 게시 API 구현 여부 재검토
+6. Kakao 공식 발송 경로 확정 후 연동

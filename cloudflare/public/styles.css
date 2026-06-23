@@ -1202,6 +1202,29 @@ button:disabled {
   border-color: #d8e0e5;
 }
 
+.platformPicker label.disabled {
+  display: none;
+}
+
+.startActions.singleState {
+  align-items: center;
+}
+
+.startActions.singleState.ready {
+  border-color: rgba(42, 128, 86, 0.24);
+  background: var(--success-bg);
+}
+
+.startActions.singleState.pending {
+  border-color: rgba(138, 103, 19, 0.24);
+  background: #fff9e8;
+}
+
+.startActions.singleState.missing {
+  border-color: rgba(192, 57, 43, 0.22);
+  background: var(--danger-bg);
+}
+
 .nativePlatformPicker {
   position: absolute;
   width: 1px;

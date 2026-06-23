@@ -20,14 +20,6 @@ const imagePreview = document.querySelector("#imagePreview");
 const clearImage = document.querySelector("#clearImage");
 const accountConnections = document.querySelector("#accountConnections");
 const systemReadiness = document.querySelector("#systemReadiness");
-const adminSettingsForm = document.querySelector("#adminSettingsForm");
-const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
-const adminSettingsSummary = document.querySelector("#adminSettingsSummary");
-const adminSettingsDialog = document.querySelector("#adminSettingsDialog");
-const openAdminSettings = document.querySelector("#openAdminSettings");
-const openAdminSettingsSide = document.querySelector("#openAdminSettingsSide");
-const closeAdminSettings = document.querySelector("#closeAdminSettings");
-const cancelAdminSettings = document.querySelector("#cancelAdminSettings");
 const workspaceSummary = document.querySelector("#workspaceSummary");
 const customerReadiness = document.querySelector("#customerReadiness");
 const platformReadiness = document.querySelector("#platformReadiness");
@@ -120,24 +112,6 @@ function setBusy(button, busy, label) {
   if (label) button.textContent = label;
 }
 
-function openSettingsDialog() {
-  if (!adminSettingsDialog) return;
-  if (typeof adminSettingsDialog.showModal === "function") {
-    adminSettingsDialog.showModal();
-  } else {
-    adminSettingsDialog.setAttribute("open", "");
-  }
-}
-
-function closeSettingsDialog() {
-  if (!adminSettingsDialog) return;
-  if (typeof adminSettingsDialog.close === "function") {
-    adminSettingsDialog.close();
-  } else {
-    adminSettingsDialog.removeAttribute("open");
-  }
-}
-
 function platformLabel(platform) {
   return {
     instagram: "Instagram Business",
@@ -156,10 +130,10 @@ function platformInitial(platform) {
 
 function missingLabel(key) {
   return {
-    client_id: "Meta App ID",
-    client_secret: "Meta App Secret",
-    oauth_state_secret: "OAuth state secret",
-    token_encryption_key: "Token encryption key",
+    client_id: "운영자 OAuth 설정",
+    client_secret: "운영자 OAuth 설정",
+    oauth_state_secret: "운영자 보안 설정",
+    token_encryption_key: "운영자 보안 설정",
   }[key] || key;
 }
 
@@ -757,7 +731,8 @@ function renderPlatformReadiness() {
   }
 
   if (platformReadiness) {
-    platformReadiness.innerHTML = inputs.map((input) => {
+    const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
+    platformReadiness.innerHTML = visibleInputs.length ? visibleInputs.map((input) => {
       const status = platformStatus(input.value);
       return `
         <article class="platformStatusItem ${status.tone}">
@@ -766,13 +741,20 @@ function renderPlatformReadiness() {
           <p>${escapeHtml(status.detail)}</p>
         </article>
       `;
-    }).join("");
+    }).join("") : `
+      <article class="platformStatusItem pending">
+        <strong>게시 채널 대기</strong>
+        <span>계정 연결 필요</span>
+        <p>사용 가능한 채널은 계정 연결 영역에서 승인한 뒤 여기에 표시됩니다.</p>
+      </article>
+    `;
   }
 
   if (platformQuickPicker) {
+    const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
     platformQuickPicker.innerHTML = `
       <div class="quickPickerButtons">
-        ${inputs.map((input) => {
+        ${visibleInputs.map((input) => {
           const status = platformStatus(input.value);
           return `
             <button
@@ -812,24 +794,34 @@ function renderCustomerReadiness() {
   const serviceReady = systemReadyForUsers() && Boolean(appState.readiness?.platforms?.instagram?.configured);
   const instagramConnected = instagram.connected;
   const readyToSchedule = instagram.selectable;
-  const action = !serviceReady
-    ? `<button class="secondaryButton" type="button" data-open-admin>관리자 설정 확인</button>`
+  const state = !serviceReady
+    ? {
+      title: "운영 설정 확인 필요",
+      detail: "Meta 앱과 보안 설정은 운영자가 Cloudflare에서 관리합니다. 일반 사용자는 이 값을 입력하지 않습니다.",
+      action: `<button class="secondaryButton" type="button" disabled>운영자 확인 필요</button>`,
+      tone: "missing",
+    }
     : !instagramConnected
-      ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=instagram">Instagram 연결하기</a>`
-      : `<button type="button" data-scroll-batch>날짜 폴더 예약하기</button>`;
+      ? {
+        title: "Instagram 계정 연결 필요",
+        detail: "게시할 Instagram Business 계정만 승인하면 바로 게시와 예약을 사용할 수 있습니다.",
+        action: `<a class="linkButton primary" href="/api/auth/meta/start?platform=instagram">Instagram 연결하기</a>`,
+        tone: "pending",
+      }
+      : {
+        title: "게시 준비 완료",
+        detail: `${instagram.detail} 계정으로 바로 게시하거나 날짜 폴더 예약을 만들 수 있습니다.`,
+        action: `<button type="button" data-scroll-batch>날짜 폴더 예약하기</button>`,
+        tone: "ready",
+      };
 
   customerReadiness.innerHTML = `
-    <div class="startSteps">
-      ${readinessStep("서비스 준비", serviceReady, serviceReady ? "저장소와 Facebook Login 설정이 준비됐습니다." : "운영자가 Meta 앱, 보안 키, 저장소 설정을 완료해야 합니다.")}
-      ${readinessStep("Instagram 연결", instagramConnected, instagramConnected ? instagram.detail : "게시할 Instagram Business 계정을 승인하세요.")}
-      ${readinessStep("예약 가능", readyToSchedule, readyToSchedule ? "날짜별 폴더를 선택하면 예약 작업을 만들 수 있습니다." : "연결이 끝나면 예약 버튼이 활성화됩니다.")}
-    </div>
-    <div class="startActions">
+    <div class="startActions singleState ${state.tone}">
       <div>
-        <strong>${readyToSchedule ? "자동 예약을 사용할 수 있습니다." : "예약 전 준비가 필요합니다."}</strong>
-        <p>${readyToSchedule ? "이미지 폴더를 날짜별로 정리한 뒤 아래 예약 영역에서 확인하세요." : "일반 사용자는 관리자 설정값을 입력하지 않고 계정 연결만 진행합니다."}</p>
+        <strong>${state.title}</strong>
+        <p>${state.detail}</p>
       </div>
-      ${action}
+      ${state.action}
     </div>
   `;
 }
@@ -858,8 +850,8 @@ function previewStatusFor(platform) {
     const file = imageFile.files?.[0];
     const hasImage = Boolean(file || form.elements.image_url.value);
     return {
-      label: hasImage ? "이미지 포함" : "이미지 필요",
-      tone: hasImage ? "ok" : "missing",
+      label: hasImage ? "이미지 포함" : "텍스트 이미지 자동 생성",
+      tone: "ok",
     };
   }
   if (platform === "threads") return { label: "Mock 게시", tone: "pending" };
@@ -907,8 +899,7 @@ function updateSummary() {
   const systemOk = Boolean(
     appState.system?.d1?.bound
     && appState.system?.d1?.schema_ready
-    && appState.system?.r2?.bound
-    && appState.system?.secrets?.admin_setup_key
+    && (appState.system?.media?.bound || appState.system?.r2?.bound)
     && appState.system?.secrets?.token_encryption_key,
   );
   const failedCount = appState.jobs.filter((job) => job.status === "failed").length;
@@ -1026,48 +1017,6 @@ async function loadConnections() {
   renderPlatformReadiness();
 }
 
-function renderAdminSettingsStatus(status) {
-  if (!adminSettingsStatus) return;
-  const rows = [
-    ["관리자 키", status.admin_setup_key_configured],
-    ["암호화 키", status.token_encryption_key_configured],
-    ["Meta App ID", status.meta_app_id_configured],
-    ["Meta App Secret", status.meta_app_secret_configured],
-    ["Login Config ID", status.meta_login_config_id_configured],
-  ];
-  const badges = rows.map(([label, ok]) => `
-    <span class="${ok ? "ok" : "missing"}">${label}: ${ok ? "설정됨" : "필요"}</span>
-  `).join("");
-  adminSettingsStatus.innerHTML = badges;
-}
-
-function renderAdminSettingsSummary(status) {
-  if (!adminSettingsSummary) return;
-  const metaReady = Boolean(status.meta_app_id_configured && status.meta_app_secret_configured);
-  const secureReady = Boolean(status.admin_setup_key_configured && status.token_encryption_key_configured);
-  adminSettingsSummary.innerHTML = `
-    <span class="${secureReady ? "ok" : "missing"}">보안 키: ${secureReady ? "정상" : "확인 필요"}</span>
-    <span class="${metaReady ? "ok" : "missing"}">Facebook Login: ${metaReady ? "설정됨" : "입력 필요"}</span>
-  `;
-}
-
-async function loadAdminSettingsStatus() {
-  if (!adminSettingsStatus) return;
-  const status = await request("/api/admin/settings").catch((error) => ({
-    admin_setup_key_configured: false,
-    token_encryption_key_configured: false,
-    meta_app_id_configured: false,
-    meta_app_secret_configured: false,
-    error: error.message,
-  }));
-  renderAdminSettingsStatus(status);
-  renderAdminSettingsSummary(status);
-  if (status.error) {
-    adminSettingsStatus.insertAdjacentHTML("beforeend", `<span class="missing">저장소 확인 필요: ${escapeHtml(status.error)}</span>`);
-    adminSettingsSummary?.insertAdjacentHTML("beforeend", `<span class="missing">확인 실패</span>`);
-  }
-}
-
 function readinessItem(label, ok, detail = "") {
   return `
     <article class="readinessItem ${ok ? "ready" : "missing"}">
@@ -1101,7 +1050,6 @@ async function loadSystemReadiness() {
     readinessItem("D1 DB", Boolean(status.d1?.bound), "DB"),
     readinessItem("스키마", Boolean(status.d1?.schema_ready), missingTables.length ? `누락: ${missingTables.join(", ")}` : "적용 완료"),
     readinessItem("이미지 저장소", Boolean(status.media?.bound || status.r2?.bound), status.media?.storage === "kv" ? "MEDIA_KV" : "MEDIA_BUCKET"),
-    readinessItem("관리자 키", Boolean(status.secrets?.admin_setup_key), "ADMIN_SETUP_KEY"),
     readinessItem("암호화 키", Boolean(status.secrets?.token_encryption_key), "TOKEN_ENCRYPTION_KEY"),
   ].join("");
 }
@@ -1644,25 +1592,113 @@ async function uploadImageFileToAssets(file, options = {}) {
   });
 }
 
-async function uploadSelectedImage() {
+function wrapCanvasText(context, text, maxWidth) {
+  const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  const lines = [];
+  let current = "";
+  const pushLongWord = (word) => {
+    let part = "";
+    for (const char of word) {
+      const test = `${part}${char}`;
+      if (context.measureText(test).width <= maxWidth) {
+        part = test;
+        continue;
+      }
+      if (part) lines.push(part);
+      part = char;
+    }
+    current = part;
+  };
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (context.measureText(test).width <= maxWidth) {
+      current = test;
+      continue;
+    }
+    if (current) lines.push(current);
+    if (context.measureText(word).width > maxWidth) pushLongWord(word);
+    else current = word;
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+async function generateTextPostImageFile() {
+  const title = String(form.elements.title.value || "").trim();
+  const body = String(form.elements.body.value || "").trim();
+  const hashtags = String(form.elements.hashtags.value || "").trim();
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Text image generation is not available.");
+
+  context.fillStyle = "#f7f8fb";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#ffffff";
+  context.fillRect(72, 72, 936, 936);
+  context.strokeStyle = "#d8dee8";
+  context.lineWidth = 2;
+  context.strokeRect(72, 72, 936, 936);
+
+  context.fillStyle = "#0f172a";
+  context.textBaseline = "top";
+  context.font = "700 62px Arial, sans-serif";
+  const titleLines = wrapCanvasText(context, title || "Automatic Posting", 800).slice(0, 3);
+  let y = 168;
+  for (const line of titleLines) {
+    context.fillText(line, 140, y);
+    y += 78;
+  }
+
+  y += 24;
+  context.fillStyle = "#334155";
+  context.font = "400 38px Arial, sans-serif";
+  const bodyLines = wrapCanvasText(context, body || hashtags || " ", 800).slice(0, 10);
+  for (const line of bodyLines) {
+    if (y > 820) break;
+    context.fillText(line, 140, y);
+    y += 52;
+  }
+
+  if (hashtags) {
+    context.fillStyle = "#2563eb";
+    context.font = "700 30px Arial, sans-serif";
+    wrapCanvasText(context, hashtags, 800).slice(0, 2).forEach((line, index) => {
+      context.fillText(line, 140, 890 + index * 40);
+    });
+  }
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) resolve(result);
+      else reject(new Error("Text image generation failed."));
+    }, "image/jpeg", 0.92);
+  });
+  return new File([blob], "text-post.jpg", { type: "image/jpeg" });
+}
+
+async function uploadSelectedImage(platforms = selectedPlatforms()) {
   const file = imageFile.files?.[0];
-  if (!file) return { image_key: "", image_url: "" };
+  const shouldGenerateTextImage = !file && platforms.includes("instagram");
+  if (!file && !shouldGenerateTextImage) return { image_key: "", image_url: "" };
+  const uploadSource = file || await generateTextPostImageFile();
 
   imagePreview.classList.add("uploading");
-  formStatus.textContent = "이미지 업로드 중";
+  formStatus.textContent = shouldGenerateTextImage ? "텍스트 이미지 생성 중" : "이미지 업로드 중";
   let result;
   try {
-    result = await uploadImageFileToAssets(file, { forceJpeg: selectedPlatforms().includes("instagram") });
+    result = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") });
   } finally {
     imagePreview.classList.remove("uploading");
   }
   form.elements.image_key.value = result.image_key;
   form.elements.image_url.value = result.image_url;
   imagePreview.innerHTML = `
-    <img src="${previewUrl}" alt="선택한 이미지 미리보기" />
+    <img src="${shouldGenerateTextImage ? result.image_url : previewUrl}" alt="게시 이미지 미리보기" />
     <div>
-      <strong>${escapeHtml(file.name)}</strong>
-      <span>업로드 완료</span>
+      <strong>${escapeHtml(shouldGenerateTextImage ? "text-post.jpg" : uploadSource.name)}</strong>
+      <span>${shouldGenerateTextImage ? "본문으로 자동 생성" : "업로드 완료"}</span>
     </div>
   `;
   return result;
@@ -1813,15 +1849,10 @@ form.addEventListener("submit", async (event) => {
     renderPlatformReadiness();
     return;
   }
-  const selectedImage = imageFile.files?.[0];
-  if (platforms.includes("instagram") && !selectedImage && !form.elements.image_url.value) {
-    showToast("Instagram 발행에는 이미지가 필요합니다.", "error");
-    return;
-  }
   setBusy(submitPost, true, "처리 중");
   formStatus.textContent = "발행 요청 중";
   try {
-    const uploadedImage = await uploadSelectedImage();
+    const uploadedImage = await uploadSelectedImage(platforms);
     const post = await request("/api/posts", {
       method: "POST",
       body: JSON.stringify({
@@ -1855,7 +1886,7 @@ form.addEventListener("submit", async (event) => {
     formStatus.textContent = "실패";
     showToast(error.message, "error");
   } finally {
-    setBusy(submitPost, false, "게시글 저장 및 발행");
+    setBusy(submitPost, false, "게시 작업 만들기");
   }
 });
 
@@ -2017,22 +2048,12 @@ jobsEl.addEventListener("click", async (event) => {
 });
 
 customerReadiness?.addEventListener("click", (event) => {
-  if (event.target.closest("[data-open-admin]")) {
-    openSettingsDialog();
-    return;
-  }
   if (event.target.closest("[data-scroll-batch]")) {
     batchScheduleForm?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 });
 
 accountConnections?.addEventListener("click", async (event) => {
-  const setupButton = event.target.closest("[data-open-admin]");
-  if (setupButton) {
-    openSettingsDialog();
-    return;
-  }
-
   const button = event.target.closest("[data-disconnect]");
   if (!button) return;
   setBusy(button, true, "해제 중");
@@ -2049,52 +2070,10 @@ accountConnections?.addEventListener("click", async (event) => {
   }
 });
 
-adminSettingsForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const submitButton = adminSettingsForm.querySelector("button[type='submit']");
-  const data = new FormData(adminSettingsForm);
-  const payload = {
-    admin_key: data.get("admin_key"),
-    meta_app_id: data.get("meta_app_id"),
-    meta_app_secret: data.get("meta_app_secret"),
-    meta_login_config_id: data.get("meta_login_config_id"),
-  };
-  setBusy(submitButton, true, "저장 중");
-  try {
-    const result = await request("/api/admin/settings", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    adminSettingsForm.reset();
-    renderAdminSettingsStatus({
-      admin_setup_key_configured: true,
-      token_encryption_key_configured: true,
-      meta_app_id_configured: result.meta_app_id_configured,
-      meta_app_secret_configured: result.meta_app_secret_configured,
-      meta_login_config_id_configured: result.meta_login_config_id_configured,
-    });
-    renderAdminSettingsSummary({
-      admin_setup_key_configured: true,
-      token_encryption_key_configured: true,
-      meta_app_id_configured: result.meta_app_id_configured,
-      meta_app_secret_configured: result.meta_app_secret_configured,
-      meta_login_config_id_configured: result.meta_login_config_id_configured,
-    });
-    showToast("관리자 설정을 저장했습니다.");
-    closeSettingsDialog();
-    await loadConnections();
-  } catch (error) {
-    adminSettingsStatus.innerHTML = `<span class="missing">설정 저장 실패: ${escapeHtml(error.message)}</span>`;
-    showToast(error.message, "error");
-  } finally {
-    setBusy(submitButton, false, "설정 저장");
-  }
-});
-
 refreshJobs.addEventListener("click", async () => {
   setBusy(refreshJobs, true, "새로고침 중");
   try {
-    await Promise.all([loadJobs(), loadConnections(), loadSystemReadiness(), loadAdminSettingsStatus()]);
+    await Promise.all([loadJobs(), loadConnections(), loadSystemReadiness()]);
     showToast("상태를 새로고침했습니다.");
   } catch (error) {
     showToast(error.message, "error");
@@ -2104,7 +2083,7 @@ refreshJobs.addEventListener("click", async () => {
 });
 
 runScheduler.addEventListener("click", async () => {
-  const confirmed = window.confirm("현재 시간이 지난 예약 작업을 즉시 처리합니다. 계속할까요?");
+  const confirmed = window.confirm("자동 실행이 지연된 예약 작업을 지금 확인합니다. 계속할까요?");
   if (!confirmed) return;
   setBusy(runScheduler, true, "실행 중");
   try {
@@ -2114,16 +2093,8 @@ runScheduler.addEventListener("click", async () => {
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(runScheduler, false, "만기 예약 처리");
+    setBusy(runScheduler, false, "예약 작업 수동 확인");
   }
-});
-
-openAdminSettings?.addEventListener("click", openSettingsDialog);
-openAdminSettingsSide?.addEventListener("click", openSettingsDialog);
-closeAdminSettings?.addEventListener("click", closeSettingsDialog);
-cancelAdminSettings?.addEventListener("click", closeSettingsDialog);
-adminSettingsDialog?.addEventListener("click", (event) => {
-  if (event.target === adminSettingsDialog) closeSettingsDialog();
 });
 
 const oauthResult = new URLSearchParams(window.location.search);
@@ -2148,7 +2119,6 @@ loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });
 loadSystemReadiness();
-loadAdminSettingsStatus();
 loadJobs().catch((error) => {
   jobsEl.innerHTML = `<div class="emptyState error"><strong>작업을 불러오지 못했습니다.</strong><span>${escapeHtml(error.message)}</span></div>`;
 });
