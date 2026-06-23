@@ -130,7 +130,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     await ensurePostSchema(env);
     const jobs = await env.DB.prepare(
       `
-      select j.*, p.title, p.image_key, p.image_url, p.link_url, p.campaign_name, p.campaign_tags, p.source_file
+      select j.*, p.title, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.source_file
       from publish_jobs j
       join post_targets t on t.id = j.post_target_id
       join posts p on p.id = t.post_id
@@ -147,6 +147,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     if (!Array.isArray(input.platforms) || input.platforms.length === 0) return badRequest("at least one platform is required");
     if (input.platforms.some((platform) => !supportedPlatforms.includes(platform))) {
       return badRequest("platform must be instagram, threads, or kakao");
+    }
+    if (input.media_type && !input.media_type.startsWith("image/") && !input.media_type.startsWith("video/")) {
+      return badRequest("media_type must be image or video");
     }
     const platforms = [...new Set(input.platforms)];
     if (platforms.length !== 1) return badRequest("select exactly one platform");

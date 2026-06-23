@@ -2,7 +2,9 @@ import { badRequest, jsonResponse, notFound } from "./http";
 import type { Env } from "./types";
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
 const maxImageBytes = 8 * 1024 * 1024;
+const maxVideoBytes = 100 * 1024 * 1024;
 
 interface StoredImageMetadata {
   contentType?: string;
@@ -16,6 +18,8 @@ function extensionForType(contentType: string): string {
     "image/jpeg": "jpg",
     "image/png": "png",
     "image/webp": "webp",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
   }[contentType] ?? "bin";
 }
 
@@ -91,30 +95,38 @@ async function getMedia(env: Env, key: string): Promise<{
 
 export async function uploadAsset(request: Request, env: Env): Promise<Response> {
   const form = await request.formData();
-  const entry = form.get("image");
+  const entry = form.get("media") || form.get("image");
   if (!entry || typeof entry === "string" || typeof entry !== "object" || !("stream" in entry)) {
-    return badRequest("image file is required");
+    return badRequest("media file is required");
   }
-  const image = entry as File;
-  if (!allowedImageTypes.has(image.type)) return badRequest("image must be jpeg, png, or webp");
-  if (image.size <= 0) return badRequest("image file is empty");
-  if (image.size > maxImageBytes) return badRequest("image must be 8 MB or smaller");
+  const media = entry as File;
+  const isImage = allowedImageTypes.has(media.type);
+  const isVideo = allowedVideoTypes.has(media.type);
+  if (!isImage && !isVideo) return badRequest("media must be jpeg, png, webp, mp4, or mov");
+  if (media.size <= 0) return badRequest("media file is empty");
+  if (isImage && media.size > maxImageBytes) return badRequest("image must be 8 MB or smaller");
+  if (isVideo && !env.MEDIA_BUCKET) return badRequest("video upload requires R2 media storage.");
+  if (isVideo && media.size > maxVideoBytes) return badRequest("video must be 100 MB or smaller");
 
-  const extension = extensionForType(image.type);
-  const originalName = cleanFileName(image.name);
+  const extension = extensionForType(media.type);
+  const originalName = cleanFileName(media.name);
   const key = `uploads/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${originalName}.${extension}`;
-  await putMedia(env, key, await image.arrayBuffer(), {
-    contentType: image.type,
+  await putMedia(env, key, await media.arrayBuffer(), {
+    contentType: media.type,
     cacheControl: "public, max-age=31536000, immutable",
-    originalName: image.name,
+    originalName: media.name,
     uploadedAt: new Date().toISOString(),
   });
+  const url = publicUrl(request, key, env);
 
   return jsonResponse({
+    media_key: key,
+    media_url: url,
+    media_type: media.type,
     image_key: key,
-    image_url: publicUrl(request, key, env),
-    content_type: image.type,
-    size: image.size,
+    image_url: url,
+    content_type: media.type,
+    size: media.size,
   }, 201);
 }
 

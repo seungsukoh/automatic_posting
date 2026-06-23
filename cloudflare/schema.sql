@@ -6,6 +6,7 @@ create table if not exists posts (
   hashtags text,
   image_key text,
   image_url text,
+  media_type text,
   campaign_name text,
   campaign_tags text,
   campaign_goal text,

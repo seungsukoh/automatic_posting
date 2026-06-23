@@ -41,6 +41,12 @@ interface ThreadsMediaResponse extends GraphError {
   permalink?: string;
 }
 
+interface MediaContainerStatusResponse extends GraphError {
+  status_code?: string;
+  status?: string;
+  error_message?: string;
+}
+
 const facebookGraphBaseUrl = "https://graph.facebook.com/v25.0";
 const threadsGraphBaseUrl = "https://graph.threads.net/v1.0";
 
@@ -74,6 +80,10 @@ function hasJpegImage(payload: PublishPayload): boolean {
   return /\.(jpe?g)(?:$|[?#\s])/i.test(`${payload.imageKey} ${payload.imageUrl}`);
 }
 
+function isVideoPayload(payload: PublishPayload): boolean {
+  return payload.mediaType.startsWith("video/") || /\.(mp4|mov)(?:$|[?#\s])/i.test(`${payload.imageKey} ${payload.imageUrl}`);
+}
+
 function graphError(data: GraphError, fallback: string): string {
   const error = data.error;
   if (!error) return fallback;
@@ -88,17 +98,36 @@ async function readJsonResponse<T extends GraphError>(response: Response, fallba
   return data;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForContainerReady(baseUrl: string, containerId: string, accessToken: string, fallback: string): Promise<void> {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const url = new URL(`${baseUrl}/${containerId}`);
+    url.searchParams.set("fields", "status_code,status,error_message");
+    url.searchParams.set("access_token", accessToken);
+    const data = await readJsonResponse<MediaContainerStatusResponse>(await fetch(url.toString()), fallback);
+    const status = String(data.status_code || data.status || "").toUpperCase();
+    if (status === "FINISHED" || status === "PUBLISHED") return;
+    if (status === "ERROR" || status === "FAILED") throw new Error(data.error_message || fallback);
+    await sleep(2500);
+  }
+  throw new Error(fallback);
+}
+
 class InstagramPublisher implements Publisher {
   async publish(env: Env, payload: PublishPayload): Promise<PublishResult> {
     try {
       if (!payload.imageUrl) {
         return {
           status: "failed",
-          error_message: "Instagram publishing requires an uploaded image.",
+          error_message: "Instagram publishing requires an uploaded image or video.",
           external_post_url: "",
         };
       }
-      if (!hasJpegImage(payload)) {
+      const isVideo = isVideoPayload(payload);
+      if (!isVideo && !hasJpegImage(payload)) {
         return {
           status: "failed",
           error_message: "Instagram publishing requires a JPG image.",
@@ -117,7 +146,13 @@ class InstagramPublisher implements Publisher {
 
       const accessToken = await decryptToken(env, account.accessTokenCiphertext);
       const createUrl = new URL(`${facebookGraphBaseUrl}/${account.accountId}/media`);
-      createUrl.searchParams.set("image_url", payload.imageUrl);
+      if (isVideo) {
+        createUrl.searchParams.set("media_type", "REELS");
+        createUrl.searchParams.set("video_url", payload.imageUrl);
+        createUrl.searchParams.set("share_to_feed", "true");
+      } else {
+        createUrl.searchParams.set("image_url", payload.imageUrl);
+      }
       createUrl.searchParams.set("caption", formatPublishText(payload));
       createUrl.searchParams.set("access_token", accessToken);
 
@@ -126,6 +161,9 @@ class InstagramPublisher implements Publisher {
         "Instagram media container creation failed.",
       );
       if (!container.id) throw new Error("Instagram did not return a media container id.");
+      if (isVideo) {
+        await waitForContainerReady(facebookGraphBaseUrl, container.id, accessToken, "Instagram video processing failed.");
+      }
 
       const publishUrl = new URL(`${facebookGraphBaseUrl}/${account.accountId}/media_publish`);
       publishUrl.searchParams.set("creation_id", container.id);
@@ -181,11 +219,12 @@ class ThreadsPublisher implements Publisher {
       }
 
       const accessToken = await decryptToken(env, account.accessTokenCiphertext);
+      const isVideo = isVideoPayload(payload);
       const createUrl = new URL(`${threadsGraphBaseUrl}/${account.accountId}/threads`);
       createUrl.searchParams.set("text", text);
       if (payload.imageUrl) {
-        createUrl.searchParams.set("media_type", "IMAGE");
-        createUrl.searchParams.set("image_url", payload.imageUrl);
+        createUrl.searchParams.set("media_type", isVideo ? "VIDEO" : "IMAGE");
+        createUrl.searchParams.set(isVideo ? "video_url" : "image_url", payload.imageUrl);
       } else {
         createUrl.searchParams.set("media_type", "TEXT");
       }
@@ -196,6 +235,9 @@ class ThreadsPublisher implements Publisher {
         "Threads media container creation failed.",
       );
       if (!container.id) throw new Error("Threads did not return a media container id.");
+      if (isVideo) {
+        await waitForContainerReady(threadsGraphBaseUrl, container.id, accessToken, "Threads video processing failed.");
+      }
 
       const publishUrl = new URL(`${threadsGraphBaseUrl}/${account.accountId}/threads_publish`);
       publishUrl.searchParams.set("creation_id", container.id);

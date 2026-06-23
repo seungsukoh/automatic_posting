@@ -1129,17 +1129,20 @@ button:focus-visible,
   color: var(--danger);
 }
 
-.imagePreview:has(img) {
+.imagePreview:has(img),
+.imagePreview:has(video) {
   grid-template-columns: 180px 1fr;
   place-items: stretch;
   align-items: center;
   text-align: left;
 }
 
-.imagePreview img {
+.imagePreview img,
+.imagePreview video {
   width: 180px;
   height: 128px;
   object-fit: cover;
+  background: #111827;
 }
 
 .imagePreview div {
@@ -1159,6 +1162,19 @@ button:focus-visible,
   font-size: 12px;
   font-weight: 900;
   line-height: 1.35;
+}
+
+.imageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+}
+
+.imageActions .secondaryButton {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .publishPreviewPanel {
@@ -1947,11 +1963,13 @@ button:focus-visible,
     display: none;
   }
 
-  .imagePreview:has(img) {
+  .imagePreview:has(img),
+  .imagePreview:has(video) {
     grid-template-columns: 1fr;
   }
 
-  .imagePreview img {
+  .imagePreview img,
+  .imagePreview video {
     width: 100%;
     height: 190px;
   }

@@ -147,7 +147,7 @@
               <div>
                 <p class="eyebrow">Step 2</p>
                 <h2>글 작성</h2>
-                <span class="muted">이미지를 선택하지 않으면 글 내용을 기반으로 Instagram용 JPG 이미지를 자동 생성합니다.</span>
+                <span class="muted">이미지나 영상을 선택하지 않으면 글 내용을 기반으로 Instagram용 JPG 이미지를 자동 생성합니다.</span>
               </div>
               <span id="formStatus" class="formStatus">대기 중</span>
             </div>
@@ -241,17 +241,18 @@
                 <div class="manualPostContent">
                   <div class="imagePicker">
                     <div class="fieldLabelRow">
-                      <strong>이미지</strong>
+                      <strong>이미지/영상</strong>
                       <button id="clearImage" class="ghostButton" type="button" disabled>제거</button>
                     </div>
                     <label class="fileDrop">
-                      <input id="imageFile" name="image_file" type="file" accept="image/png,image/jpeg,image/webp" />
-                      <span>이미지 선택</span>
-                      <small>선택 사항 · PNG, JPG, WEBP / 최대 8MB</small>
+                      <input id="imageFile" name="image_file" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime" />
+                      <span>파일 선택</span>
+                      <small>이미지 PNG·JPG·WEBP 최대 8MB / 영상 MP4·MOV 최대 100MB</small>
                     </label>
                     <input name="image_key" type="hidden" />
                     <input name="image_url" type="hidden" />
-                    <div id="imagePreview" class="imagePreview">선택된 이미지가 없습니다.</div>
+                    <input name="media_type" type="hidden" />
+                    <div id="imagePreview" class="imagePreview">선택된 파일이 없습니다.</div>
                   </div>
                   <div class="publishPreviewPanel">
                     <div class="fieldLabelRow">

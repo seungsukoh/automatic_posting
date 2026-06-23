@@ -12,6 +12,7 @@ export async function audit(env: Env, action: string, targetType: string, target
 let postColumnsReady = false;
 const postColumns = [
   "image_url text",
+  "media_type text",
   "campaign_name text",
   "campaign_tags text",
   "campaign_goal text",
@@ -34,7 +35,7 @@ export async function createPost(env: Env, input: CreatePostRequest): Promise<nu
   await ensurePostSchema(env);
   const now = utcNow();
   const result = await env.DB.prepare(
-    "insert into posts (title, body, link_url, hashtags, image_key, image_url, campaign_name, campaign_tags, campaign_goal, source_file, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "insert into posts (title, body, link_url, hashtags, image_key, image_url, media_type, campaign_name, campaign_tags, campaign_goal, source_file, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
   )
     .bind(
       input.title.trim(),
@@ -43,6 +44,7 @@ export async function createPost(env: Env, input: CreatePostRequest): Promise<nu
       input.hashtags ?? "",
       input.image_key ?? "",
       input.image_url ?? "",
+      input.media_type ?? "",
       input.campaign_name?.trim() ?? "",
       input.campaign_tags?.trim() ?? "",
       input.campaign_goal?.trim() ?? "",
@@ -101,7 +103,7 @@ export async function getPublishPayload(env: Env, jobId: number): Promise<{ plat
   await ensurePostSchema(env);
   const row = await env.DB.prepare(
     `
-    select j.platform, p.title, p.body, p.link_url, p.hashtags, p.image_key, p.image_url, t.body_override
+    select j.platform, p.title, p.body, p.link_url, p.hashtags, p.image_key, p.image_url, p.media_type, t.body_override
     from publish_jobs j
     join post_targets t on t.id = j.post_target_id
     join posts p on p.id = t.post_id
@@ -121,6 +123,7 @@ export async function getPublishPayload(env: Env, jobId: number): Promise<{ plat
       hashtags: row.hashtags ?? "",
       imageKey: row.image_key ?? "",
       imageUrl: row.image_url ?? "",
+      mediaType: row.media_type ?? "",
       platformBody: row.body_override ?? "",
     },
   };

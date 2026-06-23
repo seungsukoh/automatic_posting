@@ -28,6 +28,7 @@ export interface CreatePostRequest {
   hashtags?: string;
   image_key?: string;
   image_url?: string;
+  media_type?: string;
   campaign_name?: string;
   campaign_tags?: string;
   campaign_goal?: string;
@@ -48,6 +49,7 @@ export interface PublishPayload {
   hashtags: string;
   imageKey: string;
   imageUrl: string;
+  mediaType: string;
   platformBody: string;
 }
 
