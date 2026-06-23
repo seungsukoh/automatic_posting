@@ -28,7 +28,21 @@ interface InstagramMediaResponse extends GraphError {
   permalink?: string;
 }
 
+interface ThreadsContainerResponse extends GraphError {
+  id?: string;
+}
+
+interface ThreadsPublishResponse extends GraphError {
+  id?: string;
+}
+
+interface ThreadsMediaResponse extends GraphError {
+  id?: string;
+  permalink?: string;
+}
+
 const facebookGraphBaseUrl = "https://graph.facebook.com/v25.0";
+const threadsGraphBaseUrl = "https://graph.threads.net/v1.0";
 
 function base64UrlDecode(value: string): Uint8Array {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
@@ -146,12 +160,67 @@ class InstagramPublisher implements Publisher {
 }
 
 class ThreadsPublisher implements Publisher {
-  async publish(_env: Env, _payload: PublishPayload): Promise<PublishResult> {
-    return {
-      status: "success",
-      error_message: "",
-      external_post_url: "https://example.local/threads/mock-post",
-    };
+  async publish(env: Env, payload: PublishPayload): Promise<PublishResult> {
+    try {
+      const text = formatPublishText(payload);
+      if (!text) {
+        return {
+          status: "failed",
+          error_message: "Threads publishing requires text.",
+          external_post_url: "",
+        };
+      }
+
+      const account = await getPublishingSocialAccount(env, "threads");
+      if (!account) {
+        return {
+          status: "failed",
+          error_message: "Threads account is not connected.",
+          external_post_url: "",
+        };
+      }
+
+      const accessToken = await decryptToken(env, account.accessTokenCiphertext);
+      const createUrl = new URL(`${threadsGraphBaseUrl}/${account.accountId}/threads`);
+      createUrl.searchParams.set("media_type", "TEXT");
+      createUrl.searchParams.set("text", text);
+      createUrl.searchParams.set("access_token", accessToken);
+
+      const container = await readJsonResponse<ThreadsContainerResponse>(
+        await fetch(createUrl.toString(), { method: "POST" }),
+        "Threads media container creation failed.",
+      );
+      if (!container.id) throw new Error("Threads did not return a media container id.");
+
+      const publishUrl = new URL(`${threadsGraphBaseUrl}/${account.accountId}/threads_publish`);
+      publishUrl.searchParams.set("creation_id", container.id);
+      publishUrl.searchParams.set("access_token", accessToken);
+      const published = await readJsonResponse<ThreadsPublishResponse>(
+        await fetch(publishUrl.toString(), { method: "POST" }),
+        "Threads publish failed.",
+      );
+      if (!published.id) throw new Error("Threads did not return a published media id.");
+
+      const mediaUrl = new URL(`${threadsGraphBaseUrl}/${published.id}`);
+      mediaUrl.searchParams.set("fields", "id,permalink");
+      mediaUrl.searchParams.set("access_token", accessToken);
+      const media = await readJsonResponse<ThreadsMediaResponse>(
+        await fetch(mediaUrl.toString()),
+        "Threads permalink lookup failed.",
+      );
+
+      return {
+        status: "success",
+        error_message: "",
+        external_post_url: media.permalink ?? `https://www.threads.net/@${account.username}/post/${published.id}`,
+      };
+    } catch (error) {
+      return {
+        status: "failed",
+        error_message: error instanceof Error ? error.message : "Threads publishing failed.",
+        external_post_url: "",
+      };
+    }
   }
 }
 

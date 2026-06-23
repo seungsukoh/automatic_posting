@@ -644,12 +644,30 @@ function platformStatus(platform) {
   const serviceReady = configured;
 
   if (platform === "threads") {
+    if (!serviceReady) {
+      return {
+        selectable: false,
+        connected: false,
+        label: "연결 준비 필요",
+        detail: "Threads 연결 설정이 아직 준비되지 않았습니다.",
+        tone: "missing",
+      };
+    }
+    if (!connected) {
+      return {
+        selectable: false,
+        connected: false,
+        label: "계정 연결 필요",
+        detail: "Threads 연결하기를 눌러 글 전용 게시 계정을 승인하세요.",
+        tone: "pending",
+      };
+    }
     return {
-      selectable: false,
+      selectable: true,
       connected,
-      label: "사용 불가",
-      detail: "현재 Instagram 게시만 사용할 수 있습니다.",
-      tone: "pending",
+      label: "글 게시 가능",
+      detail: account.username || account.account_id || "연결된 Threads 계정",
+      tone: "ok",
     };
   }
   if (platform === "kakao") {
@@ -717,6 +735,14 @@ function syncPlatformPicker() {
     appState.platformSelectionInitialized = true;
   }
 
+  if (!appState.platformSelectionInitialized && selectedPlatforms().length === 0 && readyInputs.length > 1) {
+    const preferred = imageFile.files?.[0]
+      ? readyInputs.find((input) => input.value === "instagram")
+      : readyInputs.find((input) => input.value === "threads") || readyInputs.find((input) => input.value === "instagram");
+    if (preferred) preferred.checked = true;
+    appState.platformSelectionInitialized = true;
+  }
+
   if (platformQuickPicker) {
     const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
     platformQuickPicker.innerHTML = visibleInputs.length
@@ -780,7 +806,7 @@ function previewStatusFor(platform) {
       tone: "ok",
     };
   }
-  if (platform === "threads") return { label: "Mock 게시", tone: "pending" };
+  if (platform === "threads") return { label: "텍스트 게시", tone: "ok" };
   if (platform === "kakao") return { label: "경로 미구성", tone: "missing" };
   return { label: "확인 필요", tone: "pending" };
 }
@@ -828,23 +854,17 @@ function renderConnectionCard(platform, readiness, account) {
     ? `<span class="statusBadge ok">연결됨</span>`
     : disconnected
       ? `<span class="statusBadge missing">재연결 필요</span>`
-    : platform === "threads"
-      ? `<span class="statusBadge pending">준비 중</span>`
     : configured
       ? `<span class="statusBadge pending">승인 가능</span>`
-      : `<span class="statusBadge missing">설정 필요</span>`;
+      : `<span class="statusBadge missing">연결 준비 필요</span>`;
   const statusText = connected
     ? escapeHtml(account.username || account.account_id)
     : disconnected
       ? `${escapeHtml(account.username || account.account_id || platformLabel(platform))} 계정 토큰이 해제됐습니다. 다시 승인하세요.`
-    : platform === "threads"
-      ? "실제 발행 준비 중"
     : configured
       ? "계정 승인 대기"
       : missing.map(missingLabel).join(", ");
-  const primaryAction = platform === "threads" && !connected
-    ? `<button class="secondaryButton" type="button" disabled>준비 중</button>`
-    : connected
+  const primaryAction = connected
     ? `<button class="secondaryButton" type="button" data-disconnect="${platform}">연결 해제</button>`
     : configured
       ? `<a class="linkButton primary" href="/api/auth/meta/start?platform=${platform}">${disconnected ? "재연결하기" : "연결하기"}</a>`
@@ -893,7 +913,7 @@ async function loadConnections() {
   accountConnections.innerHTML = `
     ${accountError}
     <div class="connectionGrid">
-      ${["instagram"].map((platform) => renderConnectionCard(
+      ${["instagram", "threads"].map((platform) => renderConnectionCard(
         platform,
         readiness.platforms?.[platform],
         accounts.find((account) => account.platform === platform),
@@ -1118,7 +1138,7 @@ function renderBatchPlan() {
     state.duplicate.existingConflictCount ? `기존 예약과 시간이 겹치는 후보 ${state.duplicate.existingConflictCount}개가 있습니다.` : "",
     state.missingCaptionCount ? `캡션 파일이 없는 이미지 ${state.missingCaptionCount}개는 공통 문구를 사용합니다.` : "",
     state.missingCopyCount ? `본문 없이 예약될 이미지 ${state.missingCopyCount}개가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.` : "",
-    state.hasThreads ? "Threads는 현재 mock 게시 상태입니다." : "",
+    state.hasThreads ? "Threads는 글만 바로 게시할 때 사용하세요. 날짜 폴더 예약은 Instagram 이미지 예약만 지원합니다." : "",
   ].filter(Boolean);
 
   const titleTemplate = String(form.elements.title.value || "").trim();
@@ -1260,7 +1280,7 @@ function renderBatchQueue() {
   const hasOverflowItems = state.overflowCount > 0;
   const hasDuplicateWarnings = state.duplicate.warningCount > 0;
   const hasMissingCopy = state.missingCopyCount > 0;
-  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
+  const hasBlockingIssue = needsInstagramJpeg || hasPastItems || hasKakao || state.hasThreads || hasOverflowItems || hasDuplicateWarnings || hasMissingCopy;
   const allSucceeded = items.length > 0 && items.every((item) => batchResultFor(item)?.status === "success");
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
@@ -1285,7 +1305,7 @@ function renderBatchQueue() {
   if (items.length === 0) {
     batchQueue.className = "batchQueue emptyState compact";
     batchQueue.innerHTML = skipped.length
-      ? `<strong>${skipped.length}개 파일이 제외되었습니다.</strong><span>날짜 폴더와 이미지 형식을 확인하세요.</span>${renderSkippedDetails(skipped)}`
+      ? `<strong>폴더를 받지 않았습니다.</strong><span>${skipped.length}개 파일의 위치나 형식이 맞지 않습니다. 아래 항목을 고친 뒤 다시 선택하세요.</span>${renderSkippedDetails(skipped)}`
       : `<strong>상위 폴더를 선택하세요.</strong><span>예: campaign / 2026-06-21 / 001.jpg</span>`;
     return;
   }
@@ -1670,7 +1690,7 @@ function singlePostConfirmationMessage(data, platforms) {
   if (mode === "scheduled") {
     lines.push(`예약 시간: ${formatFullDateTime(data.get("scheduled_at"))}`);
   }
-  lines.push(`이미지: ${imageFile.files?.[0] ? imageFile.files[0].name : "본문 기반 자동 생성"}`);
+  lines.push(`이미지: ${imageFile.files?.[0] ? imageFile.files[0].name : platforms.includes("instagram") ? "본문 기반 자동 생성" : "없음"}`);
   const campaignName = String(data.get("campaign_name") || "").trim();
   if (campaignName) lines.push(`캠페인: ${campaignName}`);
   return lines.join("\n");
@@ -1773,11 +1793,21 @@ submitPost?.addEventListener("click", requestSinglePostSubmit);
 batchFolderInput?.addEventListener("change", async () => {
   if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
-  appState.batchItems = items;
+  const rejected = skipped.length > 0;
+  appState.batchItems = rejected ? [] : items;
   appState.batchSkipped = skipped;
   appState.batchResults = {};
   appState.batchDateGroups = {};
-  if (batchStatus) batchStatus.textContent = items.length ? `${items.length}개 준비` : "대기 중";
+  if (batchStatus) {
+    batchStatus.textContent = rejected
+      ? "폴더 수정 필요"
+      : items.length
+      ? `${items.length}개 준비`
+      : "대기 중";
+  }
+  if (rejected) {
+    showToast("폴더 구조나 파일 형식이 맞지 않아 예약 목록을 받지 않았습니다.", "error");
+  }
   renderBatchQueue();
 });
 
@@ -1826,6 +1856,11 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   }
   if (state.hasKakao) {
     showToast("Kakao는 아직 배치 예약 발송 경로가 구성되지 않았습니다.", "error");
+    renderBatchQueue();
+    return;
+  }
+  if (state.hasThreads) {
+    showToast("Threads는 글만 바로 게시할 때 사용하세요. 날짜 폴더 예약은 Instagram 이미지 예약만 지원합니다.", "error");
     renderBatchQueue();
     return;
   }

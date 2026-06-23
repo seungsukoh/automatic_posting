@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 02:54 KST
+Last updated: 2026-06-23 03:06 KST
 
 ## Current Status
 
@@ -43,6 +43,10 @@ Last updated: 2026-06-23 02:54 KST
 - Failed jobs now expose an expandable failure detail block instead of only a cramped inline message.
 - PM/design review reopened: panel sizing, button placement, visible progress indicators, and empty channel states were still not strong enough.
 - Added a sticky four-step flow rail, clearer step panel markers, top quick navigation, better connected-account emphasis, clearer empty channel notice, and stronger spacing/box sizing for compose/schedule/job areas.
+- Threads was restored as a first-class connection and text-only posting channel.
+- Threads publisher was changed from mock success to the official Threads container + publish API flow.
+- Text-only single posts can use Threads without generating an Instagram text image; Instagram still generates/uses JPG when selected.
+- Date-folder scheduling now rejects the whole folder selection when any file is outside the required date-folder/image/caption rules, and shows correction guidance instead of partially accepting valid files.
 
 ## Active Issues
 
@@ -56,11 +60,11 @@ Last updated: 2026-06-23 02:54 KST
 
 ## Next Plan
 
-1. Deploy the layout/indicator/button cleanup to production.
+1. Deploy Threads connection/publishing and strict folder validation to production.
 2. Verify production assets contain no mojibake sequences after deployment.
-3. Do a browser-level UX pass on the production app when browser tooling is available.
-4. Keep admin settings out of the normal product surface; use Cloudflare/operator tooling for rare configuration changes.
-5. Later replace the admin-key memory burden with Cloudflare Access or account-based admin auth.
+3. Connect a real Threads account through the UI and run a live text-only post test.
+4. Do a browser-level UX pass on the production app when browser tooling is available.
+5. Keep admin settings out of the normal product surface; use Cloudflare/operator tooling for rare configuration changes.
 
 ## Update Rule
 

@@ -162,12 +162,19 @@ function redirectUri(request: Request): string {
 }
 
 async function exchangeCode(config: ProviderConfig, code: string, request: Request): Promise<TokenResponse> {
-  const url = new URL(config.tokenUrl);
-  url.searchParams.set("client_id", config.clientId);
-  url.searchParams.set("client_secret", config.clientSecret);
-  url.searchParams.set("redirect_uri", redirectUri(request));
-  url.searchParams.set("code", code);
-  const response = await fetch(url.toString());
+  const params = new URLSearchParams({
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
+    redirect_uri: redirectUri(request),
+    code,
+  });
+  const response = config.platform === "threads"
+    ? await fetch(config.tokenUrl, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    })
+    : await fetch(`${config.tokenUrl}?${params.toString()}`);
   const data = (await response.json()) as TokenResponse;
   if (!response.ok || !data.access_token) {
     throw new Error(data.error?.message ?? "OAuth token exchange failed.");
