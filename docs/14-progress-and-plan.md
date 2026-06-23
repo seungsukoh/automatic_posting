@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 03:06 KST
+Last updated: 2026-06-23 KST
 
 ## Current Status
 
@@ -47,24 +47,27 @@ Last updated: 2026-06-23 03:06 KST
 - Threads publisher was changed from mock success to the official Threads container + publish API flow.
 - Text-only single posts can use Threads without generating an Instagram text image; Instagram still generates/uses JPG when selected.
 - Date-folder scheduling now rejects the whole folder selection when any file is outside the required date-folder/image/caption rules, and shows correction guidance instead of partially accepting valid files.
+- The public app now allows Instagram and Threads to be selected together.
+- The API no longer rejects multi-platform post creation; one post can create platform-specific publish jobs.
+- Compose UX was tightened: campaign tracking is collapsed by default, media and preview are grouped, and platform status labels are consistent.
+- Root Pages Functions route imports `cloudflare/src/index`, so server changes in that module affect the production Pages API.
+- Root README and current system guide were updated to match the current Instagram + Threads product state.
 
 ## Active Issues
 
-- Product UI still needs stronger PM/design cleanup so the normal user path is separated from admin setup.
-- Admin setup guidance must not expose real App IDs, secrets, or setup keys.
-- README and docs need cleanup where old assumptions mention R2 as the active storage.
-- End-to-end connection and publishing are now confirmed, but the product surface still needs UX cleanup.
-- Admin key rotation did not directly change Instagram OAuth, but it created operational confusion because the key was not preserved for later admin edits.
-- Admin-key UX is a product issue: it should not block normal Instagram reconnect or posting.
-- Immediate blocker for admin settings has been moved out of the normal UI; future rare changes should use Cloudflare/operator setup or real admin auth.
+- Production deployment must be checked after each push because old assets can remain visible until Cloudflare Pages finishes deployment or browser cache clears.
+- Live Threads publishing still needs verification with the connected Threads account.
+- Multi-platform post creation should be verified in production by confirming separate Instagram and Threads jobs in `작업 현황`.
+- Failure UX should be improved further after collecting real Meta API errors from live posting.
+- Future rare settings changes should use Cloudflare/operator tooling or real admin auth, not normal posting flow prompts.
 
 ## Next Plan
 
-1. Deploy Threads connection/publishing and strict folder validation to production.
-2. Verify production assets contain no mojibake sequences after deployment.
-3. Connect a real Threads account through the UI and run a live text-only post test.
-4. Do a browser-level UX pass on the production app when browser tooling is available.
-5. Keep admin settings out of the normal product surface; use Cloudflare/operator tooling for rare configuration changes.
+1. Confirm latest commit is deployed to `https://automatic-posting.pages.dev`.
+2. Create one single post with Instagram and Threads both selected.
+3. Verify `작업 현황` shows separate platform jobs and captures any Meta API failure details.
+4. Test media cases: no media, valid image, Instagram ratio adjustment, short video, long video.
+5. Improve retry/failure UX based on live error messages.
 
 ## Update Rule
 

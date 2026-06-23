@@ -1,10 +1,10 @@
 # 현재 시스템 운영 가이드
 
-이 문서는 현재 구현된 Automatic Posting MVP의 실제 상태와 운영 방법을 정리합니다.
+이 문서는 현재 구현된 소셜 게시 자동화 MVP의 실제 상태와 운영 방법을 정리합니다.
 
 ## 1. 시스템 개요
 
-Automatic Posting은 Instagram Business 계정에 공식 API로 게시 작업을 생성하는 Cloudflare 기반 웹앱입니다.
+소셜 게시 자동화는 Instagram Business와 Threads 계정에 공식 API로 게시 작업을 생성하는 Cloudflare 기반 웹앱입니다.
 
 ```text
 Frontend: Cloudflare Pages + Vite static assets
@@ -33,6 +33,7 @@ GET  /api/admin/settings
 GET  /api/social-accounts
 POST /api/social-accounts/disconnect
 GET  /api/auth/meta/start?platform=instagram
+GET  /api/auth/meta/start?platform=threads
 GET  /api/auth/meta/callback
 POST /api/assets/upload
 GET  /api/assets/:key
@@ -53,7 +54,9 @@ POST /api/scheduler/run
 - Meta App ID/Secret 저장
 - Page access token 암호화 저장
 - Instagram Graph API 발행 구현
+- Threads Graph API 발행 구현
 - PNG/JPG/WEBP 업로드 지원
+- MP4/MOV 영상 업로드 지원
 - Instagram 발행 시 JPG 변환 지원
 - 이미지 없이 글만 입력하면 본문 기반 JPG 자동 생성
 - 일반 사용자 화면에서 관리자 설정과 시스템 상세 상태 숨김
@@ -63,6 +66,8 @@ POST /api/scheduler/run
 ```text
 Instagram connection: working
 Instagram publishing: working
+Threads connection: configured / ready for live verification
+Threads publishing: implemented / ready for live verification
 Media storage: MEDIA_KV
 Meta App ID: configured
 Meta App Secret: configured
@@ -77,7 +82,7 @@ Facebook Login Configuration ID: optional / not configured
 
 일반 사용자는 다음만 수행합니다.
 
-- Instagram 계정 연결
+- Instagram 또는 Threads 계정 연결
 - 게시글 작성
 - 이미지 선택 또는 텍스트만 작성
 - 바로 게시 작업 생성
@@ -104,14 +109,14 @@ Facebook Login Configuration ID: optional / not configured
 
 ## 6. 새 사용자 계정 연결 절차
 
-새 사용자가 자신의 Instagram 계정을 연결하려면 프로그래밍이나 관리자 키가 필요하지 않습니다.
+새 사용자가 자신의 Instagram 또는 Threads 계정을 연결하려면 프로그래밍이나 관리자 키가 필요하지 않습니다.
 
 1. 앱에 접속합니다.
-2. `계정 연결` 영역에서 `Instagram 연결하기`를 누릅니다.
-3. Facebook 로그인 화면에서 본인 계정으로 로그인합니다.
-4. 게시에 사용할 Facebook Page와 Instagram Business 계정을 승인합니다.
-5. 앱으로 돌아왔을 때 연결된 Instagram username이 표시되는지 확인합니다.
-6. 게시 채널에 Instagram이 활성화되면 바로 게시 또는 예약을 진행합니다.
+2. `계정 연결` 영역에서 `Instagram 연결하기` 또는 `Threads 연결하기`를 누릅니다.
+3. Meta 로그인 화면에서 본인 계정으로 로그인합니다.
+4. 게시에 사용할 Instagram Business 계정 또는 Threads 계정을 승인합니다.
+5. 앱으로 돌아왔을 때 연결된 username이 표시되는지 확인합니다.
+6. 게시 채널이 활성화되면 바로 게시 또는 예약을 진행합니다.
 
 전제 조건:
 
@@ -121,15 +126,15 @@ Facebook Login Configuration ID: optional / not configured
 
 ## 7. 게시 흐름
 
-Instagram 발행 흐름:
+Instagram/Threads 발행 흐름:
 
 1. 사용자가 제목/본문/해시태그를 입력합니다.
-2. 이미지가 있으면 업로드합니다.
-3. 이미지가 없으면 브라우저에서 본문 기반 JPG를 자동 생성합니다.
-4. 업로드된 이미지 URL과 caption으로 Instagram media container를 생성합니다.
-5. `media_publish`를 호출합니다.
-6. permalink를 조회합니다.
-7. 발행 작업에 성공/실패 결과를 저장합니다.
+2. 이미지나 영상이 있으면 `MEDIA_KV`에 업로드합니다.
+3. Instagram이 선택되어 있고 이미지가 없으면 브라우저에서 본문 기반 JPG를 자동 생성합니다.
+4. 선택된 플랫폼별로 publish job을 생성합니다.
+5. Instagram은 media container 생성 후 `media_publish`를 호출합니다.
+6. Threads는 threads container 생성 후 `threads_publish`를 호출합니다.
+7. permalink를 조회하고 발행 작업에 성공/실패 결과를 저장합니다.
 
 Instagram 공식 Content Publishing API는 순수 텍스트 피드 게시를 지원하지 않으므로, 텍스트만 입력한 경우에도 앱이 자동으로 JPG 이미지를 만들어 발행합니다.
 
@@ -170,5 +175,5 @@ Instagram 공식 Content Publishing API는 순수 텍스트 피드 게시를 지
 2. 새 사용자 온보딩 매뉴얼 보강
 3. 단건 게시 전 확인 요약 추가
 4. 발행 작업 상세 로그 화면 개선
-5. Threads 실제 게시 API 구현 여부 재검토
+5. Threads 실제 게시 라이브 검증
 6. Kakao 공식 발송 경로 확정 후 연동

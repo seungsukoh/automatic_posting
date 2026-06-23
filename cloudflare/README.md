@@ -1,14 +1,14 @@
 # Cloudflare TypeScript MVP
 
-Cloudflare Workers, Pages, D1, R2, Queues, Cron 기반 자동 포스팅 MVP입니다.
+Cloudflare Workers/Pages Functions, Pages, D1, MEDIA_KV, Queues, Cron 기반 자동 게시 MVP입니다.
 
 ## 현재 범위
 
 - Workers API
 - D1 schema
-- Pages 정적 관리자 화면
+- Pages 정적 게시 화면
 - 플랫폼별 Publisher 인터페이스
-- Instagram, Threads mock success
+- Instagram, Threads 공식 API 게시 흐름
 - Kakao official route not configured failure
 - 즉시 발행, 예약 발행, 재시도, 작업 조회
 
@@ -74,11 +74,11 @@ Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` W
 
 운영자가 Cloudflare와 Facebook Login for Business 설정을 먼저 끝낸 뒤, 일반 사용자는 앱 안에서 아래 순서만 진행합니다.
 
-1. 상단의 자동 예약 시작 영역에서 서비스 준비 상태를 확인합니다.
-2. `Instagram 연결하기`를 눌러 게시할 Instagram Business 계정을 승인합니다.
-3. 플랫폼 상태가 `예약 가능`으로 바뀌면 날짜별 폴더를 선택합니다.
-4. 예약 미리보기에서 이미지 수, 날짜, 시간, 제외 파일, 경고를 확인합니다.
-5. `예약 작업 만들기`를 눌러 예약을 확정합니다.
+1. `계정 연결` 영역에서 Instagram 또는 Threads 계정을 승인합니다.
+2. 플랫폼 상태가 `게시 가능`으로 바뀌는지 확인합니다.
+3. 게시 채널을 선택하고 제목, 본문, 해시태그를 입력합니다.
+4. 필요하면 이미지나 영상을 선택합니다.
+5. `게시 작업 만들기` 또는 `예약 작업 만들기`를 눌러 작업을 생성합니다.
 
 일반 사용자는 Meta App ID, Meta App Secret, Cloudflare secret 값을 입력하지 않습니다. 해당 값은 관리자 설정에서 운영자가 한 번만 관리합니다.
 
@@ -86,17 +86,17 @@ Vite dev/preview는 기본적으로 `/api/*` 요청을 `http://127.0.0.1:8787` W
 
 운영자는 다음 값이 준비되어야 사용자가 계정을 연결할 수 있습니다.
 
-- Cloudflare D1, R2, Pages Functions, Cron
+- Cloudflare D1, MEDIA_KV, Pages Functions, Cron
 - `TOKEN_ENCRYPTION_KEY`
 - `ADMIN_SETUP_KEY`
 - Meta App ID: `Meta for Developers > My Apps > AutoPosting > App settings > Basic > App ID`
 - Meta App Secret: `Meta for Developers > My Apps > AutoPosting > App settings > Basic > App secret`
 - Facebook Login OAuth Redirect URI: 배포 도메인의 `/api/auth/meta/callback`
 
-## 다음 구현
+## 다음 확인
 
-1. Instagram OAuth callback endpoint 추가
-2. R2 이미지 업로드 API 추가
-3. InstagramPublisher를 Meta Graph API 호출로 교체
-4. ThreadsPublisher를 Threads API 호출로 교체
+1. production 배포가 최신 정적 자산과 Pages Functions를 함께 반영했는지 확인
+2. 실제 연결된 Instagram과 Threads 계정으로 같은 게시글을 작성해 플랫폼별 작업 생성 확인
+3. 이미지 없음, 비율 초과 이미지, 짧은 영상, 긴 영상 케이스 확인
+4. 실패 작업의 Meta API 오류 메시지가 작업 현황에서 읽기 쉬운지 확인
 5. Queue consumer와 Cron 중복 발행 방지 강화
