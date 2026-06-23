@@ -3,15 +3,15 @@
   font-family: "Segoe UI", system-ui, sans-serif;
   color: #172026;
   background: #edf1f3;
-  --bg: #edf1f3;
+  --bg: #f3f6f8;
   --panel: #ffffff;
-  --line: #d7dee3;
+  --line: #d8e0e6;
   --muted: #66737c;
   --text: #14212a;
   --ink: #13202a;
   --primary: #1d5fbf;
   --primary-dark: #164f9f;
-  --accent: #b58b2a;
+  --accent: #8a6a16;
   --success: #0f766e;
   --success-bg: #e0f2ef;
   --warning: #946200;
@@ -19,7 +19,7 @@
   --danger: #b42318;
   --danger-bg: #fde7e4;
   --focus: #7aa7ff;
-  --shadow: 0 8px 22px rgba(20, 33, 42, 0.06);
+  --shadow: 0 8px 24px rgba(20, 33, 42, 0.055);
 }
 
 * {
@@ -28,14 +28,14 @@
 
 body {
   margin: 0;
-  background: #f4f7f8;
+  background: var(--bg);
   overflow-x: hidden;
 }
 
 .shell {
-  width: min(1360px, calc(100% - 32px));
+  width: min(1240px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0 40px;
+  padding: 24px 0 40px;
 }
 
 .topbar,
@@ -58,13 +58,18 @@ body {
 }
 
 .topbar {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
   color: var(--text);
   box-shadow: var(--shadow);
+}
+
+.topActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .topbar p {
@@ -79,7 +84,7 @@ p {
 }
 
 h1 {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.15;
   letter-spacing: 0;
 }
@@ -113,6 +118,52 @@ p {
 .fieldHint {
   color: var(--muted);
   font-size: 13px;
+}
+
+.flowRail {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(20, 33, 42, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+.flowRail a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.flowRail a:hover {
+  background: #eef4fb;
+}
+
+.flowRail span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .summaryGrid {
@@ -267,11 +318,33 @@ p {
 }
 
 .panel {
-  padding: 18px;
+  position: relative;
+  padding: 20px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
+}
+
+.stepPanel {
+  padding-left: 26px;
+}
+
+.stepPanel::before {
+  content: attr(data-step);
+  position: absolute;
+  left: -1px;
+  top: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 42px;
+  border-radius: 0 8px 8px 0;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .composePanel {
@@ -323,7 +396,7 @@ textarea {
 
 .setupGrid {
   display: grid;
-  grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(220px, 0.72fr) minmax(360px, 1.35fr) minmax(240px, 0.72fr);
   gap: 14px;
   align-items: start;
 }
@@ -336,6 +409,10 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
+}
+
+.optionalSection {
+  background: #fbfcfd;
 }
 
 .formSectionHead {
@@ -383,7 +460,7 @@ select:focus {
 
 button,
 .linkButton {
-  min-height: 40px;
+  min-height: 42px;
   border: 0;
   border-radius: 6px;
   background: var(--primary);
@@ -414,6 +491,10 @@ button:disabled {
   border: 1px solid #c5d0d7;
   background: #ffffff;
   color: var(--text);
+}
+
+.secondaryButton {
+  min-height: 38px;
 }
 
 .topbar .secondaryButton {
@@ -450,6 +531,7 @@ button:disabled {
   padding: 5px 11px;
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .isHidden {
@@ -537,7 +619,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 46px;
+  min-height: 50px;
   padding: 0 14px;
   cursor: pointer;
   font-weight: 900;
@@ -578,7 +660,7 @@ button:disabled {
 
 .schedulerBoard {
   display: grid;
-  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  grid-template-columns: minmax(300px, 0.76fr) minmax(0, 1.24fr);
   gap: 14px;
   align-items: start;
 }
@@ -613,7 +695,10 @@ button:disabled {
 }
 
 .fileDrop:focus-within,
-.platformPicker input:focus-visible + span {
+.platformPicker input:focus-visible + span,
+.quickPlatformButton:focus-visible,
+button:focus-visible,
+.linkButton:focus-visible {
   outline: 3px solid rgba(122, 167, 255, 0.35);
   border-color: var(--focus);
 }
@@ -1224,15 +1309,16 @@ button:disabled {
 
 .quickPickerButtons {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
 .quickPlatformButton {
-  min-height: 86px;
+  min-height: 64px;
   display: grid;
-  gap: 6px;
-  align-content: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-content: center;
   justify-items: start;
   text-align: left;
   border: 1px solid #c5d0d7;
@@ -1257,6 +1343,9 @@ button:disabled {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
 }
 
 .quickPlatformButton small {
@@ -1289,6 +1378,30 @@ button:disabled {
 .quickPlatformButton:disabled .quickPlatformState,
 .quickPlatformButton:disabled small {
   color: #8a969e;
+}
+
+.inlineNotice {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  background: #f8fafb;
+}
+
+.inlineNotice strong {
+  color: var(--text);
+}
+
+.inlineNotice span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inlineNotice.pending {
+  border-color: #ead083;
+  background: #fff9e8;
 }
 
 .platformStatusItem {
@@ -1329,10 +1442,12 @@ button:disabled {
 
 .connectionCard {
   grid-template-columns: 42px minmax(0, 1fr) auto;
+  min-height: 82px;
 }
 
 .connectionCard.connected {
   border-color: #94d7bc;
+  background: linear-gradient(90deg, #f0fbf8, #ffffff 38%);
 }
 
 .platformMark {
@@ -1408,7 +1523,7 @@ button:disabled {
 }
 
 .job {
-  grid-template-columns: 42px minmax(160px, 1fr) auto minmax(140px, 0.8fr) auto;
+  grid-template-columns: 42px minmax(180px, 1fr) auto minmax(190px, 0.82fr) auto;
 }
 
 .jobMeta {
@@ -1537,6 +1652,10 @@ button:disabled {
   .schedulerBoard {
     grid-template-columns: 1fr;
   }
+
+  .flowRail {
+    position: static;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1547,6 +1666,7 @@ button:disabled {
 
   .topbar,
   .sectionHead,
+  .flowRail,
   .startActions,
   .batchGuide,
   .batchMetricGrid,
@@ -1565,6 +1685,14 @@ button:disabled {
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;
+  }
+
+  .flowRail {
+    gap: 6px;
+  }
+
+  .flowRail a {
+    min-height: 34px;
   }
 
   .batchMetricGrid article {
@@ -1597,6 +1725,14 @@ button:disabled {
   .panel,
   .composePanel {
     padding: 16px;
+  }
+
+  .stepPanel {
+    padding-left: 18px;
+  }
+
+  .stepPanel::before {
+    display: none;
   }
 
   .imagePreview:has(img) {

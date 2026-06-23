@@ -1,6 +1,6 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 02:42 KST
+Last updated: 2026-06-23 02:54 KST
 
 ## Current Status
 
@@ -41,6 +41,8 @@ Last updated: 2026-06-23 02:42 KST
 - Korean text corruption was found in the public app JavaScript bundle and repaired at source.
 - Single-post submission now shows a confirmation summary before creating the publish job.
 - Failed jobs now expose an expandable failure detail block instead of only a cramped inline message.
+- PM/design review reopened: panel sizing, button placement, visible progress indicators, and empty channel states were still not strong enough.
+- Added a sticky four-step flow rail, clearer step panel markers, top quick navigation, better connected-account emphasis, clearer empty channel notice, and stronger spacing/box sizing for compose/schedule/job areas.
 
 ## Active Issues
 
@@ -54,9 +56,9 @@ Last updated: 2026-06-23 02:42 KST
 
 ## Next Plan
 
-1. Deploy the Korean text repair and posting confirmation improvements.
-2. Verify production assets contain no mojibake sequences.
-3. Do a browser-level UX pass on the production app after deployment.
+1. Deploy the layout/indicator/button cleanup to production.
+2. Verify production assets contain no mojibake sequences after deployment.
+3. Do a browser-level UX pass on the production app when browser tooling is available.
 4. Keep admin settings out of the normal product surface; use Cloudflare/operator tooling for rare configuration changes.
 5. Later replace the admin-key memory burden with Cloudflare Access or account-based admin auth.
 

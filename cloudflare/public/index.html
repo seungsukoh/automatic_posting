@@ -15,16 +15,23 @@
           <p>Instagram Business 계정에 바로 게시하거나 날짜 폴더로 예약합니다.</p>
         </div>
         <div class="topActions">
-          <button id="refreshJobs" class="secondaryButton" type="button">
-            작업 새로고침
-          </button>
+          <a class="linkButton secondaryButton" href="#accountStep">계정 확인</a>
+          <a class="linkButton secondaryButton" href="#composeStep">글 작성</a>
+          <a class="linkButton secondaryButton" href="#jobsStep">결과 확인</a>
         </div>
       </header>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+      <nav class="flowRail" aria-label="게시 진행 단계">
+        <a href="#accountStep"><span>1</span>계정 연결</a>
+        <a href="#composeStep"><span>2</span>글 작성</a>
+        <a href="#batchStep"><span>3</span>예약</a>
+        <a href="#jobsStep"><span>4</span>결과</a>
+      </nav>
+
       <section class="postingFlow">
-        <section class="panel accountPanel">
+        <section id="accountStep" class="panel accountPanel stepPanel" data-step="1">
           <div class="sectionHead">
             <div>
               <p class="eyebrow">Step 1</p>
@@ -36,7 +43,7 @@
         </section>
 
         <div class="mainColumn">
-          <section class="panel composePanel workspaceSetupPanel">
+          <section id="composeStep" class="panel composePanel workspaceSetupPanel stepPanel" data-step="2">
             <div class="sectionHead">
               <div>
                 <p class="eyebrow">Step 2</p>
@@ -94,7 +101,7 @@
                   </div>
                 </div>
 
-                <div class="formSection marketingTools">
+                <div class="formSection marketingTools optionalSection">
                   <div class="formSectionHead">
                     <span class="stepNumber">3</span>
                     <div>
@@ -106,7 +113,7 @@
                     캠페인명
                     <input name="campaign_name" maxlength="80" placeholder="summer_launch" />
                   </label>
-                  <details class="trackingDetails" open>
+                  <details class="trackingDetails">
                     <summary>태그, 목표, UTM 설정</summary>
                     <div class="trackingFields">
                       <label>
@@ -176,7 +183,7 @@
             </form>
           </section>
 
-          <section class="panel batchPanel">
+          <section id="batchStep" class="panel batchPanel stepPanel" data-step="3">
             <div class="sectionHead">
               <div>
                 <p class="eyebrow">Step 3</p>
@@ -232,7 +239,7 @@
             </form>
           </section>
 
-          <section class="panel">
+          <section id="jobsStep" class="panel jobsPanel stepPanel" data-step="4">
             <div class="sectionHead">
               <div>
                 <p class="eyebrow">Step 4</p>
@@ -241,6 +248,9 @@
               </div>
               <button id="runScheduler" class="secondaryButton" type="button">
                 예약 작업 수동 확인
+              </button>
+              <button id="refreshJobs" class="secondaryButton" type="button">
+                작업 새로고침
               </button>
             </div>
             <div id="jobs" class="jobs"></div>

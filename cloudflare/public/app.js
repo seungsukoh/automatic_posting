@@ -719,26 +719,33 @@ function syncPlatformPicker() {
 
   if (platformQuickPicker) {
     const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
-    platformQuickPicker.innerHTML = `
-      <div class="quickPickerButtons">
-        ${visibleInputs.map((input) => {
-          const status = platformStatus(input.value);
-          return `
-            <button
-              class="quickPlatformButton ${input.checked ? "selected" : ""}"
-              type="button"
-              data-platform-toggle="${escapeHtml(input.value)}"
-              ${status.selectable ? "" : "disabled"}
-              title="${escapeHtml(status.detail)}"
-            >
-              <span class="quickPlatformName">${platformLabel(input.value)}</span>
-              <span class="quickPlatformState">${escapeHtml(status.label)}</span>
-              <small>${escapeHtml(status.detail)}</small>
-            </button>
-          `;
-        }).join("")}
-      </div>
-    `;
+    platformQuickPicker.innerHTML = visibleInputs.length
+      ? `
+        <div class="quickPickerButtons">
+          ${visibleInputs.map((input) => {
+            const status = platformStatus(input.value);
+            return `
+              <button
+                class="quickPlatformButton ${input.checked ? "selected" : ""}"
+                type="button"
+                data-platform-toggle="${escapeHtml(input.value)}"
+                ${status.selectable ? "" : "disabled"}
+                title="${escapeHtml(status.detail)}"
+              >
+                <span class="quickPlatformName">${platformLabel(input.value)}</span>
+                <span class="quickPlatformState">${escapeHtml(status.label)}</span>
+                <small>${escapeHtml(status.detail)}</small>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `
+      : `
+        <div class="inlineNotice pending">
+          <strong>게시 채널 대기</strong>
+          <span>Step 1에서 Instagram 계정을 먼저 연결하세요.</span>
+        </div>
+      `;
   }
 
   renderPublishPreview();
