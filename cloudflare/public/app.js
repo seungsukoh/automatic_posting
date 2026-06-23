@@ -115,6 +115,18 @@ function showToast(message, tone = "success") {
   }, 3200);
 }
 
+function setRedirectUri(value) {
+  const redirectUri = value || `${window.location.origin}/api/auth/meta/callback`;
+  if (redirectUriValue) redirectUriValue.textContent = redirectUri;
+  redirectUriMirrors.forEach((element) => {
+    element.textContent = redirectUri;
+  });
+}
+
+function isRedirectUriError(message) {
+  return /URL Blocked|redirect URI|Valid OAuth Redirect URIs|whitelisted/i.test(String(message || ""));
+}
+
 function setBusy(button, busy, label) {
   if (!button) return;
   button.disabled = busy;
@@ -1113,6 +1125,7 @@ async function loadConnections() {
   const accounts = accountsData.accounts || [];
   appState.accounts = accounts;
   appState.readiness = readiness;
+  setRedirectUri(readiness.redirect_uri);
   syncPlatformPicker();
 
   const accountError = accountsData.error
@@ -2268,17 +2281,17 @@ if (oauthResult.get("connected")) {
   history.replaceState({}, "", window.location.pathname);
 }
 if (oauthResult.get("oauth_error")) {
-  showToast(`계정 연결 실패: ${oauthResult.get("oauth_error")}`, "error");
+  const oauthError = oauthResult.get("oauth_error");
+  showToast(`계정 연결 실패: ${oauthError}`, "error");
+  if (isRedirectUriError(oauthError)) {
+    openAdminSettingsPanel(oauthResult.get("oauth_platform") || "threads");
+  }
   history.replaceState({}, "", window.location.pathname);
 }
 
 updateFormMeta();
 syncPlatformPicker();
-const redirectUri = `${window.location.origin}/api/auth/meta/callback`;
-if (redirectUriValue) redirectUriValue.textContent = redirectUri;
-redirectUriMirrors.forEach((element) => {
-  element.textContent = redirectUri;
-});
+setRedirectUri();
 loadConnections().catch((error) => {
   if (accountConnections) accountConnections.textContent = error.message;
 });

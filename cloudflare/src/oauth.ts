@@ -122,6 +122,15 @@ function platformFromUrl(url: URL): OAuthPlatform | null {
   return platform === "instagram" || platform === "threads" ? platform : null;
 }
 
+async function platformFromState(env: Env, state: string): Promise<OAuthPlatform | ""> {
+  if (!state) return "";
+  try {
+    return (await verifyState(env, state)).platform;
+  } catch {
+    return "";
+  }
+}
+
 async function providerConfig(env: Env, platform: OAuthPlatform): Promise<ProviderConfig | null> {
   const settings = await getRuntimeSettings(env);
   const metaClientId = settings.metaAppId;
@@ -330,7 +339,8 @@ export async function handleMetaCallback(request: Request, env: Env): Promise<Re
   const error = url.searchParams.get("error_description") ?? url.searchParams.get("error") ?? "";
   if (error) {
     await auditOAuthFailure(env, request, "provider_error", { message: error });
-    return redirectResponse(`/?oauth_error=${encodeURIComponent(error)}`);
+    const platform = await platformFromState(env, state);
+    return redirectResponse(`/?oauth_error=${encodeURIComponent(error)}${platform ? `&oauth_platform=${platform}` : ""}`);
   }
   if (!code || !state) {
     await auditOAuthFailure(env, request, "missing_code_or_state");
