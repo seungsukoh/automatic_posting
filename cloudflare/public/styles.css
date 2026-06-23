@@ -1430,36 +1430,18 @@ button:focus-visible,
   background: #fbfcfd;
 }
 
-.adminSettingsPanel summary {
+.adminSettingsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-height: 52px;
-  padding: 0 14px;
-  cursor: pointer;
-  font-weight: 900;
-  list-style: none;
+  padding: 12px 14px 0;
 }
 
-.adminSettingsPanel summary::-webkit-details-marker {
-  display: none;
-}
-
-.adminSettingsPanel summary::after {
-  content: "+";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: #eef2f6;
-  color: var(--muted);
-}
-
-.adminSettingsPanel[open] summary::after {
-  content: "-";
+.adminSettingsHeader div {
+  display: grid;
+  gap: 4px;
 }
 
 .adminSettingsPanel small {

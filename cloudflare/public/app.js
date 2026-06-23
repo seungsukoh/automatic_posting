@@ -43,6 +43,7 @@ const utmPreview = document.querySelector("#utmPreview");
 const adminSettingsPanel = document.querySelector("#adminSettingsPanel");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
+const closeAdminSettings = document.querySelector("#closeAdminSettings");
 const refreshAdminSettings = document.querySelector("#refreshAdminSettings");
 const saveAdminSettings = document.querySelector("#saveAdminSettings");
 const redirectUriValue = document.querySelector("#redirectUriValue");
@@ -976,6 +977,20 @@ function hasAdminSettingValue(payload) {
   ].some((name) => Boolean(payload[name]));
 }
 
+function openAdminSettingsPanel() {
+  if (!adminSettingsPanel) return;
+  adminSettingsPanel.classList.remove("isHidden");
+  adminSettingsPanel.setAttribute("aria-hidden", "false");
+  loadAdminSettings().catch(() => {});
+  adminSettingsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeAdminSettingsPanel() {
+  if (!adminSettingsPanel) return;
+  adminSettingsPanel.classList.add("isHidden");
+  adminSettingsPanel.setAttribute("aria-hidden", "true");
+}
+
 function renderConnectionCard(platform, readiness, account) {
   const configured = Boolean(readiness?.configured);
   const missing = readiness?.missing || [];
@@ -1854,13 +1869,11 @@ platformQuickPicker?.addEventListener("click", (event) => {
 document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-open-settings]");
   if (!target || !adminSettingsPanel) return;
-  adminSettingsPanel.open = true;
-  loadAdminSettings().catch(() => {});
+  event.preventDefault();
+  openAdminSettingsPanel();
 });
 
-adminSettingsPanel?.addEventListener("toggle", () => {
-  if (adminSettingsPanel.open) loadAdminSettings().catch(() => {});
-});
+closeAdminSettings?.addEventListener("click", closeAdminSettingsPanel);
 
 refreshAdminSettings?.addEventListener("click", async () => {
   setBusy(refreshAdminSettings, true, "확인 중");

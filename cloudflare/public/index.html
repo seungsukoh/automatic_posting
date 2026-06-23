@@ -16,7 +16,6 @@
         </div>
         <div class="topActions">
           <a class="linkButton secondaryButton" href="#accountStep">계정 확인</a>
-          <a class="linkButton secondaryButton" href="#adminSettingsPanel" data-open-settings>관리자 설정</a>
           <a class="linkButton secondaryButton" href="#composeStep">글 작성</a>
           <a class="linkButton secondaryButton" href="#jobsStep">결과 확인</a>
         </div>
@@ -41,11 +40,14 @@
             </div>
           </div>
           <div id="accountConnections" class="connections">연결 상태를 확인하고 있습니다.</div>
-          <details id="adminSettingsPanel" class="adminSettingsPanel">
-            <summary>
-              <span>관리자 설정</span>
-              <small>Instagram / Threads 연결값을 운영자가 저장합니다.</small>
-            </summary>
+          <section id="adminSettingsPanel" class="adminSettingsPanel isHidden" aria-hidden="true">
+            <div class="adminSettingsHeader">
+              <div>
+                <strong>연결 설정</strong>
+                <small>Instagram / Threads 연결값을 입력한 뒤 계정을 연결합니다.</small>
+              </div>
+              <button id="closeAdminSettings" class="ghostButton" type="button">닫기</button>
+            </div>
             <form id="adminSettingsForm" class="adminSettingsForm">
               <div id="adminSettingsStatus" class="adminSettingsStatus" aria-live="polite">설정 상태를 확인하고 있습니다.</div>
               <div class="adminSettingsGrid">
@@ -112,7 +114,7 @@
                 <button id="saveAdminSettings" type="submit">관리자 설정 저장</button>
               </div>
             </form>
-          </details>
+          </section>
         </section>
 
         <div class="mainColumn">
