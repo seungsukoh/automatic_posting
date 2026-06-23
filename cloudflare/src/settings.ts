@@ -178,7 +178,6 @@ export async function getAdminSettingsStatus(env: Env): Promise<Response> {
 export async function saveAdminSettings(request: Request, env: Env): Promise<Response> {
   if (!hasD1(env)) return serviceUnavailable("Cloudflare D1 binding DB is not configured.");
   const input = (await request.json().catch(() => ({}))) as {
-    admin_key?: string;
     meta_app_id?: string;
     meta_app_secret?: string;
     meta_login_config_id?: string;
@@ -186,7 +185,6 @@ export async function saveAdminSettings(request: Request, env: Env): Promise<Res
     threads_client_secret?: string;
   };
 
-  if (env.ADMIN_SETUP_KEY && input.admin_key?.trim() !== env.ADMIN_SETUP_KEY) return badRequest("Admin setup key is invalid.");
   const metaAppId = input.meta_app_id?.trim() ?? "";
   const metaAppSecret = input.meta_app_secret?.trim() ?? "";
   const metaLoginConfigId = input.meta_login_config_id?.trim() ?? "";

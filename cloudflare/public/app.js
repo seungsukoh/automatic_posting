@@ -43,7 +43,6 @@ const utmPreview = document.querySelector("#utmPreview");
 const adminSettingsPanel = document.querySelector("#adminSettingsPanel");
 const adminSettingsForm = document.querySelector("#adminSettingsForm");
 const adminSettingsStatus = document.querySelector("#adminSettingsStatus");
-const adminKeyGroup = document.querySelector("#adminKeyGroup");
 const closeAdminSettings = document.querySelector("#closeAdminSettings");
 const refreshAdminSettings = document.querySelector("#refreshAdminSettings");
 const saveAdminSettings = document.querySelector("#saveAdminSettings");
@@ -873,13 +872,6 @@ function renderPublishPreview() {
 
 function adminSettingRows(settings) {
   const rows = [];
-  if (settings.admin_setup_key_configured) {
-    rows.push({
-      label: "설정 보호 키",
-      configured: settings.admin_setup_key_configured,
-      source: "Cloudflare secret",
-    });
-  }
   if (settings.token_encryption_key_configured) {
     rows.push({
       label: "Secret 보호",
@@ -924,8 +916,6 @@ function adminSettingRows(settings) {
 
 function renderAdminSettingsStatus(settings) {
   if (!adminSettingsStatus) return;
-  adminKeyGroup?.classList.toggle("isHidden", !settings.admin_setup_key_configured);
-  adminKeyGroup?.setAttribute("aria-hidden", settings.admin_setup_key_configured ? "false" : "true");
   const rows = adminSettingRows(settings);
   const storesPlainSecrets = !settings.token_encryption_key_configured;
   const readyCount = rows.filter((row) => row.configured).length;
@@ -966,7 +956,6 @@ async function loadAdminSettings() {
 
 function adminSettingsPayload() {
   const fields = [
-    "admin_key",
     "meta_app_id",
     "meta_app_secret",
     "meta_login_config_id",
@@ -1899,10 +1888,6 @@ refreshAdminSettings?.addEventListener("click", async () => {
 adminSettingsForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = adminSettingsPayload();
-  if (appState.adminSettings?.admin_setup_key_configured && !payload.admin_key) {
-    showToast("설정 보호 키를 입력하세요.", "error");
-    return;
-  }
   if (!hasAdminSettingValue(payload)) {
     showToast("저장할 Meta 또는 Threads 설정값을 하나 이상 입력하세요.", "error");
     return;
