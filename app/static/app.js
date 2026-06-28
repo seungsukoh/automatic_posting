@@ -5,6 +5,7 @@ const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 const resetPostForm = document.querySelector("#resetPostForm");
 const resetScheduleFields = document.querySelector("#resetScheduleFields");
+const submitPost = document.querySelector("#submitPost");
 let previewUrl = "";
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
@@ -170,6 +171,44 @@ function formData() {
   };
 }
 
+function postSubmitLabel(mode = form?.elements?.mode?.value) {
+  return mode === "scheduled" ? "예약 게시" : "바로 작성 후 게시";
+}
+
+function updatePostSubmitLabel(mode = form?.elements?.mode?.value) {
+  if (!submitPost) return;
+  submitPost.textContent = postSubmitLabel(mode);
+}
+
+function normalizeHashtagToken(token) {
+  const normalized = String(token || "").trim().replace(/#+/g, "");
+  return normalized ? `#${normalized}` : "";
+}
+
+function normalizeHashtagInputValue(value, options = {}) {
+  const tokens = String(value || "")
+    .split(/[\s,]+/)
+    .map(normalizeHashtagToken)
+    .filter(Boolean);
+  if (!tokens.length) return "";
+  return `${tokens.join(" ")}${options.appendNext ? " #" : ""}`;
+}
+
+function commitHashtagInput(input, options = {}) {
+  input.value = normalizeHashtagInputValue(input.value, options);
+  input.setSelectionRange?.(input.value.length, input.value.length);
+}
+
+function handleHashtagKeydown(event) {
+  if (event.key !== "Tab" || event.shiftKey) return;
+  const input = event.currentTarget;
+  const value = String(input.value || "");
+  const caretAtEnd = input.selectionStart === input.selectionEnd && input.selectionEnd === value.length;
+  if (!caretAtEnd || !value.trim() || /(?:^|\s)#$/.test(value.trim())) return;
+  event.preventDefault();
+  commitHashtagInput(input, { appendNext: true });
+}
+
 function clearImagePreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = "";
@@ -190,12 +229,14 @@ function resetPostFormState() {
   form.elements.scheduled_at.value = "";
   imageFile.value = "";
   clearImagePreview();
+  updatePostSubmitLabel();
   showToast("작성내용을 초기화했습니다.");
 }
 
 function resetScheduleFieldsState() {
   form.elements.mode.value = "now";
   form.elements.scheduled_at.value = "";
+  updatePostSubmitLabel();
   showToast("예약내용을 초기화했습니다.");
 }
 
@@ -289,7 +330,7 @@ form.addEventListener("submit", async (event) => {
       })
     });
 
-    showToast(mode === "scheduled" ? "예약 발행 작업을 만들었습니다." : "즉시 발행 작업을 실행했습니다.");
+    showToast(mode === "scheduled" ? "예약 게시를 등록했습니다." : "바로 게시를 요청했습니다.");
     clearImagePreview();
     await loadJobs();
   } catch (error) {
@@ -310,6 +351,12 @@ jobsEl.addEventListener("click", async (event) => {
 });
 
 document.querySelector("#refreshJobs").addEventListener("click", loadJobs);
+form.elements.mode?.addEventListener("change", (event) => updatePostSubmitLabel(event.currentTarget.value));
+form.elements.hashtags?.addEventListener("keydown", handleHashtagKeydown);
+form.elements.hashtags?.addEventListener("blur", (event) => {
+  if (!String(event.currentTarget.value || "").trim()) return;
+  commitHashtagInput(event.currentTarget);
+});
 resetPostForm?.addEventListener("click", resetPostFormState);
 resetScheduleFields?.addEventListener("click", resetScheduleFieldsState);
 document.querySelector("#runScheduler").addEventListener("click", async () => {
@@ -323,3 +370,4 @@ document.querySelector("#runScheduler").addEventListener("click", async () => {
 });
 
 loadJobs();
+updatePostSubmitLabel();

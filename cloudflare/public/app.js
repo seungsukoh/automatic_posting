@@ -163,7 +163,7 @@ function setBusy(button, busy, label) {
 }
 
 function singlePostSubmitLabel(mode = form?.elements?.mode?.value) {
-  return mode === "scheduled" ? "예약 게시" : "작성 후 바로 게시";
+  return mode === "scheduled" ? "예약 게시" : "바로 작성 후 게시";
 }
 
 function updateSinglePostSubmitLabel(mode = form?.elements?.mode?.value) {
@@ -2832,7 +2832,7 @@ function requestBatchSubmit() {
 function singlePostConfirmationMessage(data, platforms) {
   const mode = data.get("mode");
   const lines = [
-    mode === "scheduled" ? "예약 게시할까요?" : "작성 후 바로 게시할까요?",
+    mode === "scheduled" ? "예약 게시할까요?" : "바로 작성 후 게시할까요?",
     "",
     `채널: ${platforms.map(platformLabel).join(", ")}`,
     `제목: ${String(data.get("title") || "제목 없음").trim()}`,
