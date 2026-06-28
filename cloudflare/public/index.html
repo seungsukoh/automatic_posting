@@ -325,7 +325,9 @@
               <span id="batchStatus" class="formStatus">대기 중</span>
             </div>
             <form id="batchScheduleForm">
-              <div class="batchSetupGrid">
+              <div class="batchWorkspace">
+                <div class="batchEditorColumn">
+                  <div class="batchSetupGrid">
                 <div class="formSection batchChannelSection">
                   <div class="formSectionHead">
                     <span class="sectionToken">채널</span>
@@ -374,7 +376,7 @@
                   <label class="fileDrop folderDrop">
                     <input id="batchFolderInput" type="file" accept="image/png,image/jpeg,image/webp,text/plain,text/markdown,.txt,.md,.csv" webkitdirectory directory multiple />
                     <span>상위 폴더 선택</span>
-                    <small>예: campaign / 20260621 / 001.jpg + 001.txt 또는 caption.txt, captions.csv</small>
+                    <small>예: campaign / 20260621 / 001.jpg + 001.txt, caption.txt, captions.csv</small>
                   </label>
                   <div id="batchFolderFeedback" class="batchFolderFeedback"></div>
                   <div class="batchGuide" aria-label="폴더 예약 규칙">
@@ -383,8 +385,8 @@
                       <span>20260621 형식</span>
                     </article>
                     <article>
-                      <strong>순서</strong>
-                      <span>파일명 숫자순</span>
+                      <strong>문구</strong>
+                      <span>001.txt는 개별, caption.txt는 날짜별</span>
                     </article>
                     <article>
                       <strong>시간</strong>
@@ -413,6 +415,17 @@
               <div class="formActions">
                 <button id="clearBatch" class="secondaryButton" type="button" disabled>예약내용 초기화</button>
                 <button id="submitBatch" type="button" disabled>예약 게시</button>
+              </div>
+                </div>
+                <aside class="batchPreviewColumn" aria-label="예약 게시 미리보기">
+                  <div class="batchSelectedPreviewPanel">
+                    <div class="fieldLabelRow">
+                      <strong>예약 게시 미리보기</strong>
+                      <span class="fieldHint">목록을 클릭하면 우측에 표시됩니다.</span>
+                    </div>
+                    <div id="batchSelectedPreview" class="batchSelectedPreview emptyState compact">선택된 예약 게시가 없습니다.</div>
+                  </div>
+                </aside>
               </div>
             </form>
           </section>

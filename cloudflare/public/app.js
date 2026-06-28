@@ -52,6 +52,7 @@ const batchInterval = document.querySelector("#batchInterval");
 const batchFolderFeedback = document.querySelector("#batchFolderFeedback");
 const batchPlan = document.querySelector("#batchPlan");
 const batchQueue = document.querySelector("#batchQueue");
+const batchSelectedPreview = document.querySelector("#batchSelectedPreview");
 const scheduleCalendar = document.querySelector("#scheduleCalendar");
 const jobsOverview = document.querySelector("#jobsOverview");
 const jobsFilters = document.querySelector("#jobsFilters");
@@ -81,6 +82,7 @@ let selectedMediaKind = "";
 let selectedImageAdjustment = "";
 let adjustedImageFile = null;
 let selectedMediaItems = [];
+let activeMediaPreviewIndex = 0;
 let imageSelectionVersion = 0;
 let singlePostSubmitRequested = false;
 let batchSubmitRequested = false;
@@ -98,6 +100,7 @@ const appState = {
   batchSkipped: [],
   batchResults: {},
   batchDateGroups: {},
+  activeBatchPreviewKey: "",
   batchSubmitting: false,
   platformSelectionInitialized: false,
 };
@@ -188,6 +191,25 @@ function syncPrimaryMediaState() {
 
 function selectedMediaCount() {
   return selectedMediaItems.length;
+}
+
+function boundedIndex(index, length) {
+  if (!length) return 0;
+  const value = Number(index);
+  if (!Number.isFinite(value)) return 0;
+  return ((Math.trunc(value) % length) + length) % length;
+}
+
+function activeMediaItem() {
+  if (!selectedMediaItems.length) return null;
+  activeMediaPreviewIndex = boundedIndex(activeMediaPreviewIndex, selectedMediaItems.length);
+  return selectedMediaItems[activeMediaPreviewIndex] || null;
+}
+
+function setActiveMediaPreviewIndex(index) {
+  activeMediaPreviewIndex = boundedIndex(index, selectedMediaItems.length);
+  renderSelectedImagePreview();
+  renderPublishPreview();
 }
 
 function selectedMediaLabel() {
@@ -653,51 +675,61 @@ function renderSelectedImagePreview(statusText = "업로드 전") {
   const hasIssue = selectedMediaItems.some((item) => mediaIssueForItem(item));
   imagePreview.classList.toggle("hasError", hasIssue);
   imagePreview.classList.add("hasMedia");
+  const activeItem = activeMediaItem();
+  const activeIndex = boundedIndex(activeMediaPreviewIndex, selectedMediaItems.length);
+  const displayFile = activeItem.adjustedFile || activeItem.file;
+  const issue = mediaIssueForItem(activeItem);
+  const adjustedLabel = activeItem.adjustment
+    ? activeItem.adjustment === "crop" ? "중앙 자르기 적용 · 원본 비율 유지" : "여백 추가 적용 · 원본 비율 유지"
+    : "";
+  const imageMeta = activeItem.kind === "video" ? [
+    `${Math.ceil(displayFile.size / 1024 / 1024)} MB`,
+    formatImageDimensions(activeItem.videoInfo),
+    activeItem.videoInfo?.duration ? formatDuration(activeItem.videoInfo.duration) : "",
+    statusText,
+  ].filter(Boolean).join(" · ") : [
+    `${Math.ceil(displayFile.size / 1024)} KB`,
+    formatImageDimensions(activeItem.imageInfo),
+    adjustedLabel,
+    statusText,
+  ].filter(Boolean).join(" · ");
+  const mediaPreview = activeItem.kind === "video"
+    ? `<video src="${activeItem.previewUrl}" controls muted playsinline></video>`
+    : `<img src="${activeItem.previewUrl}" alt="${escapeHtml(displayFile.name)} 미리보기" />`;
+  const adjustmentActions = issue && activeItem.kind === "image"
+    ? `
+      <div class="imageActions" aria-label="Instagram 이미지 비율 맞춤">
+        <span class="imageActionHint">원본을 늘리거나 눌러서 왜곡하지 않습니다.</span>
+        <button class="secondaryButton" type="button" data-image-adjust="pad" data-image-adjust-index="${activeIndex}">여백 추가</button>
+        <button class="secondaryButton" type="button" data-image-adjust="crop" data-image-adjust-index="${activeIndex}">중앙 자르기</button>
+      </div>
+    `
+    : "";
+  const canMove = selectedMediaItems.length > 1;
   imagePreview.innerHTML = `
-    <div class="multiMediaPreviewList">
-      ${selectedMediaItems.map((item, index) => {
-        const displayFile = item.adjustedFile || item.file;
-        const issue = mediaIssueForItem(item);
-        const adjustedLabel = item.adjustment
-          ? item.adjustment === "crop" ? "중앙 자르기 적용 · 원본 비율 유지" : "여백 추가 적용 · 원본 비율 유지"
-          : "";
-        const imageMeta = item.kind === "video" ? [
-          `${Math.ceil(displayFile.size / 1024 / 1024)} MB`,
-          formatImageDimensions(item.videoInfo),
-          item.videoInfo?.duration ? formatDuration(item.videoInfo.duration) : "",
-          statusText,
-        ].filter(Boolean).join(" · ") : [
-          `${Math.ceil(displayFile.size / 1024)} KB`,
-          formatImageDimensions(item.imageInfo),
-          adjustedLabel,
-          statusText,
-        ].filter(Boolean).join(" · ");
-        const mediaPreview = item.kind === "video"
-          ? `<video src="${item.previewUrl}" controls muted playsinline></video>`
-          : `<img src="${item.previewUrl}" alt="${escapeHtml(displayFile.name)} 미리보기" />`;
-        const adjustmentActions = issue && item.kind === "image"
-          ? `
-            <div class="imageActions" aria-label="Instagram 이미지 비율 맞춤">
-              <span class="imageActionHint">원본을 늘리거나 눌러서 왜곡하지 않습니다.</span>
-              <button class="secondaryButton" type="button" data-image-adjust="pad" data-image-adjust-index="${index}">여백 추가</button>
-              <button class="secondaryButton" type="button" data-image-adjust="crop" data-image-adjust-index="${index}">중앙 자르기</button>
-            </div>
-          `
-          : "";
-        return `
-          <article class="multiMediaPreviewCard ${issue ? "hasIssue" : ""}">
-            <span class="multiMediaIndex">${index + 1}</span>
-            ${mediaPreview}
-            <div class="multiMediaMeta">
-              <strong>${escapeHtml(displayFile.name)}</strong>
-              <span class="imageMeta">${escapeHtml(imageMeta)}</span>
-              ${issue ? `<span class="imageIssue">${escapeHtml(issue)}</span>` : ""}
-              ${adjustmentActions}
-            </div>
-          </article>
-        `;
-      }).join("")}
-    </div>
+    <article class="mediaCarousel ${issue ? "hasIssue" : ""}">
+      <div class="mediaCarouselStage">
+        ${canMove ? `<button class="mediaCarouselButton previous" type="button" data-preview-nav="-1" aria-label="이전 미리보기">&lsaquo;</button>` : ""}
+        ${mediaPreview}
+        ${canMove ? `<button class="mediaCarouselButton next" type="button" data-preview-nav="1" aria-label="다음 미리보기">&rsaquo;</button>` : ""}
+      </div>
+      <div class="mediaCarouselMeta">
+        <span class="multiMediaIndex">${activeIndex + 1} / ${selectedMediaItems.length}</span>
+        <strong>${escapeHtml(displayFile.name)}</strong>
+        <span class="imageMeta">${escapeHtml(imageMeta)}</span>
+        ${issue ? `<span class="imageIssue">${escapeHtml(issue)}</span>` : ""}
+        ${adjustmentActions}
+        ${canMove ? `
+          <div class="mediaCarouselDots" aria-label="미리보기 선택">
+            ${selectedMediaItems.map((item, index) => `
+              <button class="${index === activeIndex ? "isActive" : ""}" type="button" data-preview-index="${index}" aria-label="${index + 1}번 미리보기">
+                ${index + 1}
+              </button>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+    </article>
   `;
   renderMediaChecklist();
 }
@@ -1179,6 +1211,43 @@ function batchResultFor(item) {
   return appState.batchResults[item.relativePath] || null;
 }
 
+function batchItemKey(item) {
+  return item?.relativePath || "";
+}
+
+function activeBatchPreviewItem(items = appState.batchItems) {
+  if (!items.length) {
+    appState.activeBatchPreviewKey = "";
+    return null;
+  }
+  const current = items.find((item) => batchItemKey(item) === appState.activeBatchPreviewKey);
+  if (current) return current;
+  appState.activeBatchPreviewKey = batchItemKey(items[0]);
+  return items[0];
+}
+
+function setActiveBatchPreviewKey(key) {
+  appState.activeBatchPreviewKey = String(key || "");
+  renderBatchQueue();
+}
+
+function moveBatchPreview(offset) {
+  const items = appState.batchItems;
+  if (!items.length) return;
+  const activeItem = activeBatchPreviewItem(items);
+  const currentIndex = Math.max(0, items.findIndex((item) => batchItemKey(item) === batchItemKey(activeItem)));
+  const nextItem = items[boundedIndex(currentIndex + Number(offset || 0), items.length)];
+  if (nextItem) setActiveBatchPreviewKey(batchItemKey(nextItem));
+}
+
+function captionMatchLabel(item) {
+  if (item?.captionSource) return `캡션 매칭: ${item.captionSource}`;
+  if (batchCopyValue("title") || batchCopyValue("body") || batchCopyValue("hashtags") || batchCopyValue("link_url")) {
+    return "예약 공통 문구 적용";
+  }
+  return "문구 없음";
+}
+
 function addBatchWarning(warnings, item, message) {
   const existing = warnings.get(item.relativePath) || [];
   if (!existing.includes(message)) existing.push(message);
@@ -1518,19 +1587,23 @@ function previewMediaLabel(platform) {
 
 function publishPreviewMediaMarkup(platform, text) {
   if (selectedMediaItems.length) {
+    const activeItem = activeMediaItem();
+    const activeIndex = boundedIndex(activeMediaPreviewIndex, selectedMediaItems.length);
+    const displayFile = activeItem.adjustedFile || activeItem.file;
+    const media = activeItem.kind === "video"
+      ? `<video src="${activeItem.previewUrl}" controls muted playsinline></video>`
+      : `<img src="${activeItem.previewUrl}" alt="${platformLabel(platform)} ${activeIndex + 1}번 미디어 미리보기" />`;
+    const canMove = selectedMediaItems.length > 1;
     return `
-      <div class="previewMedia ${selectedMediaItems.length > 1 ? "multi" : ""}">
-        ${selectedMediaItems.map((item, index) => {
-          const media = item.kind === "video"
-            ? `<video src="${item.previewUrl}" controls muted playsinline></video>`
-            : `<img src="${item.previewUrl}" alt="${platformLabel(platform)} ${index + 1}번 미디어 미리보기" />`;
-          return `
-            <figure class="previewMediaItem">
-              ${media}
-              <figcaption>${index + 1}. ${escapeHtml((item.adjustedFile || item.file).name)}</figcaption>
-            </figure>
-          `;
-        }).join("")}
+      <div class="previewMedia carousel">
+        <figure class="previewMediaItem">
+          <div class="previewMediaFrame">
+            ${canMove ? `<button class="mediaCarouselButton previous" type="button" data-preview-nav="-1" aria-label="이전 미리보기">&lsaquo;</button>` : ""}
+            ${media}
+            ${canMove ? `<button class="mediaCarouselButton next" type="button" data-preview-nav="1" aria-label="다음 미리보기">&rsaquo;</button>` : ""}
+          </div>
+          <figcaption>${activeIndex + 1} / ${selectedMediaItems.length} · ${escapeHtml(displayFile.name)}</figcaption>
+        </figure>
       </div>
     `;
   }
@@ -1930,6 +2003,7 @@ function clearImagePreview() {
     if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
   });
   selectedMediaItems = [];
+  activeMediaPreviewIndex = 0;
   previewUrl = "";
   selectedImageInfo = null;
   selectedVideoInfo = null;
@@ -2343,6 +2417,60 @@ function renderScheduleCalendar() {
   `;
 }
 
+function renderBatchSelectedPreview(item = activeBatchPreviewItem(), platforms = selectedPlatforms()) {
+  if (!batchSelectedPreview) return;
+  if (!item) {
+    batchSelectedPreview.className = "batchSelectedPreview emptyState compact";
+    batchSelectedPreview.innerHTML = `
+      <strong>선택된 예약 게시가 없습니다.</strong>
+      <span>폴더를 선택한 뒤 예약 게시 목록을 클릭하면 이미지와 최종 문구를 확인할 수 있습니다.</span>
+    `;
+    return;
+  }
+
+  const items = appState.batchItems;
+  const activeIndex = Math.max(0, items.findIndex((candidate) => batchItemKey(candidate) === batchItemKey(item)));
+  const canMove = items.length > 1;
+  const preview = batchPostPreviewData(item, platforms);
+  const result = batchResultFor(item);
+  const scheduleIssue = batchItemScheduleIssue(item);
+  const captionLabel = captionMatchLabel(item);
+  batchSelectedPreview.className = "batchSelectedPreview";
+  batchSelectedPreview.innerHTML = `
+    <article class="batchSelectedPreviewCard">
+      <div class="batchPreviewStage">
+        ${canMove ? `<button class="mediaCarouselButton previous" type="button" data-batch-preview-nav="-1" aria-label="이전 예약 미리보기">&lsaquo;</button>` : ""}
+        ${item.previewUrl
+          ? `<img src="${item.previewUrl}" alt="${escapeHtml(item.fileName)} 예약 게시 이미지 미리보기" />`
+          : `<div class="previewGeneratedImage"><em>Preview</em><strong>${escapeHtml(item.fileName)}</strong><span>${escapeHtml(captionLabel)}</span></div>`}
+        ${canMove ? `<button class="mediaCarouselButton next" type="button" data-batch-preview-nav="1" aria-label="다음 예약 미리보기">&rsaquo;</button>` : ""}
+      </div>
+      <div class="batchPreviewHeader">
+        <div>
+          <span class="multiMediaIndex">${activeIndex + 1} / ${items.length}</span>
+          <strong>${escapeHtml(item.fileName)}</strong>
+          <small>${escapeHtml(item.relativePath)}</small>
+        </div>
+        <span class="batchBadge ${scheduleIssue ? "warning" : ""}">${scheduleIssue ? "시간 확인" : escapeHtml(batchItemTypeLabel(item))}</span>
+      </div>
+      <div class="previewMeta">
+        <span>예약 ${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</span>
+        <span>${escapeHtml(captionLabel)}</span>
+        ${formatImageDimensions(item.imageInfo) ? `<span>${escapeHtml(formatImageDimensions(item.imageInfo))}</span>` : ""}
+        ${result ? `<span>${escapeHtml(result.label)}</span>` : ""}
+      </div>
+      <div class="batchPostPreviewTexts">
+        ${preview.platformTexts.map(({ platform, text }) => `
+          <article>
+            <strong>${escapeHtml(platformLabel(platform))}</strong>
+            <pre>${text ? escapeHtml(text) : `<span class="previewEmpty">본문 없음</span>`}</pre>
+          </article>
+        `).join("")}
+      </div>
+    </article>
+  `;
+}
+
 function renderBatchQueue() {
   if (!batchQueue) return;
   const items = appState.batchItems;
@@ -2360,10 +2488,12 @@ function renderBatchQueue() {
   const allSucceeded = items.length > 0 && items.every((item) => batchResultFor(item)?.status === "success");
   const remainingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   const remainingTaskCount = remainingItems.length * platforms.length;
+  const selectedPreviewItem = activeBatchPreviewItem(items);
 
   renderBatchFolderFeedback();
   renderBatchPlan();
   renderScheduleCalendar();
+  renderBatchSelectedPreview(selectedPreviewItem, platforms);
 
   if (submitBatch) {
     submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || hasBlockingIssue;
@@ -2472,8 +2602,9 @@ function renderBatchQueue() {
                 || "",
               96,
             );
+            const isSelected = batchItemKey(item) === appState.activeBatchPreviewKey;
             return `
-              <div class="batchFile">
+              <div class="batchFile ${isSelected ? "isSelected" : ""}" role="button" tabindex="0" data-batch-preview-key="${escapeHtml(batchItemKey(item))}" aria-pressed="${isSelected ? "true" : "false"}">
                 <span class="batchSequence">${item.indexWithinDate + 1}</span>
                 ${item.previewUrl
                   ? `<img class="batchThumb" src="${item.previewUrl}" alt="${escapeHtml(item.fileName)} 미리보기" />`
@@ -2487,7 +2618,6 @@ function renderBatchQueue() {
                   ${imageRatioIssue ? `<span class="batchCaptionPreview">${escapeHtml(imageRatioIssue)}</span>` : ""}
                   ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
                   ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
-                  ${renderBatchPostPreview(item, platforms)}
                 </div>
                 <div class="batchFileSchedule">
                   <strong>${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</strong>
@@ -2512,6 +2642,7 @@ function clearBatchQueue() {
   appState.batchSkipped = [];
   appState.batchResults = {};
   appState.batchDateGroups = {};
+  appState.activeBatchPreviewKey = "";
   if (batchFolderInput) batchFolderInput.value = "";
   if (batchStatus) batchStatus.textContent = "대기 중";
   renderBatchQueue();
@@ -2656,6 +2787,7 @@ imageFile.addEventListener("change", async () => {
   }
 
   selectedMediaItems = accepted;
+  activeMediaPreviewIndex = 0;
   syncPrimaryMediaState();
   clearImage.disabled = false;
   renderSelectedImagePreview();
@@ -2670,11 +2802,24 @@ clearImage.addEventListener("click", () => {
   clearImagePreview();
 });
 
-imagePreview?.addEventListener("click", (event) => {
+function handleMediaPreviewClick(event) {
+  const navButton = event.target.closest("[data-preview-nav]");
+  if (navButton) {
+    setActiveMediaPreviewIndex(activeMediaPreviewIndex + Number(navButton.dataset.previewNav || 0));
+    return;
+  }
+  const indexButton = event.target.closest("[data-preview-index]");
+  if (indexButton) {
+    setActiveMediaPreviewIndex(Number(indexButton.dataset.previewIndex || 0));
+    return;
+  }
   const button = event.target.closest("[data-image-adjust]");
   if (!button) return;
   applySelectedImageAdjustment(button.dataset.imageAdjust || "pad", Number(button.dataset.imageAdjustIndex || 0));
-});
+}
+
+imagePreview?.addEventListener("click", handleMediaPreviewClick);
+publishPreview?.addEventListener("click", handleMediaPreviewClick);
 
 async function uploadImageFileToAssets(file, options = {}) {
   const uploadFile = options.forceJpeg ? await convertImageToJpeg(file) : normalizedMediaFile(file);
@@ -3297,6 +3442,7 @@ batchFolderInput?.addEventListener("change", async () => {
   appState.batchSkipped = skipped;
   appState.batchResults = {};
   appState.batchDateGroups = {};
+  appState.activeBatchPreviewKey = items[0]?.relativePath || "";
   if (batchStatus) {
     batchStatus.textContent = items.length
       ? `${items.length}개 준비`
@@ -3327,6 +3473,26 @@ batchQueue?.addEventListener("toggle", (event) => {
   const dateKey = group.dataset.dateKey;
   if (dateKey) appState.batchDateGroups[dateKey] = group.open;
 }, true);
+
+batchQueue?.addEventListener("click", (event) => {
+  const item = event.target.closest("[data-batch-preview-key]");
+  if (!item || !batchQueue.contains(item)) return;
+  setActiveBatchPreviewKey(item.dataset.batchPreviewKey || "");
+});
+
+batchQueue?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const item = event.target.closest("[data-batch-preview-key]");
+  if (!item || !batchQueue.contains(item)) return;
+  event.preventDefault();
+  setActiveBatchPreviewKey(item.dataset.batchPreviewKey || "");
+});
+
+batchSelectedPreview?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-batch-preview-nav]");
+  if (!button) return;
+  moveBatchPreview(Number(button.dataset.batchPreviewNav || 0));
+});
 
 batchScheduleForm?.addEventListener("submit", async (event) => {
   event.preventDefault();

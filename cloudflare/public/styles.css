@@ -506,7 +506,8 @@ p {
   padding: 18px;
 }
 
-.composeWorkspace {
+.composeWorkspace,
+.batchWorkspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(380px, 0.48fr);
   gap: 18px;
@@ -515,13 +516,17 @@ p {
 
 .composeEditorColumn,
 .composePreviewColumn,
-.selectedMediaPanel {
+.batchEditorColumn,
+.batchPreviewColumn,
+.selectedMediaPanel,
+.batchSelectedPreviewPanel {
   display: grid;
   gap: 14px;
   min-width: 0;
 }
 
-.composePreviewColumn {
+.composePreviewColumn,
+.batchPreviewColumn {
   position: sticky;
   top: 88px;
   max-height: calc(100vh - 104px);
@@ -1304,6 +1309,19 @@ button:focus-visible,
   gap: 12px;
   padding: 10px 12px;
   border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.batchFile:hover,
+.batchFile:focus-visible,
+.batchFile.isSelected {
+  background: #0E275014;
+}
+
+.batchFile:focus-visible,
+.batchFile.isSelected {
+  outline: 3px solid #C9A86A59;
+  outline-offset: -3px;
 }
 
 .batchSequence {
@@ -1417,6 +1435,79 @@ button:focus-visible,
   font-size: 16px;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.batchSelectedPreview {
+  min-height: 240px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.batchSelectedPreview.emptyState {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.batchSelectedPreviewCard {
+  display: grid;
+  min-width: 0;
+}
+
+.batchPreviewStage {
+  min-height: 260px;
+}
+
+.batchPreviewStage img {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: contain;
+  background: #061328;
+}
+
+.batchPreviewStage .previewGeneratedImage {
+  width: 100%;
+  min-height: 260px;
+}
+
+.batchPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 12px 14px;
+  background: #FFFFFF;
+}
+
+.batchPreviewHeader > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.batchPreviewHeader .multiMediaIndex {
+  position: static;
+  width: fit-content;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px 9px;
+  background: #0E275014;
+  color: #0A1A33;
+}
+
+.batchPreviewHeader strong,
+.batchPreviewHeader small {
+  overflow-wrap: anywhere;
+}
+
+.batchSelectedPreview .batchPostPreviewTexts {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+  background: #FBFAF6;
 }
 
 .scheduleCalendar {
@@ -1567,6 +1658,121 @@ button:focus-visible,
   gap: 5px;
   min-width: 0;
   padding: 14px;
+}
+
+.mediaCarousel {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  background: #FFFFFF;
+}
+
+.imagePreview .mediaCarousel,
+.imagePreview .mediaCarouselStage,
+.imagePreview .mediaCarouselMeta,
+.imagePreview .mediaCarouselDots {
+  padding: 0;
+}
+
+.mediaCarouselStage,
+.previewMediaFrame,
+.batchPreviewStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  min-width: 0;
+  background: #061328;
+}
+
+.mediaCarouselStage img,
+.mediaCarouselStage video,
+.previewMediaFrame img,
+.previewMediaFrame video {
+  display: block;
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+  background: #061328;
+}
+
+.mediaCarouselButton {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border: 1px solid #C9A86A66;
+  border-radius: 999px;
+  padding: 0;
+  background: #FBFAF6E6;
+  color: #0E2750;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.mediaCarouselButton.previous {
+  left: 10px;
+}
+
+.mediaCarouselButton.next {
+  right: 10px;
+}
+
+.mediaCarouselButton:hover {
+  background: #C9A86A;
+  color: #0E2750;
+}
+
+.mediaCarouselMeta {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #FFFFFF;
+}
+
+.mediaCarouselMeta .multiMediaIndex {
+  position: static;
+  width: fit-content;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #0E275014;
+  color: #0A1A33;
+}
+
+.mediaCarouselDots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mediaCarouselDots button {
+  width: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0;
+  background: #FFFFFF;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.mediaCarouselDots button.isActive {
+  border-color: #C9A86A;
+  background: #0E2750;
+  color: #FFFFFF;
 }
 
 .multiMediaPreviewList {
@@ -1789,6 +1995,20 @@ button:focus-visible,
   background: #0E275033;
 }
 
+.previewMedia.carousel {
+  display: block;
+  min-height: 0;
+  background: #061328;
+}
+
+.previewMedia.carousel .previewMediaItem {
+  display: grid;
+}
+
+.previewMedia.carousel .previewMediaFrame {
+  min-height: 260px;
+}
+
 .previewMediaItem {
   display: grid;
   margin: 0;
@@ -1813,6 +2033,12 @@ button:focus-visible,
   max-height: 340px;
   object-fit: contain;
   background: #061328;
+}
+
+.previewMedia.carousel .previewMediaFrame img,
+.previewMedia.carousel .previewMediaFrame video {
+  height: 260px;
+  max-height: none;
 }
 
 .previewGeneratedImage {
@@ -2806,12 +3032,14 @@ button:focus-visible,
   .startSteps,
   .setupGrid,
   .composeWorkspace,
+  .batchWorkspace,
   .batchSetupGrid,
   .schedulerBoard {
     grid-template-columns: 1fr;
   }
 
-  .composePreviewColumn {
+  .composePreviewColumn,
+  .batchPreviewColumn {
     position: static;
     max-height: none;
     overflow: visible;
@@ -2884,7 +3112,11 @@ button:focus-visible,
   .composeWorkspace,
   .composeEditorColumn,
   .composePreviewColumn,
+  .batchWorkspace,
+  .batchEditorColumn,
+  .batchPreviewColumn,
   .batchPostPreviewGrid,
+  .batchPreviewHeader,
   .jobContentPreview > div,
   .batchSetupGrid,
   .schedulerBoard,
@@ -3025,7 +3257,12 @@ button:focus-visible,
   }
 
   .imagePreview img,
-  .imagePreview video {
+  .imagePreview video,
+  .mediaCarouselStage img,
+  .mediaCarouselStage video,
+  .batchPreviewStage img,
+  .previewMedia.carousel .previewMediaFrame img,
+  .previewMedia.carousel .previewMediaFrame video {
     width: 100%;
     height: 190px;
   }
