@@ -1,25 +1,29 @@
 :root {
   color-scheme: light;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  color: #172026;
-  background: #edf1f3;
-  --bg: #f5f7f9;
-  --panel: #ffffff;
-  --line: #dce3e8;
-  --muted: #66737c;
-  --text: #14212a;
-  --ink: #13202a;
-  --primary: #245f9e;
-  --primary-dark: #174a82;
-  --accent: #8a6a16;
-  --success: #0f766e;
-  --success-bg: #e0f2ef;
-  --warning: #946200;
-  --warning-bg: #fff3cf;
-  --danger: #b42318;
-  --danger-bg: #fde7e4;
-  --focus: #7aa7ff;
-  --shadow: 0 1px 2px rgba(20, 33, 42, 0.04), 0 8px 22px rgba(20, 33, 42, 0.035);
+  --font-sans: "Pretendard Variable", "Pretendard", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif: "Noto Serif KR", Georgia, serif;
+  --font-mono: "JetBrains Mono", "D2Coding", Consolas, monospace;
+  font-family: var(--font-sans);
+  color: #0A1A33;
+  background: #F2F1EC;
+  --bg: #F2F1EC;
+  --panel: #FBFAF6;
+  --paper: #FBFAF6;
+  --line: #0E275033;
+  --muted: #6E7A8F;
+  --text: #0A1A33;
+  --ink: #0A1A33;
+  --primary: #0E2750;
+  --primary-dark: #0E2750;
+  --accent: #C9A86A;
+  --success: #0E2750;
+  --success-bg: #0E275014;
+  --warning: #A8853F;
+  --warning-bg: #C9A86A33;
+  --danger: #A8853F;
+  --danger-bg: #A8853F26;
+  --focus: #C9A86A;
+  --shadow: 0 1px 2px #0A1A330A, 0 8px 22px #0A1A3309;
 }
 
 * {
@@ -29,6 +33,10 @@
 body {
   margin: 0;
   background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.75;
   overflow-x: hidden;
 }
 
@@ -74,7 +82,7 @@ body {
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--text);
   box-shadow: var(--shadow);
 }
@@ -119,18 +127,21 @@ p {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: 32px;
+  font-weight: 700;
   line-height: 1.15;
   letter-spacing: 0;
 }
 
 h2 {
-  font-size: 17px;
+  font-size: 24px;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 h3 {
-  font-size: 14px;
+  font-size: 20px;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -142,8 +153,9 @@ p {
 
 .eyebrow {
   color: var(--accent);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-mono);
   letter-spacing: 0;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -153,8 +165,9 @@ p {
 .fieldHint {
   display: block;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .workspaceNav {
@@ -178,8 +191,8 @@ p {
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.04);
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px #0A1A330A;
 }
 
 .workspaceUtilityTabs {
@@ -197,8 +210,8 @@ p {
   border: 1px solid transparent;
   background: transparent;
   padding: 8px 10px;
-  color: #40515c;
-  font-size: 13px;
+  color: #6E7A8F;
+  font-size: 16px;
   font-weight: 700;
   text-decoration: none;
 }
@@ -207,26 +220,26 @@ p {
   flex: 0 1 auto;
   min-width: 108px;
   border-color: var(--line);
-  background: #ffffff;
-  color: #4f5f68;
+  background: #FFFFFF;
+  color: #6E7A8F;
   font-weight: 700;
-  box-shadow: 0 1px 2px rgba(20, 33, 42, 0.03);
+  box-shadow: 0 1px 2px #0A1A3308;
 }
 
 .workspaceNav button:hover {
-  background: #f5f8fa;
+  background: #FBFAF6;
   color: var(--text);
 }
 
 .workspaceNav button.isActive {
-  border-color: #c5d0d7;
-  background: #eef4fb;
+  border-color: #0E275033;
+  background: #C9A86A33;
   color: var(--primary-dark);
 }
 
 .workspaceUtilityTabs button.isActive {
-  border-color: #c5d0d7;
-  background: #eef4fb;
+  border-color: #0E275033;
+  background: #C9A86A33;
 }
 
 [data-workspace-panel] {
@@ -262,8 +275,8 @@ p {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: #e8eef8;
-  color: #204264;
+  background: #0E275014;
+  color: #0E2750;
   font-weight: 800;
 }
 
@@ -274,10 +287,8 @@ p {
 }
 
 .platformMark--instagram {
-  background:
-    radial-gradient(circle at 30% 108%, #fdf497 0 18%, #fd5949 42%, transparent 43%),
-    linear-gradient(135deg, #405de6 0%, #833ab4 32%, #c13584 55%, #e1306c 72%, #fd1d1d 100%);
-  color: #ffffff;
+  background: #0E2750;
+  color: #FFFFFF;
 }
 
 .platformMark--instagram svg rect,
@@ -293,8 +304,8 @@ p {
 }
 
 .platformMark--threads {
-  background: #111111;
-  color: #ffffff;
+  background: #061328;
+  color: #FFFFFF;
 }
 
 .platformMark--threads svg path {
@@ -306,8 +317,8 @@ p {
 }
 
 .platformMark--kakao {
-  background: #fee500;
-  color: #1f1b10;
+  background: #C9A86A;
+  color: #0A1A33;
 }
 
 .platformMark--kakao svg path {
@@ -315,7 +326,7 @@ p {
 }
 
 .platformMark--fallback {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .summaryIcon {
@@ -341,7 +352,7 @@ p {
 }
 
 .summaryItem strong {
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .summaryItem p {
@@ -355,7 +366,7 @@ p {
   margin-bottom: 18px;
   padding: 14px 16px;
   box-shadow: none;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .startSteps {
@@ -372,7 +383,7 @@ p {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .startStep p {
@@ -385,12 +396,12 @@ p {
   width: fit-content;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 800;
 }
 
 .startStep.ready {
-  border-color: #94d7bc;
+  border-color: #0E275066;
 }
 
 .startStep.ready span,
@@ -413,7 +424,7 @@ p {
 .startStep p,
 .platformStatusItem p,
 .startActions p {
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.35;
 }
 
@@ -425,7 +436,7 @@ p {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .postingFlow,
@@ -458,7 +469,7 @@ label,
 fieldset {
   display: grid;
   gap: 7px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -478,10 +489,10 @@ textarea,
 select {
   width: 100%;
   min-height: 40px;
-  border: 1px solid #c5d0d7;
+  border: 1px solid #0E275033;
   border-radius: 6px;
   padding: 10px 11px;
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--text);
   font: inherit;
 }
@@ -520,11 +531,11 @@ textarea {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .optionalSection {
-  background: #fbfcfd;
+  background: #FBFAF6;
 }
 
 .formSectionHead {
@@ -540,12 +551,12 @@ textarea {
 }
 
 .formSectionHead strong {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .formSectionHead span:not(.sectionToken) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -558,11 +569,11 @@ textarea {
   width: fit-content;
   max-width: 72px;
   border-radius: 999px;
-  border: 1px solid #d7e2ea;
-  background: #f4f7fa;
-  color: #40515c;
+  border: 1px solid #0E275033;
+  background: #FBFAF6;
+  color: #6E7A8F;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -571,7 +582,7 @@ textarea {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 3px solid rgba(122, 167, 255, 0.35);
+  outline: 3px solid #C9A86A59;
   border-color: var(--focus);
 }
 
@@ -582,7 +593,7 @@ button,
   border: 0;
   border-radius: 6px;
   background: var(--primary);
-  color: #ffffff;
+  color: #FFFFFF;
   padding: 0 14px;
   font-weight: 700;
   cursor: pointer;
@@ -608,8 +619,8 @@ button:disabled {
 
 .secondaryButton,
 .ghostButton {
-  border: 1px solid #c5d0d7;
-  background: #ffffff;
+  border: 1px solid #0E275033;
+  background: #FFFFFF;
   color: var(--text);
 }
 
@@ -618,24 +629,24 @@ button:disabled {
 }
 
 .topbar .secondaryButton {
-  border-color: #c5d0d7;
-  background: #ffffff;
+  border-color: #0E275033;
+  background: #FFFFFF;
   color: var(--text);
 }
 
 .topbar .secondaryButton:hover {
-  background: #f5f8fa;
+  background: #FBFAF6;
 }
 
 .secondaryButton:hover,
 .ghostButton:hover {
-  background: #f5f8fa;
+  background: #FBFAF6;
 }
 
 .ghostButton {
   min-height: 32px;
   padding: 0 10px;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .grid {
@@ -652,10 +663,10 @@ button:disabled {
   max-width: 100%;
   width: fit-content;
   border-radius: 999px;
-  background: #eef2f6;
-  color: #40515c;
+  background: #0E275014;
+  color: #6E7A8F;
   padding: 5px 11px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -669,9 +680,9 @@ button:disabled {
   min-height: 88px;
   place-items: center;
   text-align: center;
-  border: 1px dashed #a9b8c1;
+  border: 1px dashed #0E275066;
   border-radius: 8px;
-  background: #f8fafb;
+  background: #F2F1EC;
   color: var(--text);
   cursor: pointer;
 }
@@ -703,7 +714,7 @@ button:disabled {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
   overflow: hidden;
 }
 
@@ -733,7 +744,7 @@ button:disabled {
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
   font-weight: 800;
 }
@@ -766,12 +777,12 @@ button:disabled {
 
 .utmPreview {
   min-height: 34px;
-  border: 1px solid #dbe3e8;
+  border: 1px solid #0E275033;
   border-radius: 6px;
   padding: 9px 10px;
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -779,19 +790,19 @@ button:disabled {
 .campaignHelp {
   display: grid;
   gap: 4px;
-  border: 1px solid #e1e8ed;
+  border: 1px solid #0E275033;
   border-radius: 6px;
   padding: 9px 10px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .campaignHelp strong {
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .campaignHelp span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -799,7 +810,7 @@ button:disabled {
 .manualPostDetails {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: #FBFAF6;
 }
 
 .manualPostDetails summary {
@@ -826,7 +837,7 @@ button:disabled {
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
 }
 
@@ -836,7 +847,7 @@ button:disabled {
 
 .manualPostDetails small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -886,7 +897,7 @@ button:disabled {
 .trackingDetails summary {
   cursor: pointer;
   color: var(--primary-dark);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -899,7 +910,7 @@ button:disabled {
 .platformCopyDetails {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: #FBFAF6;
 }
 
 .platformCopyDetails summary {
@@ -919,7 +930,7 @@ button:disabled {
 
 .platformCopyDetails small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -936,7 +947,7 @@ button:disabled {
 .quickPlatformButton:focus-visible,
 button:focus-visible,
 .linkButton:focus-visible {
-  outline: 3px solid rgba(122, 167, 255, 0.35);
+  outline: 3px solid #C9A86A59;
   border-color: var(--focus);
 }
 
@@ -951,7 +962,7 @@ button:focus-visible,
 
 .folderDrop {
   min-height: 132px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .batchFolderFeedback {
@@ -960,7 +971,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px 12px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .batchFolderFeedback.ready,
@@ -969,19 +980,19 @@ button:focus-visible,
 }
 
 .batchFolderFeedback.ready {
-  border-color: #94d7bc;
+  border-color: #0E275066;
   background: var(--success-bg);
 }
 
 .batchFolderFeedback.warning {
-  border-color: #f2d36b;
+  border-color: #C9A86A66;
   background: var(--warning-bg);
 }
 
 .batchFolderFeedback span,
 .batchFolderFeedback small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -996,7 +1007,7 @@ button:focus-visible,
 .batchFolderFeedback summary {
   cursor: pointer;
   color: var(--warning);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -1024,7 +1035,7 @@ button:focus-visible,
 .batchSkipped {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
   padding: 9px 11px;
 }
 
@@ -1037,7 +1048,7 @@ button:focus-visible,
 
 .batchGuide article,
 .batchRuleSummary {
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .batchGuide span,
@@ -1045,7 +1056,7 @@ button:focus-visible,
 .batchRuleSummary span,
 .batchSkipped span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   overflow-wrap: anywhere;
 }
 
@@ -1055,7 +1066,7 @@ button:focus-visible,
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .batchMetricGrid article {
@@ -1071,7 +1082,7 @@ button:focus-visible,
 
 .batchMetricGrid span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1089,22 +1100,22 @@ button:focus-visible,
 .batchChecks {
   display: grid;
   gap: 6px;
-  border-color: #f2d36b;
+  border-color: #C9A86A66;
   background: var(--warning-bg);
   color: var(--warning);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .batchChecks.ok {
-  border-color: #94d7bc;
+  border-color: #0E275066;
   background: var(--success-bg);
   color: var(--success);
 }
 
 .batchSkipped {
-  border-color: #f2d36b;
-  background: #fffaf0;
+  border-color: #C9A86A66;
+  background: #C9A86A33;
 }
 
 .batchSkipped summary {
@@ -1136,13 +1147,13 @@ button:focus-visible,
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .batchSummary span,
 .batchFile small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1150,12 +1161,12 @@ button:focus-visible,
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .batchDateHeader {
   padding: 10px 12px;
-  background: #f8fafb;
+  background: #F2F1EC;
   cursor: pointer;
   list-style: none;
 }
@@ -1172,7 +1183,7 @@ button:focus-visible,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
   font-weight: 700;
 }
@@ -1187,13 +1198,13 @@ button:focus-visible,
   width: fit-content;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .batchDateHeader span {
-  background: #e9f0ff;
+  background: #C9A86A33;
   color: var(--primary-dark);
 }
 
@@ -1213,9 +1224,9 @@ button:focus-visible,
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--ink);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1237,7 +1248,7 @@ button:focus-visible,
 }
 
 .batchFileSchedule strong {
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .batchBadge {
@@ -1246,7 +1257,7 @@ button:focus-visible,
 }
 
 .batchProgress {
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
 }
 
@@ -1276,9 +1287,9 @@ button:focus-visible,
 
 .batchWarning {
   padding: 10px 12px;
-  border: 1px solid #f2d36b;
+  border: 1px solid #C9A86A66;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1286,15 +1297,15 @@ button:focus-visible,
   width: fit-content;
   border-radius: 999px;
   padding: 4px 9px;
-  background: #eef2f6;
-  color: #40515c;
-  font-size: 12px;
+  background: #0E275014;
+  color: #6E7A8F;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .batchCaptionPreview {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1303,7 +1314,7 @@ button:focus-visible,
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .scheduleCalendarHeader,
@@ -1318,7 +1329,7 @@ button:focus-visible,
 .scheduleCalendarHeader span,
 .calendarLegend span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1333,7 +1344,7 @@ button:focus-visible,
   width: 9px;
   height: 9px;
   border-radius: 999px;
-  background: #e9f0ff;
+  background: #C9A86A33;
 }
 
 .calendarLegend .existing::before {
@@ -1352,7 +1363,7 @@ button:focus-visible,
 
 .calendarWeekday {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
   text-align: center;
 }
@@ -1365,7 +1376,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 6px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .calendarDay.outside {
@@ -1377,7 +1388,7 @@ button:focus-visible,
 }
 
 .calendarDay.hasBatch {
-  background: #eef5ff;
+  background: #C9A86A33;
 }
 
 .calendarDay.hasExisting {
@@ -1385,17 +1396,17 @@ button:focus-visible,
 }
 
 .calendarDay.conflict {
-  border-color: #f3b3ac;
+  border-color: #A8853F66;
   background: var(--danger-bg);
 }
 
 .calendarDay strong {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .calendarDay span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1407,7 +1418,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--muted);
-  background: #ffffff;
+  background: #FFFFFF;
   overflow: hidden;
 }
 
@@ -1416,7 +1427,7 @@ button:focus-visible,
 }
 
 .imagePreview.hasError {
-  border-color: rgba(192, 57, 43, 0.45);
+  border-color: #A8853F73;
   background: var(--danger-bg);
   color: var(--danger);
 }
@@ -1434,7 +1445,7 @@ button:focus-visible,
   width: 180px;
   height: 128px;
   object-fit: cover;
-  background: #111827;
+  background: #061328;
 }
 
 .imagePreview div {
@@ -1446,13 +1457,13 @@ button:focus-visible,
 
 .imageMeta {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .imageIssue {
   color: var(--danger);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -1467,14 +1478,14 @@ button:focus-visible,
 .imageActionHint {
   flex-basis: 100%;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .imageActions .secondaryButton {
   min-height: 32px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .mediaChecklist {
@@ -1490,33 +1501,33 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 9px 10px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .mediaCheckItem strong {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .mediaCheckItem span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
 }
 
 .mediaCheckItem.ok {
-  border-color: #94d7bc;
+  border-color: #0E275066;
   background: var(--success-bg);
 }
 
 .mediaCheckItem.missing {
-  border-color: #f3b3ac;
+  border-color: #A8853F66;
   background: var(--danger-bg);
 }
 
 .mediaCheckItem.pending {
-  border-color: #ead083;
-  background: #fff9e8;
+  border-color: #C9A86A66;
+  background: #C9A86A33;
 }
 
 .publishPreviewPanel {
@@ -1533,7 +1544,7 @@ button:focus-visible,
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .previewHeader {
@@ -1551,7 +1562,7 @@ button:focus-visible,
 
 .previewHeader span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1561,17 +1572,17 @@ button:focus-visible,
   gap: 6px;
   border-top: 1px solid var(--line);
   padding: 8px 14px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .previewMeta span {
   width: fit-content;
   max-width: 100%;
   border-radius: 999px;
-  background: #eef2f6;
-  color: #40515c;
+  background: #0E275014;
+  color: #6E7A8F;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -1581,7 +1592,7 @@ button:focus-visible,
   max-width: 100%;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -1608,7 +1619,7 @@ button:focus-visible,
   overflow: auto;
   border-top: 1px solid var(--line);
   padding: 14px;
-  background: #f8fafb;
+  background: #F2F1EC;
   color: var(--text);
   font: inherit;
   font-weight: 500;
@@ -1649,23 +1660,23 @@ button:focus-visible,
   justify-content: center;
   align-items: center;
   min-height: 42px;
-  border: 1px solid #c5d0d7;
+  border: 1px solid #0E275033;
   border-radius: 6px;
-  background: #ffffff;
+  background: #FFFFFF;
   font-weight: 700;
 }
 
 .platformPicker input:checked + span {
   border-color: var(--primary);
-  background: #e9f0ff;
+  background: #C9A86A33;
   color: var(--primary-dark);
 }
 
 .platformPicker label.disabled span {
   cursor: not-allowed;
-  background: #f1f4f6;
-  color: #8a969e;
-  border-color: #d8e0e5;
+  background: #F2F1EC;
+  color: #6E7A8F;
+  border-color: #0E275033;
 }
 
 .platformPicker label.disabled {
@@ -1677,17 +1688,17 @@ button:focus-visible,
 }
 
 .startActions.singleState.ready {
-  border-color: rgba(42, 128, 86, 0.24);
+  border-color: #0E27503D;
   background: var(--success-bg);
 }
 
 .startActions.singleState.pending {
-  border-color: rgba(138, 103, 19, 0.24);
-  background: #fff9e8;
+  border-color: #A8853F3D;
+  background: #C9A86A33;
 }
 
 .startActions.singleState.missing {
-  border-color: rgba(192, 57, 43, 0.22);
+  border-color: #A8853F38;
   background: var(--danger-bg);
 }
 
@@ -1725,9 +1736,9 @@ button:focus-visible,
   align-items: start;
   justify-items: start;
   text-align: left;
-  border: 1px solid #c5d0d7;
+  border: 1px solid #0E275033;
   border-radius: 6px;
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--text);
   cursor: pointer;
   padding: 10px;
@@ -1748,7 +1759,7 @@ button:focus-visible,
 .quickPlatformName {
   grid-area: name;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
   min-width: 0;
@@ -1761,9 +1772,9 @@ button:focus-visible,
   min-height: 26px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #eef3f6;
+  background: #0E275014;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   grid-area: state;
   line-height: 1.25;
@@ -1773,7 +1784,7 @@ button:focus-visible,
 .quickPlatformButton small {
   grid-area: note;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
   min-width: 0;
@@ -1782,27 +1793,27 @@ button:focus-visible,
 
 .quickPlatformButton.selected {
   border-color: var(--primary);
-  background: #e9f0ff;
+  background: #C9A86A33;
   color: var(--primary-dark);
-  box-shadow: 0 0 0 2px rgba(122, 167, 255, 0.16);
+  box-shadow: 0 0 0 2px #C9A86A29;
 }
 
 .quickPlatformButton.selected .quickPlatformState {
-  background: #d8e6ff;
+  background: #C9A86A33;
   color: var(--primary-dark);
 }
 
 .quickPlatformButton:disabled {
   cursor: not-allowed;
-  background: #f1f4f6;
-  color: #8a969e;
-  border-color: #d8e0e5;
+  background: #F2F1EC;
+  color: #6E7A8F;
+  border-color: #0E275033;
 }
 
 .quickPlatformButton:disabled .quickPlatformName,
 .quickPlatformButton:disabled .quickPlatformState,
 .quickPlatformButton:disabled small {
-  color: #8a969e;
+  color: #6E7A8F;
 }
 
 .inlineNotice {
@@ -1811,7 +1822,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 12px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .inlineNotice strong {
@@ -1820,13 +1831,13 @@ button:focus-visible,
 
 .inlineNotice span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .inlineNotice.pending {
-  border-color: #ead083;
-  background: #fff9e8;
+  border-color: #C9A86A66;
+  background: #C9A86A33;
 }
 
 .platformStatusItem {
@@ -1837,7 +1848,7 @@ button:focus-visible,
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .connections,
@@ -1852,7 +1863,7 @@ button:focus-visible,
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .adminSettingsHeader {
@@ -1871,7 +1882,7 @@ button:focus-visible,
 
 .adminSettingsPanel small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1899,9 +1910,9 @@ button:focus-visible,
 }
 
 .settingsGuide {
-  border: 1px solid #dbe3e8;
+  border: 1px solid #0E275033;
   border-radius: 8px;
-  background: #f8fafb;
+  background: #F2F1EC;
   overflow: hidden;
 }
 
@@ -1929,9 +1940,9 @@ button:focus-visible,
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .settingsGuide[open] summary::after {
@@ -1953,7 +1964,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 9px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .settingsGuideGrid strong {
@@ -1962,7 +1973,7 @@ button:focus-visible,
 
 .settingsGuideGrid span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -1973,22 +1984,22 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 11px 12px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .adminStatusSummary.ready {
-  border-color: #94d7bc;
+  border-color: #0E275066;
   background: var(--success-bg);
 }
 
 .adminStatusSummary.missing {
-  border-color: #f2d36b;
+  border-color: #C9A86A66;
   background: var(--warning-bg);
 }
 
 .adminStatusSummary span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1999,14 +2010,14 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 11px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .adminStatusItem span {
   width: fit-content;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -2027,15 +2038,15 @@ button:focus-visible,
 .redirectUriBox {
   display: grid;
   gap: 7px;
-  border: 1px solid #dbe3e8;
+  border: 1px solid #0E275033;
   border-radius: 6px;
   padding: 10px 11px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .redirectUriBox code {
   color: var(--primary-dark);
-  font: 700 13px Consolas, "Courier New", monospace;
+  font: 700 16px var(--font-mono);
   overflow-wrap: anywhere;
 }
 
@@ -2053,7 +2064,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .connectionCard {
@@ -2079,14 +2090,14 @@ button:focus-visible,
 }
 
 .connectionCard.connected {
-  border-color: #94d7bc;
-  background: linear-gradient(90deg, #f0fbf8, #ffffff 38%);
+  border-color: #0E275066;
+  background: #FBFAF6;
 }
 
 .platformMark {
   width: 38px;
   height: 38px;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .connectionBody p,
@@ -2102,7 +2113,7 @@ button:focus-visible,
   max-width: 100%;
   border-radius: 999px;
   padding: 4px 9px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -2125,7 +2136,7 @@ button:focus-visible,
 }
 
 .status.cancelled {
-  background: #eef2f6;
+  background: #0E275014;
   color: var(--muted);
 }
 
@@ -2138,11 +2149,11 @@ button:focus-visible,
 
 .connectionWarning {
   padding: 10px 12px;
-  border: 1px solid #f2d36b;
+  border: 1px solid #C9A86A66;
   border-radius: 8px;
   background: var(--warning-bg);
   color: var(--warning);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .readinessGrid {
@@ -2156,7 +2167,7 @@ button:focus-visible,
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .readinessItem small {
@@ -2192,7 +2203,7 @@ button:focus-visible,
   display: grid;
   gap: 5px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .jobActions {
@@ -2222,7 +2233,7 @@ button:focus-visible,
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  border: 1px solid #f3b3ac;
+  border: 1px solid #A8853F66;
   border-radius: 6px;
   padding: 8px;
   background: var(--danger-bg);
@@ -2231,7 +2242,7 @@ button:focus-visible,
 
 .jobCampaign {
   color: var(--primary-dark);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -2264,7 +2275,7 @@ button:focus-visible,
 .jobCalendarStrip {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: #FFFFFF;
   padding: 10px 12px;
 }
 
@@ -2276,7 +2287,7 @@ button:focus-visible,
 .jobSummaryGrid span,
 .jobCalendarStrip span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -2299,20 +2310,20 @@ button:focus-visible,
 .jobCalendarStrip span {
   width: fit-content;
   border-radius: 999px;
-  background: #eef2f6;
+  background: #0E275014;
   padding: 5px 9px;
 }
 
 .jobFilterButton {
   min-height: 34px;
   border: 1px solid var(--line);
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--text);
 }
 
 .jobFilterButton.isActive {
-  border-color: #c5d0d7;
-  background: #eef4fb;
+  border-color: #0E275033;
+  background: #C9A86A33;
   color: var(--primary-dark);
 }
 
@@ -2322,8 +2333,8 @@ button:focus-visible,
 
 .dangerButton {
   min-height: 36px;
-  border: 1px solid #f3b3ac;
-  background: #ffffff;
+  border: 1px solid #A8853F66;
+  background: #FFFFFF;
   color: var(--danger);
 }
 
@@ -2335,10 +2346,10 @@ button:focus-visible,
   display: grid;
   gap: 6px;
   padding: 22px;
-  border: 1px dashed #b8c5cc;
+  border: 1px dashed #0E275066;
   border-radius: 8px;
   color: var(--muted);
-  background: #f8fafb;
+  background: #F2F1EC;
 }
 
 .emptyState.compact {
@@ -2350,7 +2361,7 @@ button:focus-visible,
 }
 
 .emptyState.error {
-  border-color: #f3b3ac;
+  border-color: #A8853F66;
   background: var(--danger-bg);
   color: var(--danger);
 }
@@ -2358,9 +2369,7 @@ button:focus-visible,
 .skeletonBlock {
   min-height: 76px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #eef2f6 0, #f8fafb 50%, #eef2f6 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.2s linear infinite;
+  background: #0E275014;
 }
 
 .toast {
@@ -2375,8 +2384,8 @@ button:focus-visible,
   border-radius: 8px;
   padding: 12px 14px;
   box-shadow: var(--shadow);
-  background: #172026;
-  color: #ffffff;
+  background: #0A1A33;
+  color: #FFFFFF;
   font-weight: 700;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }

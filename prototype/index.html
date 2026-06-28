@@ -6,19 +6,22 @@
   <title>Social Publisher Prototype</title>
   <style>
     :root {
-      --bg: #f6f7f9;
-      --panel: #ffffff;
-      --line: #d9dee7;
-      --text: #172033;
-      --muted: #667085;
-      --primary: #1769e0;
-      --primary-dark: #1255b5;
-      --success: #12805c;
-      --warning: #a15c00;
-      --danger: #c23b3b;
-      --kakao: #fee500;
-      --threads: #111111;
-      --instagram: #d62976;
+      --bg: #F2F1EC;
+      --panel: #FBFAF6;
+      --line: #0E275033;
+      --text: #0A1A33;
+      --muted: #6E7A8F;
+      --primary: #0E2750;
+      --primary-dark: #0E2750;
+      --success: #0E2750;
+      --warning: #A8853F;
+      --danger: #A8853F;
+      --kakao: #C9A86A;
+      --threads: #061328;
+      --instagram: #C9A86A;
+      --font-sans: "Pretendard Variable", "Pretendard", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-serif: "Noto Serif KR", Georgia, serif;
+      --font-mono: "JetBrains Mono", "D2Coding", Consolas, monospace;
     }
 
     * {
@@ -29,9 +32,9 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: Arial, "Malgun Gothic", sans-serif;
-      font-size: 14px;
-      line-height: 1.45;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.75;
     }
 
     button,
@@ -48,8 +51,8 @@
     }
 
     .sidebar {
-      background: #172033;
-      color: #f7f9fc;
+      background: #0A1A33;
+      color: #F2F1EC;
       padding: 20px 16px;
     }
 
@@ -70,7 +73,7 @@
       border: 0;
       border-radius: 6px;
       background: transparent;
-      color: #d8deea;
+      color: #F2F1EC;
       text-align: left;
       padding: 0 12px;
       cursor: pointer;
@@ -78,8 +81,8 @@
 
     .nav button.active,
     .nav button:hover {
-      background: #263248;
-      color: #ffffff;
+      background: #1B3A6B;
+      color: #FFFFFF;
     }
 
     main {
@@ -97,7 +100,8 @@
 
     h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 32px;
+      font-weight: 700;
       line-height: 1.2;
     }
 
@@ -111,7 +115,7 @@
       height: 38px;
       border: 1px solid var(--line);
       border-radius: 6px;
-      background: #ffffff;
+      background: #FFFFFF;
       color: var(--text);
       padding: 0 14px;
       cursor: pointer;
@@ -120,7 +124,7 @@
     .btn.primary {
       border-color: var(--primary);
       background: var(--primary);
-      color: #ffffff;
+      color: #FFFFFF;
     }
 
     .btn.primary:hover {
@@ -140,10 +144,10 @@
     }
 
     .notice {
-      border: 1px solid #b8c7e6;
+      border: 1px solid #0E275066;
       border-radius: 8px;
-      background: #eef4ff;
-      color: #244071;
+      background: #C9A86A33;
+      color: #0E2750;
       padding: 12px 14px;
       margin-bottom: 18px;
     }
@@ -163,7 +167,8 @@
 
     .section h2 {
       margin: 0 0 14px;
-      font-size: 16px;
+      font-size: 24px;
+      font-weight: 600;
     }
 
     .field {
@@ -173,7 +178,7 @@
     }
 
     .field label {
-      color: #344054;
+      color: #0E2750;
       font-weight: 700;
     }
 
@@ -183,7 +188,7 @@
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 6px;
-      background: #ffffff;
+      background: #FFFFFF;
       color: var(--text);
       padding: 10px 12px;
     }
@@ -198,7 +203,7 @@
       justify-content: space-between;
       gap: 12px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 16px;
     }
 
     .platform-grid {
@@ -214,7 +219,7 @@
       min-height: 104px;
       display: grid;
       gap: 8px;
-      background: #ffffff;
+      background: #FFFFFF;
     }
 
     .platform input {
@@ -254,7 +259,7 @@
 
     .dot.kakao {
       background: var(--kakao);
-      border: 1px solid #d7c200;
+      border: 1px solid #A8853F;
     }
 
     .badge {
@@ -263,22 +268,22 @@
       min-height: 22px;
       border-radius: 999px;
       padding: 2px 8px;
-      font-size: 12px;
+      font-size: 16px;
       border: 1px solid var(--line);
       color: var(--muted);
-      background: #f8fafc;
+      background: #FBFAF6;
     }
 
     .badge.ready {
       color: var(--success);
-      border-color: #b8dfd1;
-      background: #eefaf5;
+      border-color: #0E275066;
+      background: #0E275014;
     }
 
     .badge.warning {
       color: var(--warning);
-      border-color: #efd4a3;
-      background: #fff8e8;
+      border-color: #C9A86A66;
+      background: #C9A86A33;
     }
 
     .preview {
@@ -289,7 +294,7 @@
     .preview-item {
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #ffffff;
+      background: #FFFFFF;
       overflow: hidden;
     }
 
@@ -312,15 +317,13 @@
     .image-placeholder {
       aspect-ratio: 4 / 3;
       width: 100%;
-      border: 1px dashed #aeb7c6;
+      border: 1px dashed #0E275066;
       border-radius: 6px;
-      background:
-        linear-gradient(135deg, rgba(23, 105, 224, .08), rgba(18, 128, 92, .08)),
-        #f8fafc;
+      background: #FBFAF6;
       display: grid;
       place-items: center;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 16px;
     }
 
     .preview-text {
@@ -343,8 +346,8 @@
     }
 
     .result-table th {
-      color: #344054;
-      font-size: 12px;
+      color: #0E2750;
+      font-size: 16px;
     }
 
     .status {
@@ -369,12 +372,12 @@
       bottom: 20px;
       min-width: 260px;
       max-width: 420px;
-      border: 1px solid #b8dfd1;
+      border: 1px solid #0E275066;
       border-radius: 8px;
-      background: #eefaf5;
-      color: #0f5f45;
+      background: #0E275014;
+      color: #0E2750;
       padding: 12px 14px;
-      box-shadow: 0 12px 30px rgba(16, 24, 40, .14);
+      box-shadow: 0 12px 30px #0A1A3324;
       display: none;
     }
 
@@ -620,7 +623,7 @@
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll("'", "&apos;");
     }
 
     function showToast(message) {

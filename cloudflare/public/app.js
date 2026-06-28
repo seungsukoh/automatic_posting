@@ -1,4 +1,4 @@
-﻿const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
+const API_BASE = window.API_BASE || import.meta.env.VITE_API_BASE || "";
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 const INSTAGRAM_MIN_IMAGE_RATIO = 0.8;
@@ -10,6 +10,7 @@ const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_VIDEO_TYPES = new Set(["video/mp4", "video/quicktime"]);
 const TEXT_CAPTION_EXTENSIONS = new Set(["txt", "md"]);
 const CSV_CAPTION_EXTENSIONS = new Set(["csv"]);
+const CANVAS_FONT_FAMILY = '"Pretendard Variable", Pretendard, "Malgun Gothic", sans-serif';
 const IMAGE_TYPE_BY_EXTENSION = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -30,7 +31,7 @@ const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
 const mediaChecklist = document.querySelector("#mediaChecklist");
 const clearImage = document.querySelector("#clearImage");
-const accountConnections = document.querySelector("#accountConnections");
+const accountConnections = document.querySelector('[id="accountConnections"]');
 const platformQuickPicker = document.querySelector("#platformQuickPicker");
 const workspaceTabs = document.querySelectorAll("[data-workspace-tab]");
 const workspacePanels = document.querySelectorAll("[data-workspace-panel]");
@@ -128,7 +129,7 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("'", "&apos;");
 }
 
 function showToast(message, tone = "success") {
@@ -370,7 +371,7 @@ async function convertImageToJpeg(file) {
     canvas.height = bitmap.height;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas is not available.");
-    context.fillStyle = "#ffffff";
+    context.fillStyle = "#FFFFFF";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0);
     const blob = await new Promise((resolve, reject) => {
@@ -529,7 +530,7 @@ async function createInstagramAdjustedImageFile(file, mode = "pad", sourceInfo =
     canvas.height = targetHeight;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas is not available.");
-    context.fillStyle = "#ffffff";
+    context.fillStyle = "#FFFFFF";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     if (mode === "crop") {
@@ -1091,10 +1092,10 @@ function setSelectedPlatform(value) {
 }
 
 const workspaceHashByTab = {
-  compose: "#composeStep",
-  batch: "#batchStep",
-  account: "#accountStep",
-  jobs: "#jobsStep",
+  compose: '[id="composeStep"]',
+  batch: '[id="batchStep"]',
+  account: '[id="accountStep"]',
+  jobs: '[id="jobsStep"]',
 };
 
 function normalizeWorkspaceTab(value) {
@@ -2362,17 +2363,17 @@ async function generateTextPostImageFile() {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Text image generation is not available.");
 
-  context.fillStyle = "#f7f8fb";
+  context.fillStyle = "#F2F1EC";
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#ffffff";
+  context.fillStyle = "#FFFFFF";
   context.fillRect(72, 72, 936, 936);
-  context.strokeStyle = "#d8dee8";
+  context.strokeStyle = "#0E275033";
   context.lineWidth = 2;
   context.strokeRect(72, 72, 936, 936);
 
-  context.fillStyle = "#0f172a";
+  context.fillStyle = "#0A1A33";
   context.textBaseline = "top";
-  context.font = "700 62px Arial, sans-serif";
+  context.font = `700 62px ${CANVAS_FONT_FAMILY}`;
   const titleLines = wrapCanvasText(context, title || "Social Publisher", 800).slice(0, 3);
   let y = 168;
   for (const line of titleLines) {
@@ -2381,8 +2382,8 @@ async function generateTextPostImageFile() {
   }
 
   y += 24;
-  context.fillStyle = "#334155";
-  context.font = "400 38px Arial, sans-serif";
+  context.fillStyle = "#6E7A8F";
+  context.font = `400 38px ${CANVAS_FONT_FAMILY}`;
   const bodyLines = wrapCanvasText(context, body || hashtags || " ", 800).slice(0, 10);
   for (const line of bodyLines) {
     if (y > 820) break;
@@ -2391,8 +2392,8 @@ async function generateTextPostImageFile() {
   }
 
   if (hashtags) {
-    context.fillStyle = "#2563eb";
-    context.font = "700 30px Arial, sans-serif";
+    context.fillStyle = "#0E2750";
+    context.font = `700 30px ${CANVAS_FONT_FAMILY}`;
     wrapCanvasText(context, hashtags, 800).slice(0, 2).forEach((line, index) => {
       context.fillText(line, 140, 890 + index * 40);
     });

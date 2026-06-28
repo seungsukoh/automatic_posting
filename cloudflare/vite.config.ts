@@ -27,6 +27,7 @@ export default defineConfig({
   build: {
     outDir: "../../dist",
     emptyOutDir: true,
+    cssMinify: false,
     rollupOptions: {
       input: {
         index: resolve(projectDir, "public/index.html"),
