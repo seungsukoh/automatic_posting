@@ -1,3 +1,6 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap");
+
 :root {
   --bg: #F2F1EC;
   --panel: #FBFAF6;
@@ -47,13 +50,19 @@ p {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
+
 h1 {
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 700;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
   margin-bottom: 16px;
 }
@@ -181,7 +190,7 @@ legend {
 
 .setup-wizard h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .setup-wizard p {

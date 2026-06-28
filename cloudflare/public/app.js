@@ -37,6 +37,7 @@ const workspaceTabs = document.querySelectorAll("[data-workspace-tab]");
 const workspacePanels = document.querySelectorAll("[data-workspace-panel]");
 const toast = document.querySelector("#toast");
 const submitPost = document.querySelector("#submitPost");
+const resetPostForm = document.querySelector("#resetPostForm");
 const manualPostDetails = document.querySelector(".manualPostDetails");
 const formStatus = document.querySelector("#formStatus");
 const titleCount = document.querySelector("#titleCount");
@@ -2088,7 +2089,7 @@ function renderBatchQueue() {
       ? `${remainingTaskCount || state.taskCount}개 예약 작업 만들기`
       : "예약 작업 만들기";
   }
-  if (clearBatch) clearBatch.disabled = items.length === 0 && skipped.length === 0;
+  if (clearBatch) clearBatch.disabled = items.length === 0 && skipped.length === 0 && !isBatchScheduleDirty();
 
   if (items.length === 0) {
     batchQueue.className = "batchQueue emptyState compact";
@@ -2210,6 +2211,39 @@ function clearBatchQueue() {
   if (batchFolderInput) batchFolderInput.value = "";
   if (batchStatus) batchStatus.textContent = "대기 중";
   renderBatchQueue();
+}
+
+function isBatchScheduleDirty() {
+  return Boolean(
+    (batchStartTime && batchStartTime.value !== (batchStartTime.defaultValue || "09:00"))
+    || (batchInterval && batchInterval.value !== (batchInterval.defaultValue || "30")),
+  );
+}
+
+function resetPostFormState() {
+  form.reset();
+  if (imageFile) imageFile.value = "";
+  imageSelectionVersion += 1;
+  singlePostSubmitRequested = false;
+  appState.platformSelectionInitialized = false;
+  clearImagePreview();
+  if (manualPostDetails) manualPostDetails.open = true;
+  if (formStatus) formStatus.textContent = "대기 중";
+  syncPlatformPicker();
+  updateFormMeta();
+  resetBatchResultsForPlanChange();
+  renderBatchQueue();
+  showToast("작성내용을 초기화했습니다.");
+}
+
+function resetBatchScheduleState() {
+  batchScheduleForm?.reset();
+  if (batchStartTime) batchStartTime.value = batchStartTime.defaultValue || "09:00";
+  if (batchInterval) batchInterval.value = batchInterval.defaultValue || "30";
+  appState.batchSubmitting = false;
+  batchSubmitRequested = false;
+  clearBatchQueue();
+  showToast("예약내용을 초기화했습니다.");
 }
 
 function resetBatchResultsForPlanChange() {
@@ -2825,6 +2859,7 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+resetPostForm?.addEventListener("click", resetPostFormState);
 submitPost?.addEventListener("click", requestSinglePostSubmit);
 
 batchFolderInput?.addEventListener("change", async () => {
@@ -2855,7 +2890,7 @@ batchInterval?.addEventListener("input", () => {
   resetBatchResultsForPlanChange();
   renderBatchQueue();
 });
-clearBatch?.addEventListener("click", clearBatchQueue);
+clearBatch?.addEventListener("click", resetBatchScheduleState);
 submitBatch?.addEventListener("click", requestBatchSubmit);
 
 batchQueue?.addEventListener("toggle", (event) => {

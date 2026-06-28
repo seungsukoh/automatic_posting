@@ -1,3 +1,6 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap");
+
 :root {
   color-scheme: light;
   --font-sans: "Pretendard Variable", "Pretendard", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -154,21 +157,27 @@ p {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
+
 h1 {
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: 0;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
   line-height: 1.3;
 }
 
 h3 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -192,9 +201,11 @@ p {
 .muted,
 .fieldHint {
   display: block;
+  max-width: 100%;
   color: var(--muted);
   font-size: 16px;
   line-height: 1.45;
+  word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
@@ -1103,7 +1114,7 @@ button:focus-visible,
 }
 
 .batchMetricGrid strong {
-  font-size: 18px;
+  font-size: 20px;
   overflow-wrap: anywhere;
 }
 
@@ -2308,7 +2319,7 @@ button:focus-visible,
 }
 
 .jobSummaryGrid strong {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .jobCalendarStrip {
@@ -2510,7 +2521,13 @@ button:focus-visible,
 
   .sectionHead > div {
     width: 100%;
-    max-width: 100%;
+    max-width: calc(100vw - 56px);
+  }
+
+  .sectionHead .muted {
+    width: auto;
+    max-width: 29ch;
+    white-space: normal;
   }
 
   .composePanel .sectionHead .formStatus,
@@ -2583,6 +2600,10 @@ button:focus-visible,
 
   .topbar {
     padding: 16px;
+  }
+
+  .topbar h1 {
+    max-width: 10ch;
   }
 
   .startStep {

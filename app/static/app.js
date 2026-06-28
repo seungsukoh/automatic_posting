@@ -3,6 +3,8 @@ const jobsEl = document.querySelector("#jobs");
 const toast = document.querySelector("#toast");
 const imageFile = document.querySelector("#imageFile");
 const imagePreview = document.querySelector("#imagePreview");
+const resetPostForm = document.querySelector("#resetPostForm");
+const resetScheduleFields = document.querySelector("#resetScheduleFields");
 let previewUrl = "";
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
@@ -175,6 +177,28 @@ function clearImagePreview() {
   form.elements.image_name.value = "";
 }
 
+function resetPostFormState() {
+  form.reset();
+  form.elements.title.value = "";
+  form.elements.body.value = "";
+  form.elements.link_url.value = "";
+  form.elements.hashtags.value = "";
+  form.querySelectorAll("input[name='platforms']").forEach((input) => {
+    input.checked = false;
+  });
+  form.elements.mode.value = "now";
+  form.elements.scheduled_at.value = "";
+  imageFile.value = "";
+  clearImagePreview();
+  showToast("작성내용을 초기화했습니다.");
+}
+
+function resetScheduleFieldsState() {
+  form.elements.mode.value = "now";
+  form.elements.scheduled_at.value = "";
+  showToast("예약내용을 초기화했습니다.");
+}
+
 imageFile.addEventListener("change", () => {
   const file = imageFile.files?.[0];
   clearImagePreview();
@@ -286,6 +310,8 @@ jobsEl.addEventListener("click", async (event) => {
 });
 
 document.querySelector("#refreshJobs").addEventListener("click", loadJobs);
+resetPostForm?.addEventListener("click", resetPostFormState);
+resetScheduleFields?.addEventListener("click", resetScheduleFieldsState);
 document.querySelector("#runScheduler").addEventListener("click", async () => {
   try {
     const result = await request("/api/scheduler/run", { method: "POST", body: "{}" });
