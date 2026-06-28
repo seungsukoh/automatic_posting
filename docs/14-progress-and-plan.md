@@ -1,10 +1,12 @@
 # Progress and Plan
 
-Last updated: 2026-06-23 KST
+Last updated: 2026-06-28 KST
 
 ## Current Status
 
 - Production app: `https://automatic-posting.pages.dev`
+- Latest implementation commit before this PM update: `7ca9caa Align scheduler layout and add user guide`
+- Local dev server was responding at `http://127.0.0.1:5180/` during the latest verification.
 - Cloudflare Pages project: `automatic-posting`
 - Instagram OAuth start endpoint is responding with a Facebook OAuth redirect.
 - Meta OAuth readiness is configured in production.
@@ -52,6 +54,102 @@ Last updated: 2026-06-23 KST
 - Compose UX was tightened: campaign tracking is collapsed by default, media and preview are grouped, and platform status labels are consistent.
 - Root Pages Functions route imports `cloudflare/src/index`, so server changes in that module affect the production Pages API.
 - Root README and current system guide were updated to match the current Instagram + Threads product state.
+
+## 2026-06-28 PM Handoff
+
+Recent user requests focused on finishing the posting UI as a usable Instagram/Threads publishing workspace, aligning it with the supplied brand system, and documenting usage for future users.
+
+### Completed Product Changes
+
+- Workspace tabs are now organized around `게시물 작성 및 게시`, `예약 게시`, `계정 연결`, and `작업 현황`.
+- `게시물 작성 및 게시` and `예약 게시` use the same main horizontal layout pattern: left-side input/editor column and right-side preview column.
+- The latest layout adjustment aligned the internal `예약 게시` channel/copy grid ratio with the single-post compose grid.
+- `작성내용 초기화` is placed in the top action area of the single-post section.
+- `예약내용 전체 초기화` is placed in the top action area of the scheduled-post section.
+- Single-post submit text changes by mode: `바로 작성 후 게시` for immediate publishing and `예약 게시` for scheduled publishing.
+- Instagram and Threads can be selected together for single-post publishing.
+- Instagram and Threads can also be selected in `예약 게시`.
+- Account connection cards now include `연결 정보 확인` details in addition to connect/reconnect/disconnect actions.
+- Job cards can show posted or scheduled content preview, including image/video and text.
+
+### Preview and Media Work
+
+- Single-post media selection supports multiple files.
+- Right-side media preview supports carousel-style previous/next buttons and index dots.
+- The final publish preview shows platform-specific output text.
+- Scheduled-post candidates can be clicked to show a right-side preview using the same left/editor and right/preview layout pattern as single-post authoring.
+- Scheduled preview supports previous/next navigation across registered candidates.
+- Scheduled jobs created from folders include both media and text when caption files or common scheduled copy are present.
+
+### Scheduled Posting Work
+
+- Folder auto-registration remains the primary flow.
+- Date folders are read from `YYYYMMDD`, `YYYY-MM-DD`, or similar date-folder names.
+- Supported caption sources include same-name `.txt`/`.md`, date-folder `caption.txt`, and `captions.csv`.
+- `예약 공통 문구` applies to images without a matching caption file.
+- Users can delete unwanted scheduled candidates before creating jobs.
+- Users can add individual files through `개별 등록` with a selected reservation date.
+- Deletion and individual addition are restricted after successful scheduled jobs exist to avoid client/server state mismatch.
+
+### Brand and UI System
+
+- CSS uses the supplied brand palette: Heritage Navy, Signal Gold, Paper Cream, Deep Ink, Mid Navy, Steel, Gold Deep, Paper, Ink, white, and black.
+- Instagram logo colors are intentionally allowed as original Instagram brand colors.
+- Fonts are wired through CSS tokens: Pretendard Variable/Pretendard for UI, Noto Serif KR for serif use, and JetBrains Mono for mono/caption/code use.
+- CSS hex extraction was checked: only official colors, official alpha variants, and Instagram logo color exceptions remain.
+- Gold is used as an accent, not as the base surface.
+
+### Documentation
+
+- Added Word user guide: `docs/automatic-posting-user-guide.docx`.
+- The guide covers quick start, account connection, single-post publishing, hashtag entry, media preview, scheduled posting, folder/caption rules, individual registration, deletion, job status, and troubleshooting.
+- DOCX uses the official color palette and a Word-compatible `맑은 고딕` theme/font setup.
+
+### Verification Completed
+
+- `node --check cloudflare/public/app.js`
+- `npm.cmd --prefix cloudflare run typecheck`
+- `npm.cmd --prefix cloudflare run build`
+- `git diff --check`
+- CSS color validation: `OK`
+- DOCX zip/package validation: `OK`
+- DOCX XML parsing validation: `OK`
+- DOCX internal color validation: `OK`
+- DOCX font/theme check confirmed `맑은 고딕` usage.
+
+### Verification Limitations
+
+- Playwright layout verification could not run fully because the installed Playwright browser executable was missing, and launching local Chrome/Edge failed with `spawn EPERM`.
+- DOCX PNG render QA could not run because the Documents renderer dependency `pdf2image` was missing and `soffice` was not available on PATH.
+- The DOCX was therefore structurally validated, but still should be opened once in Word for visual QA before external distribution.
+
+### Repository State Notes
+
+- Latest committed and pushed implementation work before this PM update: `7ca9caa`.
+- Previous relevant commits:
+  - `349c851 Add scheduled post item management`
+  - `c3883a2 Refine workspace layout and tab navigation`
+  - `ef9dcbe Add carousel previews for scheduled posts`
+  - `e8d5c2d Support multi media previews and account details`
+  - `1bbe800 Complete publish control updates`
+- Unrelated dirty/untracked files were intentionally left untouched during the latest work:
+  - `README.md`
+  - `.tmp-chrome-docs/`
+  - `.tmp-chrome-ui/`
+  - `.tmp-ui-desktop.png`
+  - `.tmp-ui-mobile.png`
+  - `docs/16-settings-guide.md`
+  - `docs/17-usage-guide.md`
+  - `docs/18-app-setup-usage-guide.md`
+  - `docs/assets/`
+
+### Recommended Next Checks
+
+1. Confirm Cloudflare Pages has deployed commit `7ca9caa`.
+2. Open the production app and verify the single-post and scheduled-post layouts at desktop and mobile widths.
+3. Run live single-post tests for Instagram only, Threads only, and Instagram + Threads together.
+4. Run a scheduled-post test with a folder containing images plus `.txt` captions and another test using `개별 등록`.
+5. Open `docs/automatic-posting-user-guide.docx` in Word and visually confirm page layout, tables, and Korean font rendering.
 
 ## Active Issues
 
