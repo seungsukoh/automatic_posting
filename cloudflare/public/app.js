@@ -80,6 +80,7 @@ let selectedVideoInfo = null;
 let selectedMediaKind = "";
 let selectedImageAdjustment = "";
 let adjustedImageFile = null;
+let selectedMediaItems = [];
 let imageSelectionVersion = 0;
 let singlePostSubmitRequested = false;
 let batchSubmitRequested = false;
@@ -171,6 +172,31 @@ function updateSinglePostSubmitLabel(mode = form?.elements?.mode?.value) {
   submitPost.textContent = singlePostSubmitLabel(mode);
 }
 
+function primaryMediaItem() {
+  return selectedMediaItems[0] || null;
+}
+
+function syncPrimaryMediaState() {
+  const item = primaryMediaItem();
+  previewUrl = item?.previewUrl || "";
+  selectedImageInfo = item?.imageInfo || null;
+  selectedVideoInfo = item?.videoInfo || null;
+  selectedMediaKind = item?.kind || "";
+  selectedImageAdjustment = item?.adjustment || "";
+  adjustedImageFile = item?.adjustedFile || null;
+}
+
+function selectedMediaCount() {
+  return selectedMediaItems.length;
+}
+
+function selectedMediaLabel() {
+  const count = selectedMediaCount();
+  if (count === 0) return "";
+  if (count === 1) return selectedMediaItems[0].file.name;
+  return `${count}개 파일`;
+}
+
 function platformLabel(platform) {
   return {
     instagram: "Instagram",
@@ -242,7 +268,7 @@ function missingConnectionSummary(platform, missing = []) {
 function statusLabel(status) {
   return {
     queued: "대기",
-    running: "발행 중",
+    running: "게시 중",
     scheduled: "예약",
     success: "성공",
     failed: "실패",
@@ -489,14 +515,46 @@ function threadsVideoIssue(info) {
   return "";
 }
 
+function mediaIssueForItem(item, platforms = selectedPlatforms()) {
+  if (!item) return "";
+  if (item.kind === "image" && platforms.includes("instagram")) {
+    return instagramImageRatioIssue(item.imageInfo);
+  }
+  if (item.kind === "video") {
+    if (platforms.includes("instagram")) {
+      const issue = instagramVideoIssue(item.videoInfo);
+      if (issue) return issue;
+    }
+    if (platforms.includes("threads")) {
+      const issue = threadsVideoIssue(item.videoInfo);
+      if (issue) return issue;
+    }
+  }
+  return "";
+}
+
 function selectedInstagramImageIssue(platforms = selectedPlatforms()) {
-  if (selectedMediaKind !== "image") return "";
   if (!platforms.includes("instagram")) return "";
+  const item = selectedMediaItems.find((entry) => entry.kind === "image" && instagramImageRatioIssue(entry.imageInfo));
+  if (item) return instagramImageRatioIssue(item.imageInfo);
+  if (selectedMediaItems.length) return "";
+  if (selectedMediaKind !== "image") return "";
   return instagramImageRatioIssue(selectedImageInfo);
 }
 
 function selectedVideoIssue(platforms = selectedPlatforms()) {
-  if (selectedMediaKind !== "video") return "";
+  const videoItems = selectedMediaItems.length ? selectedMediaItems.filter((entry) => entry.kind === "video") : [];
+  for (const item of videoItems) {
+    if (platforms.includes("instagram")) {
+      const issue = instagramVideoIssue(item.videoInfo);
+      if (issue) return issue;
+    }
+    if (platforms.includes("threads")) {
+      const issue = threadsVideoIssue(item.videoInfo);
+      if (issue) return issue;
+    }
+  }
+  if (selectedMediaItems.length || selectedMediaKind !== "video") return "";
   if (platforms.includes("instagram")) {
     const issue = instagramVideoIssue(selectedVideoInfo);
     if (issue) return issue;
@@ -509,6 +567,10 @@ function selectedVideoIssue(platforms = selectedPlatforms()) {
 }
 
 function selectedMediaIssue(platforms = selectedPlatforms()) {
+  for (const item of selectedMediaItems) {
+    const issue = mediaIssueForItem(item, platforms);
+    if (issue) return `${item.file.name}: ${issue}`;
+  }
   return selectedInstagramImageIssue(platforms) || selectedVideoIssue(platforms);
 }
 
@@ -582,48 +644,59 @@ async function createInstagramAdjustedImageFile(file, mode = "pad", sourceInfo =
 }
 
 function renderSelectedImagePreview(statusText = "업로드 전") {
-  const file = imageFile.files?.[0];
-  if (!file || !previewUrl) {
+  if (!selectedMediaItems.length) {
+    imagePreview.classList.remove("hasError", "uploading", "hasMedia");
+    imagePreview.textContent = "선택된 파일이 없습니다.";
     renderMediaChecklist();
     return;
   }
-  const displayFile = adjustedImageFile || file;
-  const issue = selectedMediaIssue();
-  const adjustedLabel = selectedImageAdjustment
-    ? selectedImageAdjustment === "crop" ? "중앙 자르기 적용 · 원본 비율 유지" : "여백 추가 적용 · 원본 비율 유지"
-    : "";
-  const imageMeta = selectedMediaKind === "video" ? [
-    `${Math.ceil(displayFile.size / 1024 / 1024)} MB`,
-    formatImageDimensions(selectedVideoInfo),
-    selectedVideoInfo?.duration ? formatDuration(selectedVideoInfo.duration) : "",
-    statusText,
-  ].filter(Boolean).join(" · ") : [
-    `${Math.ceil(displayFile.size / 1024)} KB`,
-    formatImageDimensions(selectedImageInfo),
-    adjustedLabel,
-    statusText,
-  ].filter(Boolean).join(" · ");
-  imagePreview.classList.toggle("hasError", Boolean(issue));
+  const hasIssue = selectedMediaItems.some((item) => mediaIssueForItem(item));
+  imagePreview.classList.toggle("hasError", hasIssue);
   imagePreview.classList.add("hasMedia");
-  const mediaPreview = selectedMediaKind === "video"
-    ? `<video src="${previewUrl}" controls muted playsinline></video>`
-    : `<img src="${previewUrl}" alt="선택한 이미지 미리보기" />`;
-  const adjustmentActions = issue && selectedMediaKind === "image"
-    ? `
-      <div class="imageActions" aria-label="Instagram 이미지 비율 맞춤">
-        <span class="imageActionHint">원본을 늘리거나 눌러서 왜곡하지 않습니다.</span>
-        <button class="secondaryButton" type="button" data-image-adjust="pad">여백 추가</button>
-        <button class="secondaryButton" type="button" data-image-adjust="crop">중앙 자르기</button>
-      </div>
-    `
-    : "";
   imagePreview.innerHTML = `
-    ${mediaPreview}
-    <div>
-      <strong>${escapeHtml(displayFile.name)}</strong>
-      <span class="imageMeta">${escapeHtml(imageMeta)}</span>
-      ${issue ? `<span class="imageIssue">${escapeHtml(issue)}</span>` : ""}
-      ${adjustmentActions}
+    <div class="multiMediaPreviewList">
+      ${selectedMediaItems.map((item, index) => {
+        const displayFile = item.adjustedFile || item.file;
+        const issue = mediaIssueForItem(item);
+        const adjustedLabel = item.adjustment
+          ? item.adjustment === "crop" ? "중앙 자르기 적용 · 원본 비율 유지" : "여백 추가 적용 · 원본 비율 유지"
+          : "";
+        const imageMeta = item.kind === "video" ? [
+          `${Math.ceil(displayFile.size / 1024 / 1024)} MB`,
+          formatImageDimensions(item.videoInfo),
+          item.videoInfo?.duration ? formatDuration(item.videoInfo.duration) : "",
+          statusText,
+        ].filter(Boolean).join(" · ") : [
+          `${Math.ceil(displayFile.size / 1024)} KB`,
+          formatImageDimensions(item.imageInfo),
+          adjustedLabel,
+          statusText,
+        ].filter(Boolean).join(" · ");
+        const mediaPreview = item.kind === "video"
+          ? `<video src="${item.previewUrl}" controls muted playsinline></video>`
+          : `<img src="${item.previewUrl}" alt="${escapeHtml(displayFile.name)} 미리보기" />`;
+        const adjustmentActions = issue && item.kind === "image"
+          ? `
+            <div class="imageActions" aria-label="Instagram 이미지 비율 맞춤">
+              <span class="imageActionHint">원본을 늘리거나 눌러서 왜곡하지 않습니다.</span>
+              <button class="secondaryButton" type="button" data-image-adjust="pad" data-image-adjust-index="${index}">여백 추가</button>
+              <button class="secondaryButton" type="button" data-image-adjust="crop" data-image-adjust-index="${index}">중앙 자르기</button>
+            </div>
+          `
+          : "";
+        return `
+          <article class="multiMediaPreviewCard ${issue ? "hasIssue" : ""}">
+            <span class="multiMediaIndex">${index + 1}</span>
+            ${mediaPreview}
+            <div class="multiMediaMeta">
+              <strong>${escapeHtml(displayFile.name)}</strong>
+              <span class="imageMeta">${escapeHtml(imageMeta)}</span>
+              ${issue ? `<span class="imageIssue">${escapeHtml(issue)}</span>` : ""}
+              ${adjustmentActions}
+            </div>
+          </article>
+        `;
+      }).join("")}
     </div>
   `;
   renderMediaChecklist();
@@ -641,10 +714,10 @@ function mediaCheck(label, tone, detail) {
 function renderMediaChecklist() {
   if (!mediaChecklist) return;
   const platforms = selectedPlatforms();
-  const file = imageFile.files?.[0];
+  const items = selectedMediaItems;
   const checks = [];
 
-  if (!file) {
+  if (!items.length) {
     checks.push(mediaCheck("미디어", "pending", platforms.includes("instagram") ? "Instagram 선택 시 본문 기반 JPG 이미지를 자동 생성합니다." : "파일 없이 Threads 텍스트 게시가 가능합니다."));
     checks.push(mediaCheck("형식", "ok", "이미지는 PNG/JPG/WEBP, 영상은 MP4/MOV를 사용할 수 있습니다."));
     checks.push(mediaCheck("검사", platforms.length ? "ok" : "pending", platforms.length ? `${platforms.map(platformLabel).join(", ")} 기준으로 검사합니다.` : "게시 채널을 선택하면 플랫폼별 제한을 확인합니다."));
@@ -652,24 +725,15 @@ function renderMediaChecklist() {
     return;
   }
 
-  const kindLabel = selectedMediaKind === "video" ? "영상" : "이미지";
-  const typeOk = selectedMediaKind === "video"
-    ? ALLOWED_VIDEO_TYPES.has(mediaTypeForFile(file))
-    : ALLOWED_IMAGE_TYPES.has(mediaTypeForFile(file));
-  checks.push(mediaCheck("형식", typeOk ? "ok" : "missing", `${kindLabel} · ${mediaTypeForFile(file) || "알 수 없음"}`));
-
-  if (selectedMediaKind === "video") {
-    const sizeOk = file.size <= MAX_VIDEO_SIZE;
-    checks.push(mediaCheck("용량", sizeOk ? "ok" : "missing", `${Math.ceil(file.size / 1024 / 1024)}MB / 100MB 이하`));
-    checks.push(mediaCheck("길이", selectedVideoIssue(platforms) ? "missing" : "ok", selectedVideoInfo?.duration ? `${formatDuration(selectedVideoInfo.duration)} · Instagram 3초~15분, Threads 5분 이하 권장` : "영상 길이 확인 중"));
-  } else {
-    const sizeOk = file.size <= MAX_IMAGE_SIZE;
-    const ratioIssue = selectedInstagramImageIssue(platforms);
-    checks.push(mediaCheck("용량", sizeOk ? "ok" : "missing", `${Math.ceil(file.size / 1024)}KB / 8MB 이하`));
-    checks.push(mediaCheck("비율", ratioIssue ? "missing" : "ok", ratioIssue || `${formatImageDimensions(selectedImageInfo)} · Instagram 게시 가능`));
-  }
-
-  checks.push(mediaCheck("처리", selectedMediaIssue(platforms) ? "missing" : "ok", selectedImageAdjustment ? "원본 비율을 유지한 맞춤 파일을 사용합니다." : "원본을 왜곡하지 않고 게시합니다."));
+  const imageCount = items.filter((item) => item.kind === "image").length;
+  const videoCount = items.filter((item) => item.kind === "video").length;
+  const sizeIssues = items.filter((item) => item.kind === "video" ? item.file.size > MAX_VIDEO_SIZE : item.file.size > MAX_IMAGE_SIZE);
+  const mediaIssue = selectedMediaIssue(platforms);
+  const adjustedCount = items.filter((item) => item.adjustedFile).length;
+  checks.push(mediaCheck("파일", "ok", `${items.length}개 선택 · 이미지 ${imageCount}개${videoCount ? ` · 영상 ${videoCount}개` : ""}`));
+  checks.push(mediaCheck("용량", sizeIssues.length ? "missing" : "ok", sizeIssues.length ? `${sizeIssues.length}개 파일 용량 확인 필요` : "이미지 8MB 이하, 영상 100MB 이하"));
+  checks.push(mediaCheck("플랫폼", mediaIssue ? "missing" : "ok", mediaIssue || `${platforms.map(platformLabel).join(", ") || "채널 선택 전"} 기준으로 게시 가능`));
+  checks.push(mediaCheck("처리", mediaIssue ? "missing" : "ok", adjustedCount ? `${adjustedCount}개 파일은 원본 비율 유지 맞춤 적용` : "선택한 파일을 각각 게시 작업으로 만듭니다."));
   mediaChecklist.innerHTML = checks.join("");
 }
 
@@ -1053,6 +1117,45 @@ function scheduledAtForBatchItem(item) {
   return scheduledDateForBatchItem(item).toISOString();
 }
 
+function batchPostPreviewData(item, platforms = selectedPlatforms()) {
+  const fallbackTitle = fileStem(item.fileName);
+  const titleTemplate = item.captionTitle || batchCopyValue("title");
+  const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
+  const body = item.captionBody || batchCopyValue("body");
+  const linkUrl = applyAutoUtm(item.captionLink || batchCopyValue("link_url"), platforms, fallbackTitle);
+  const hashtags = item.captionHashtags || batchCopyValue("hashtags");
+  const platformTexts = (platforms.length ? platforms : ["instagram", "threads"]).map((platform) => {
+    const platformBody = item.captionBody ? body : batchFormValue("batch_body") ? body : formValue(`${platform}_body`) || body;
+    const text = [title, platformBody, linkUrl, hashtags]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean)
+      .join("\n\n");
+    return { platform, text };
+  });
+  return { title, body, linkUrl, hashtags, platformTexts };
+}
+
+function renderBatchPostPreview(item, platforms = selectedPlatforms()) {
+  const preview = batchPostPreviewData(item, platforms);
+  return `
+    <details class="batchPostPreview">
+      <summary>게시 내용 미리보기</summary>
+      <div class="batchPostPreviewGrid">
+        ${item.previewUrl ? `<img src="${item.previewUrl}" alt="${escapeHtml(item.fileName)} 게시 이미지 미리보기" />` : ""}
+        <div class="batchPostPreviewTexts">
+          <span>예약 ${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</span>
+          ${preview.platformTexts.map(({ platform, text }) => `
+            <article>
+              <strong>${escapeHtml(platformLabel(platform))}</strong>
+              <pre>${text ? escapeHtml(text) : `<span class="previewEmpty">본문 없음</span>`}</pre>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
 function batchItemScheduleIssue(item) {
   const scheduledDate = scheduledDateForBatchItem(item);
   const [year, month, day] = item.dateKey.split("-").map(Number);
@@ -1396,27 +1499,40 @@ function formatPublishTextForPlatform(platform, platforms = selectedPlatforms())
 }
 
 function previewMediaLabel(platform) {
-  const file = imageFile.files?.[0];
+  const count = selectedMediaCount();
   if (platform === "instagram") {
-    if (!file) return "텍스트 이미지 자동 생성";
-    if (selectedMediaKind === "video") return "Reels 영상";
-    return selectedImageAdjustment ? "피드 이미지 맞춤 완료" : "피드 이미지";
+    if (!count) return "텍스트 이미지 자동 생성";
+    if (count > 1) return `${count}개 파일별 게시`;
+    const item = primaryMediaItem();
+    if (item?.kind === "video") return "Reels 영상";
+    return item?.adjustment ? "피드 이미지 맞춤 완료" : "피드 이미지";
   }
   if (platform === "threads") {
-    if (!file && selectedPlatforms().includes("instagram")) return "자동 생성 이미지 공유";
-    if (!file) return "텍스트 게시";
-    return selectedMediaKind === "video" ? "영상 첨부" : "이미지 첨부";
+    if (!count && selectedPlatforms().includes("instagram")) return "자동 생성 이미지 공유";
+    if (!count) return "텍스트 게시";
+    if (count > 1) return `${count}개 파일별 게시`;
+    return primaryMediaItem()?.kind === "video" ? "영상 첨부" : "이미지 첨부";
   }
   return "발송 경로 확인 필요";
 }
 
 function publishPreviewMediaMarkup(platform, text) {
-  const file = imageFile.files?.[0];
-  if (file && previewUrl) {
-    const media = selectedMediaKind === "video"
-      ? `<video src="${previewUrl}" controls muted playsinline></video>`
-      : `<img src="${previewUrl}" alt="${platformLabel(platform)} 미디어 미리보기" />`;
-    return `<div class="previewMedia">${media}</div>`;
+  if (selectedMediaItems.length) {
+    return `
+      <div class="previewMedia ${selectedMediaItems.length > 1 ? "multi" : ""}">
+        ${selectedMediaItems.map((item, index) => {
+          const media = item.kind === "video"
+            ? `<video src="${item.previewUrl}" controls muted playsinline></video>`
+            : `<img src="${item.previewUrl}" alt="${platformLabel(platform)} ${index + 1}번 미디어 미리보기" />`;
+          return `
+            <figure class="previewMediaItem">
+              ${media}
+              <figcaption>${index + 1}. ${escapeHtml((item.adjustedFile || item.file).name)}</figcaption>
+            </figure>
+          `;
+        }).join("")}
+      </div>
+    `;
   }
 
   if (platform !== "instagram") return "";
@@ -1442,27 +1558,25 @@ function previewStatusFor(platform) {
     };
   }
   if (platform === "instagram") {
-    const file = imageFile.files?.[0];
-    const hasMedia = Boolean(file || form.elements.image_url.value);
+    const hasMedia = Boolean(selectedMediaItems.length || form.elements.image_url.value);
     const mediaIssue = selectedMediaIssue([platform]);
     if (mediaIssue) {
       return {
-        label: selectedMediaKind === "video" ? "영상 확인 필요" : "비율 확인 필요",
+        label: mediaIssue.includes("영상") ? "영상 확인 필요" : "비율 확인 필요",
         tone: "missing",
       };
     }
     return {
-      label: hasMedia ? selectedMediaKind === "video" ? "영상 포함" : "이미지 포함" : "텍스트 이미지 자동 생성",
+      label: hasMedia ? selectedMediaItems.length > 1 ? "다중 파일" : primaryMediaItem()?.kind === "video" ? "영상 포함" : "이미지 포함" : "텍스트 이미지 자동 생성",
       tone: "ok",
     };
   }
   if (platform === "threads") {
-    const file = imageFile.files?.[0];
-    const usesGeneratedInstagramImage = !file && selectedPlatforms().includes("instagram");
-    const hasMedia = Boolean(file || form.elements.image_url.value || usesGeneratedInstagramImage);
+    const usesGeneratedInstagramImage = !selectedMediaItems.length && selectedPlatforms().includes("instagram");
+    const hasMedia = Boolean(selectedMediaItems.length || form.elements.image_url.value || usesGeneratedInstagramImage);
     const mediaIssue = selectedMediaIssue([platform]);
     if (mediaIssue) return { label: "영상 확인 필요", tone: "missing" };
-    return { label: hasMedia ? selectedMediaKind === "video" ? "영상 포함" : "이미지 포함" : "텍스트 게시", tone: "ok" };
+    return { label: hasMedia ? selectedMediaItems.length > 1 ? "다중 파일" : primaryMediaItem()?.kind === "video" ? "영상 포함" : "이미지 포함" : "텍스트 게시", tone: "ok" };
   }
   if (platform === "kakao") return { label: "경로 미구성", tone: "missing" };
   return { label: "확인 필요", tone: "pending" };
@@ -1683,6 +1797,49 @@ function closeAdminSettingsPanel() {
   adminSettingsPanel.setAttribute("aria-hidden", "true");
 }
 
+function accountScopes(account) {
+  const scopes = account?.scopes;
+  if (Array.isArray(scopes)) return scopes.filter(Boolean);
+  return String(scopes || "")
+    .split(/[\s,]+/)
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+}
+
+function renderConnectionInfo(platform, readiness, account) {
+  const configured = Boolean(readiness?.configured);
+  const missing = readiness?.missing || [];
+  const scopes = accountScopes(account);
+  const rows = account ? [
+    ["계정 이름", account.username || "정보 없음"],
+    ["계정 ID", account.account_id || "정보 없음"],
+    ["제공자 사용자 ID", account.provider_user_id || "정보 없음"],
+    ["권한", scopes.length ? scopes.join(", ") : "저장된 권한 없음"],
+    ["토큰 만료", account.token_expires_at ? formatFullDateTime(account.token_expires_at) : "만료 정보 없음"],
+    ["연결 생성", account.created_at ? formatFullDateTime(account.created_at) : "정보 없음"],
+    ["마지막 갱신", account.updated_at ? formatFullDateTime(account.updated_at) : "정보 없음"],
+    ["마지막 오류", account.last_error || "없음"],
+  ] : [
+    ["연결 상태", "연결된 계정 없음"],
+    ["앱 설정", configured ? "입력됨" : missingConnectionSummary(platform, missing)],
+    ["필요 값", missing.length ? missing.join(", ") : "없음"],
+  ];
+  return `
+    <details class="connectionInfoDetails">
+      <summary>연결 정보 확인</summary>
+      <dl>
+        ${rows.map(([label, value]) => `
+          <div>
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${escapeHtml(value)}</dd>
+          </div>
+        `).join("")}
+      </dl>
+      <small>Access Token 값은 보안상 표시하지 않습니다.</small>
+    </details>
+  `;
+}
+
 function renderConnectionCard(platform, readiness, account) {
   const configured = Boolean(readiness?.configured);
   const missing = readiness?.missing || [];
@@ -1721,6 +1878,7 @@ function renderConnectionCard(platform, readiness, account) {
           ${badge}
         </div>
         <p>${statusText || "확인 필요"}</p>
+        ${renderConnectionInfo(platform, readiness, account)}
       </div>
       ${action}
     </article>
@@ -1768,7 +1926,10 @@ async function loadConnections() {
 }
 
 function clearImagePreview() {
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  selectedMediaItems.forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  });
+  selectedMediaItems = [];
   previewUrl = "";
   selectedImageInfo = null;
   selectedVideoInfo = null;
@@ -2326,6 +2487,7 @@ function renderBatchQueue() {
                   ${imageRatioIssue ? `<span class="batchCaptionPreview">${escapeHtml(imageRatioIssue)}</span>` : ""}
                   ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
                   ${itemWarnings.map((warning) => `<span class="batchCaptionPreview">${escapeHtml(warning)}</span>`).join("")}
+                  ${renderBatchPostPreview(item, platforms)}
                 </div>
                 <div class="batchFileSchedule">
                   <strong>${escapeHtml(formatFullDateTime(scheduledDateForBatchItem(item)))}</strong>
@@ -2405,23 +2567,24 @@ function resetBatchResultsForPlanChange() {
   if (batchStatus && appState.batchItems.length) batchStatus.textContent = `${appState.batchItems.length}개 준비`;
 }
 
-async function applySelectedImageAdjustment(mode) {
-  const file = imageFile.files?.[0];
-  if (!file || selectedMediaKind !== "image") return;
+async function applySelectedImageAdjustment(mode, index = 0) {
+  const item = selectedMediaItems[index] || primaryMediaItem();
+  if (!item || item.kind !== "image") return;
   imagePreview.classList.add("uploading");
   imagePreview.textContent = mode === "crop" ? "이미지 중앙 자르기 중" : "이미지 여백 추가 중";
   try {
-    const adjusted = await createInstagramAdjustedImageFile(file, mode, selectedImageInfo);
+    const adjusted = await createInstagramAdjustedImageFile(item.file, mode, item.imageInfo);
     if (adjusted.size > MAX_IMAGE_SIZE) {
       showToast("맞춤 이미지가 8MB를 넘었습니다. 원본을 줄인 뒤 다시 시도하세요.", "error");
       renderSelectedImagePreview();
       return;
     }
-    adjustedImageFile = adjusted;
-    selectedImageAdjustment = mode;
-    selectedImageInfo = await readImageDimensions(adjusted);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(adjusted);
+    item.adjustedFile = adjusted;
+    item.adjustment = mode;
+    item.imageInfo = await readImageDimensions(adjusted);
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    item.previewUrl = URL.createObjectURL(adjusted);
+    syncPrimaryMediaState();
     clearImage.disabled = false;
     renderSelectedImagePreview("게시 가능");
     renderPublishPreview();
@@ -2437,48 +2600,67 @@ async function applySelectedImageAdjustment(mode) {
 imageFile.addEventListener("change", async () => {
   imageSelectionVersion += 1;
   const selectionVersion = imageSelectionVersion;
-  const file = imageFile.files?.[0];
+  const files = [...(imageFile.files || [])];
   clearImagePreview();
-  if (!file) return;
+  if (!files.length) return;
 
-  const mediaKind = mediaKindForFile(file);
-  if (!mediaKind) {
-    showToast("이미지는 PNG, JPG, WEBP, 영상은 MP4, MOV만 선택할 수 있습니다.", "error");
-    imageFile.value = "";
-    return;
-  }
-  if (mediaKind === "image" && file.size > MAX_IMAGE_SIZE) {
-    showToast("이미지는 8MB 이하로 선택해 주세요.", "error");
-    imageFile.value = "";
-    return;
-  }
-  if (mediaKind === "video" && file.size > MAX_VIDEO_SIZE) {
-    showToast("영상은 100MB 이하로 선택해 주세요.", "error");
-    imageFile.value = "";
-    return;
-  }
-
-  selectedMediaKind = mediaKind;
-  imagePreview.textContent = mediaKind === "video" ? "영상 정보 확인 중" : "이미지 크기 확인 중";
-  try {
-    if (mediaKind === "video") {
-      selectedVideoInfo = await readVideoMetadata(file);
-    } else {
-      selectedImageInfo = await readImageDimensions(file);
+  imagePreview.textContent = `${files.length}개 파일 확인 중`;
+  const accepted = [];
+  const skipped = [];
+  for (const file of files) {
+    const mediaKind = mediaKindForFile(file);
+    if (!mediaKind) {
+      skipped.push(`${file.name}: 지원하지 않는 형식`);
+      continue;
     }
-  } catch {
-    if (selectionVersion !== imageSelectionVersion) return;
-    showToast(`${mediaKind === "video" ? "영상 정보" : "이미지 크기"}를 확인할 수 없습니다. 다른 파일로 다시 선택해 주세요.`, "error");
+    if (mediaKind === "image" && file.size > MAX_IMAGE_SIZE) {
+      skipped.push(`${file.name}: 이미지 8MB 초과`);
+      continue;
+    }
+    if (mediaKind === "video" && file.size > MAX_VIDEO_SIZE) {
+      skipped.push(`${file.name}: 영상 100MB 초과`);
+      continue;
+    }
+    try {
+      const item = {
+        file,
+        kind: mediaKind,
+        previewUrl: URL.createObjectURL(file),
+        imageInfo: null,
+        videoInfo: null,
+        adjustment: "",
+        adjustedFile: null,
+      };
+      if (mediaKind === "video") item.videoInfo = await readVideoMetadata(file);
+      else item.imageInfo = await readImageDimensions(file);
+      accepted.push(item);
+    } catch {
+      skipped.push(`${file.name}: ${mediaKind === "video" ? "영상 정보" : "이미지 크기"} 확인 실패`);
+    }
+    if (selectionVersion !== imageSelectionVersion) {
+      accepted.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      return;
+    }
+  }
+
+  if (selectionVersion !== imageSelectionVersion) {
+    accepted.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    return;
+  }
+
+  if (!accepted.length) {
+    showToast(skipped[0] || "게시 가능한 파일이 없습니다.", "error");
     imageFile.value = "";
     clearImagePreview();
     return;
   }
-  if (selectionVersion !== imageSelectionVersion) return;
 
-  previewUrl = URL.createObjectURL(file);
+  selectedMediaItems = accepted;
+  syncPrimaryMediaState();
   clearImage.disabled = false;
   renderSelectedImagePreview();
   announceSelectedImageIssue();
+  if (skipped.length) showToast(`${skipped.length}개 파일은 제외했습니다. ${skipped[0]}`, "error");
   renderPublishPreview();
 });
 
@@ -2491,7 +2673,7 @@ clearImage.addEventListener("click", () => {
 imagePreview?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-image-adjust]");
   if (!button) return;
-  applySelectedImageAdjustment(button.dataset.imageAdjust || "pad");
+  applySelectedImageAdjustment(button.dataset.imageAdjust || "pad", Number(button.dataset.imageAdjustIndex || 0));
 });
 
 async function uploadImageFileToAssets(file, options = {}) {
@@ -2590,50 +2772,76 @@ async function generateTextPostImageFile() {
   return new File([blob], "text-post.jpg", { type: "image/jpeg" });
 }
 
-async function uploadSelectedImage(platforms = selectedPlatforms()) {
-  const file = imageFile.files?.[0];
+async function uploadSelectedMediaItems(platforms = selectedPlatforms()) {
   const mediaIssue = selectedMediaIssue(platforms);
   if (mediaIssue) {
     renderSelectedImagePreview();
     throw new Error(mediaIssue);
   }
-  const shouldGenerateTextImage = !file && platforms.includes("instagram");
-  if (!file && !shouldGenerateTextImage) return { image_key: "", image_url: "" };
-  const uploadSource = adjustedImageFile || file || await generateTextPostImageFile();
-  const uploadKind = selectedMediaKind || "image";
+  const shouldGenerateTextImage = selectedMediaItems.length === 0 && platforms.includes("instagram");
+  if (selectedMediaItems.length === 0 && !shouldGenerateTextImage) {
+    return [{ image_key: "", image_url: "", media_type: "", source_file: "" }];
+  }
+  const uploadItems = shouldGenerateTextImage
+    ? [{
+      file: await generateTextPostImageFile(),
+      adjustedFile: null,
+      kind: "image",
+      previewUrl: "",
+      generated: true,
+    }]
+    : selectedMediaItems;
 
   imagePreview.classList.add("uploading");
-  formStatus.textContent = shouldGenerateTextImage ? "텍스트 이미지 생성 중" : uploadKind === "video" ? "영상 업로드 중" : "이미지 업로드 중";
-  let result;
+  const results = [];
   try {
-    result = await uploadImageFileToAssets(uploadSource, { forceJpeg: uploadKind === "image" && (platforms.includes("instagram") || platforms.includes("threads")) });
+    for (const [index, item] of uploadItems.entries()) {
+      const uploadSource = item.adjustedFile || item.file;
+      const uploadKind = item.kind || "image";
+      formStatus.textContent = shouldGenerateTextImage
+        ? "텍스트 이미지 생성 중"
+        : `${index + 1} / ${uploadItems.length} ${uploadKind === "video" ? "영상" : "이미지"} 업로드 중`;
+      const result = await uploadImageFileToAssets(uploadSource, {
+        forceJpeg: uploadKind === "image" && (platforms.includes("instagram") || platforms.includes("threads")),
+      });
+      results.push({
+        media_key: result.media_key || result.image_key || "",
+        media_url: result.media_url || result.image_url || "",
+        media_type: result.media_type || result.content_type || uploadSource.type || "",
+        source_file: item.generated ? "text-post.jpg" : item.file.name,
+        display_name: item.generated ? "text-post.jpg" : uploadSource.name,
+        preview_url: item.generated ? result.media_url || result.image_url || "" : item.previewUrl,
+        generated: Boolean(item.generated),
+      });
+    }
   } finally {
     imagePreview.classList.remove("uploading");
   }
-  form.elements.image_key.value = result.media_key || result.image_key;
-  form.elements.image_url.value = result.media_url || result.image_url;
-  form.elements.media_type.value = result.media_type || result.content_type || uploadSource.type || "";
+  const first = results[0] || {};
+  form.elements.image_key.value = first.media_key || "";
+  form.elements.image_url.value = first.media_url || "";
+  form.elements.media_type.value = first.media_type || "";
   imagePreview.classList.remove("hasError");
   imagePreview.classList.add("hasMedia");
-  const uploadedPreviewUrl = uploadKind === "video" ? result.media_url || result.image_url : shouldGenerateTextImage ? result.image_url : previewUrl;
-  const uploadedPreview = uploadKind === "video"
-    ? `<video src="${uploadedPreviewUrl}" controls muted playsinline></video>`
-    : `<img src="${uploadedPreviewUrl}" alt="게시 이미지 미리보기" />`;
-  imagePreview.innerHTML = `
-    ${uploadedPreview}
-    <div>
-      <strong>${escapeHtml(shouldGenerateTextImage ? "text-post.jpg" : uploadSource.name)}</strong>
-      <span>${shouldGenerateTextImage ? "본문으로 자동 생성" : uploadKind === "video" ? "영상 업로드 완료" : "업로드 완료"}</span>
-    </div>
-  `;
-  return result;
+  if (shouldGenerateTextImage) {
+    imagePreview.innerHTML = `
+      <img src="${first.media_url}" alt="게시 이미지 미리보기" />
+      <div>
+        <strong>text-post.jpg</strong>
+        <span>본문으로 자동 생성</span>
+      </div>
+    `;
+  } else {
+    renderSelectedImagePreview("업로드 완료");
+  }
+  return results;
 }
 
 function renderEmptyJobs() {
   jobsEl.innerHTML = `
     <div class="emptyState">
-      <strong>아직 발행 작업이 없습니다.</strong>
-      <span>게시글을 저장하고 발행하면 이곳에 작업 상태가 표시됩니다.</span>
+      <strong>아직 게시 작업이 없습니다.</strong>
+      <span>게시물을 작성하고 게시하면 이곳에 작업 상태가 표시됩니다.</span>
     </div>
   `;
 }
@@ -2703,6 +2911,27 @@ function jobRecordAction(job) {
   return `<button class="dangerButton" data-delete-job="${job.id}" data-job-status="${escapeHtml(job.status)}" type="button">${label}</button>`;
 }
 
+function renderJobContentPreview(job) {
+  const text = [job.title, job.body, job.link_url, job.hashtags]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join("\n\n");
+  if (!job.image_url && !text) return "";
+  return `
+    <details class="jobContentPreview">
+      <summary>게시 내용 미리보기</summary>
+      <div>
+        ${job.image_url ? (
+          String(job.media_type || "").startsWith("video/")
+            ? `<video src="${escapeHtml(job.image_url)}" controls muted playsinline></video>`
+            : `<img src="${escapeHtml(job.image_url)}" alt="${escapeHtml(job.title || "게시 이미지")} 미리보기" />`
+        ) : ""}
+        <pre>${text ? escapeHtml(text) : `<span class="previewEmpty">본문 없음</span>`}</pre>
+      </div>
+    </details>
+  `;
+}
+
 function renderJobs() {
   const jobs = appState.jobs || [];
   renderJobsOverview(jobs);
@@ -2749,6 +2978,7 @@ function renderJobs() {
           <strong>${platformLabel(job.platform)}</strong>
           <p>${escapeHtml(job.title || "제목 없음")}</p>
           ${campaignMeta ? `<span class="jobCampaign">${escapeHtml(campaignMeta)}</span>` : ""}
+          ${renderJobContentPreview(job)}
         </div>
         <span class="status ${escapeHtml(job.status)}">${statusLabel(job.status)}</span>
         <div class="jobMeta">
@@ -2779,20 +3009,15 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
     ? await createInstagramAdjustedImageFile(item.file, "pad", item.imageInfo)
     : item.file;
   const uploadedImage = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") || platforms.includes("threads") });
-  const fallbackTitle = fileStem(item.fileName);
-  const titleTemplate = item.captionTitle || batchCopyValue("title");
-  const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
-  const body = item.captionBody || batchCopyValue("body");
-  const linkUrl = applyAutoUtm(item.captionLink || batchCopyValue("link_url"), platforms, fallbackTitle);
-  const hashtags = item.captionHashtags || batchCopyValue("hashtags");
+  const preview = batchPostPreviewData(item, platforms);
   onStage("creating", "게시글 생성 중");
   const post = await request("/api/posts", {
     method: "POST",
     body: JSON.stringify({
-      title,
-      body,
-      link_url: linkUrl,
-      hashtags,
+      title: preview.title,
+      body: preview.body,
+      link_url: preview.linkUrl,
+      hashtags: preview.hashtags,
       image_key: uploadedImage.media_key || uploadedImage.image_key,
       image_url: uploadedImage.media_url || uploadedImage.image_url,
       media_type: uploadedImage.media_type || uploadedImage.content_type || uploadSource.type || "",
@@ -2831,17 +3056,22 @@ function requestBatchSubmit() {
 
 function singlePostConfirmationMessage(data, platforms) {
   const mode = data.get("mode");
+  const mediaLabel = selectedMediaCount()
+    ? selectedMediaItems.map((item, index) => `${index + 1}. ${item.file.name}`).join("\n")
+    : platforms.includes("instagram") ? "본문 기반 자동 생성 이미지" : "없음";
   const lines = [
-    mode === "scheduled" ? "예약 게시할까요?" : "바로 작성 후 게시할까요?",
+    mode === "scheduled"
+      ? `${selectedMediaCount() || 1}개 게시물을 예약 게시할까요?`
+      : `${selectedMediaCount() || 1}개 게시물을 바로 작성 후 게시할까요?`,
     "",
     `채널: ${platforms.map(platformLabel).join(", ")}`,
     `제목: ${String(data.get("title") || "제목 없음").trim()}`,
-    `방식: ${mode === "scheduled" ? "예약 발행" : "즉시 발행"}`,
+    `방식: ${mode === "scheduled" ? "예약 게시" : "바로 게시"}`,
   ];
   if (mode === "scheduled") {
     lines.push(`예약 시간: ${formatFullDateTime(data.get("scheduled_at"))}`);
   }
-  lines.push(`미디어: ${imageFile.files?.[0] ? imageFile.files[0].name : platforms.includes("instagram") ? "본문 기반 자동 생성 이미지" : "없음"}`);
+  lines.push(`미디어:\n${mediaLabel}`);
   const campaignName = String(data.get("campaign_name") || "").trim();
   if (campaignName) lines.push(`캠페인: ${campaignName}`);
   return lines.join("\n");
@@ -2984,7 +3214,7 @@ form.addEventListener("submit", async (event) => {
   if (!explicitSinglePostSubmit) {
     if (manualPostDetails) manualPostDetails.open = true;
     formStatus.textContent = "단건 게시 확인 필요";
-    showToast("단건 게시 옵션을 열고 게시 버튼을 눌러야 발행됩니다.", "error");
+    showToast("게시물 작성 및 게시 옵션을 열고 게시 버튼을 눌러야 게시됩니다.", "error");
     submitPost?.focus({ preventScroll: true });
     return;
   }
@@ -3005,39 +3235,48 @@ form.addEventListener("submit", async (event) => {
     return;
   }
   setBusy(submitPost, true, "처리 중");
-  formStatus.textContent = "발행 요청 중";
+  formStatus.textContent = "게시 요청 중";
   try {
-    const uploadedMedia = await uploadSelectedImage(platforms);
-    const post = await request("/api/posts", {
-      method: "POST",
-      body: JSON.stringify({
-        title: data.get("title"),
-        body: data.get("body"),
-        link_url: applyAutoUtm(data.get("link_url"), platforms, data.get("title")),
-        hashtags: data.get("hashtags"),
-        image_key: uploadedMedia.media_key || uploadedMedia.image_key,
-        image_url: uploadedMedia.media_url || uploadedMedia.image_url,
-        media_type: uploadedMedia.media_type || uploadedMedia.content_type || form.elements.media_type.value || "",
-        platforms,
-        platform_bodies: platformBodyPayload(platforms),
-        ...campaignMetadata(imageFile.files?.[0]?.name || ""),
-      }),
-    });
-
     const mode = data.get("mode");
-    await request(`/api/posts/${post.post_id}/publish`, {
-      method: "POST",
-      body: JSON.stringify({
-        mode,
-        scheduled_at: mode === "scheduled" ? data.get("scheduled_at") : undefined,
-      }),
-    });
+    const uploadedMediaItems = await uploadSelectedMediaItems(platforms);
+    let createdPosts = 0;
+    let createdJobs = 0;
+    for (const [index, uploadedMedia] of uploadedMediaItems.entries()) {
+      formStatus.textContent = `${index + 1} / ${uploadedMediaItems.length} 게시 작업 생성 중`;
+      const post = await request("/api/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.get("title"),
+          body: data.get("body"),
+          link_url: applyAutoUtm(data.get("link_url"), platforms, data.get("title")),
+          hashtags: data.get("hashtags"),
+          image_key: uploadedMedia.media_key,
+          image_url: uploadedMedia.media_url,
+          media_type: uploadedMedia.media_type,
+          platforms,
+          platform_bodies: platformBodyPayload(platforms),
+          ...campaignMetadata(uploadedMedia.source_file || ""),
+        }),
+      });
+
+      const published = await request(`/api/posts/${post.post_id}/publish`, {
+        method: "POST",
+        body: JSON.stringify({
+          mode,
+          scheduled_at: mode === "scheduled" ? data.get("scheduled_at") : undefined,
+        }),
+      });
+      createdPosts += 1;
+      createdJobs += Array.isArray(published.jobs) ? published.jobs.length : platforms.length;
+    }
 
     form.reset();
     clearImagePreview();
     updateFormMeta();
     formStatus.textContent = "완료";
-    showToast(mode === "scheduled" ? "예약 게시를 등록했습니다." : "바로 게시를 요청했습니다.");
+    showToast(mode === "scheduled"
+      ? `${createdPosts}개 게시물, ${createdJobs}개 예약 게시를 등록했습니다.`
+      : `${createdPosts}개 게시물, ${createdJobs}개 바로 게시를 요청했습니다.`);
     await loadJobs();
   } catch (error) {
     formStatus.textContent = "실패";
@@ -3213,7 +3452,7 @@ jobsEl.addEventListener("click", async (event) => {
   if (deleteButton) {
     const status = deleteButton.dataset.jobStatus;
     const message = status === "scheduled" || status === "queued"
-      ? "아직 발행되지 않은 작업을 취소하고 목록에서 숨길까요?"
+      ? "아직 게시되지 않은 작업을 취소하고 목록에서 숨길까요?"
       : "작업 기록만 삭제합니다. Instagram/Threads에 이미 올라간 게시물은 삭제되지 않습니다.";
     if (!window.confirm(message)) return;
     setBusy(deleteButton, true, status === "scheduled" || status === "queued" ? "취소 중" : "삭제 중");
@@ -3281,7 +3520,7 @@ runScheduler.addEventListener("click", async () => {
   } catch (error) {
     showToast(error.message, "error");
   } finally {
-    setBusy(runScheduler, false, "예약 작업 수동 확인");
+    setBusy(runScheduler, false, "예약 게시 수동 확인");
   }
 });
 

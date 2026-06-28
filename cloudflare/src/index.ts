@@ -176,7 +176,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     await markStaleRunningJobs(env);
     const jobs = await env.DB.prepare(
       `
-      select j.*, p.title, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.campaign_goal, p.source_file
+      select j.*, p.title, p.body, p.hashtags, p.image_key, p.image_url, p.media_type, p.link_url, p.campaign_name, p.campaign_tags, p.campaign_goal, p.source_file
       from publish_jobs j
       join post_targets t on t.id = j.post_target_id
       join posts p on p.id = t.post_id

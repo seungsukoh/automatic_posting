@@ -50,7 +50,7 @@ body {
 
 .shell {
   width: calc(100% - 32px);
-  max-width: 1220px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 20px 0 36px;
 }
@@ -504,6 +504,31 @@ p {
 
 .composePanel {
   padding: 18px;
+}
+
+.composeWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 0.48fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.composeEditorColumn,
+.composePreviewColumn,
+.selectedMediaPanel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.composePreviewColumn {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 104px);
+  overflow: auto;
+  border-left: 1px solid var(--line);
+  padding-left: 18px;
+  scrollbar-gutter: stable;
 }
 
 form {
@@ -1525,6 +1550,10 @@ button:focus-visible,
   text-align: left;
 }
 
+.imagePreview.hasMedia:has(.multiMediaPreviewList) {
+  grid-template-columns: 1fr;
+}
+
 .imagePreview img,
 .imagePreview video {
   width: 180px;
@@ -1538,6 +1567,58 @@ button:focus-visible,
   gap: 5px;
   min-width: 0;
   padding: 14px;
+}
+
+.multiMediaPreviewList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+}
+
+.multiMediaPreviewCard {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+
+.multiMediaPreviewCard.hasIssue {
+  border-color: #A8853F66;
+}
+
+.multiMediaPreviewCard img,
+.multiMediaPreviewCard video {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  background: #061328;
+}
+
+.multiMediaIndex {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: #0E2750;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.multiMediaMeta {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
 }
 
 .imageMeta {
@@ -1620,6 +1701,22 @@ button:focus-visible,
   gap: 10px;
 }
 
+.composePreviewColumn .imagePreview {
+  min-height: 240px;
+}
+
+.composePreviewColumn .imagePreview.hasMedia,
+.composePreviewColumn .imagePreview:has(img),
+.composePreviewColumn .imagePreview:has(video) {
+  grid-template-columns: 1fr;
+}
+
+.composePreviewColumn .imagePreview img,
+.composePreviewColumn .imagePreview video {
+  width: 100%;
+  height: 240px;
+}
+
 .publishPreview {
   display: grid;
   gap: 10px;
@@ -1683,6 +1780,29 @@ button:focus-visible,
   min-height: 220px;
   background: #061328;
   overflow: hidden;
+}
+
+.previewMedia.multi {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  place-items: stretch;
+  background: #0E275033;
+}
+
+.previewMediaItem {
+  display: grid;
+  margin: 0;
+  background: #061328;
+}
+
+.previewMediaItem figcaption {
+  min-height: 36px;
+  padding: 7px 9px;
+  background: #FFFFFF;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .previewMedia img,
@@ -1776,6 +1896,84 @@ button:focus-visible,
 .previewEmpty {
   color: var(--muted);
   font-weight: 700;
+}
+
+.batchPostPreview,
+.jobContentPreview {
+  display: grid;
+  gap: 8px;
+}
+
+.batchPostPreview summary,
+.jobContentPreview summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+.batchPostPreviewGrid {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #FBFAF6;
+}
+
+.batchPostPreviewGrid > img {
+  width: 160px;
+  height: 160px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: #061328;
+}
+
+.batchPostPreviewTexts,
+.batchPostPreviewTexts article {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.batchPostPreviewTexts > span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.batchPostPreviewTexts pre,
+.jobContentPreview pre {
+  max-height: 220px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  background: #FFFFFF;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.jobContentPreview > div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.jobContentPreview img,
+.jobContentPreview video {
+  width: 140px;
+  height: 140px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: #061328;
 }
 
 .platformPicker {
@@ -2251,6 +2449,53 @@ button:focus-visible,
   overflow-wrap: anywhere;
 }
 
+.connectionInfoDetails {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.connectionInfoDetails summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+.connectionInfoDetails dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+
+.connectionInfoDetails dl div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.connectionInfoDetails dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.connectionInfoDetails dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.connectionInfoDetails small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .statusBadge,
 .status,
 .readinessItem span {
@@ -2560,9 +2805,18 @@ button:focus-visible,
 
   .startSteps,
   .setupGrid,
+  .composeWorkspace,
   .batchSetupGrid,
   .schedulerBoard {
     grid-template-columns: 1fr;
+  }
+
+  .composePreviewColumn {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border-left: 0;
+    padding-left: 0;
   }
 
   .setupGrid {
@@ -2627,6 +2881,11 @@ button:focus-visible,
   .adminSettingsGrid,
   .adminStatusGrid,
   .setupGrid,
+  .composeWorkspace,
+  .composeEditorColumn,
+  .composePreviewColumn,
+  .batchPostPreviewGrid,
+  .jobContentPreview > div,
   .batchSetupGrid,
   .schedulerBoard,
   .postExecutionGrid,
@@ -2687,6 +2946,11 @@ button:focus-visible,
   .connectionActions > .linkButton,
   .connectionActions > .secondaryButton {
     width: 100%;
+  }
+
+  .connectionInfoDetails dl div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .job {
@@ -2764,6 +3028,13 @@ button:focus-visible,
   .imagePreview video {
     width: 100%;
     height: 190px;
+  }
+
+  .batchPostPreviewGrid > img,
+  .jobContentPreview img,
+  .jobContentPreview video {
+    width: 100%;
+    height: 220px;
   }
 
   .batchFileSchedule {

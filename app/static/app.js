@@ -6,7 +6,8 @@ const imagePreview = document.querySelector("#imagePreview");
 const resetPostForm = document.querySelector("#resetPostForm");
 const resetScheduleFields = document.querySelector("#resetScheduleFields");
 const submitPost = document.querySelector("#submitPost");
-let previewUrl = "";
+let previewUrls = [];
+let selectedImageFiles = [];
 const setupInputs = document.querySelectorAll("[data-setup]");
 const setupStateKey = "automatic-posting.setup";
 const wizardEl = document.querySelector("#setupWizard");
@@ -158,7 +159,7 @@ function showToast(message) {
   window.setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
-function formData() {
+function formData(imageName = form.elements.image_name.value) {
   const data = new FormData(form);
   const platforms = Array.from(form.querySelectorAll("input[name='platforms']:checked")).map((el) => el.value);
   return {
@@ -166,7 +167,7 @@ function formData() {
     body: data.get("body"),
     link_url: data.get("link_url"),
     hashtags: data.get("hashtags"),
-    image_name: data.get("image_name"),
+    image_name: imageName,
     platforms
   };
 }
@@ -210,8 +211,9 @@ function handleHashtagKeydown(event) {
 }
 
 function clearImagePreview() {
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
-  previewUrl = "";
+  previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  previewUrls = [];
+  selectedImageFiles = [];
   imagePreview.textContent = "선택된 이미지가 없습니다.";
   form.elements.image_name.value = "";
 }
@@ -241,24 +243,31 @@ function resetScheduleFieldsState() {
 }
 
 imageFile.addEventListener("change", () => {
-  const file = imageFile.files?.[0];
+  const files = [...(imageFile.files || [])];
   clearImagePreview();
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
+  if (!files.length) return;
+  const invalid = files.filter((file) => !file.type.startsWith("image/"));
+  selectedImageFiles = files.filter((file) => file.type.startsWith("image/"));
+  if (!selectedImageFiles.length) {
     showToast("이미지 파일만 선택할 수 있습니다.");
     imageFile.value = "";
     return;
   }
 
-  previewUrl = URL.createObjectURL(file);
-  form.elements.image_name.value = file.name;
+  previewUrls = selectedImageFiles.map((file) => URL.createObjectURL(file));
+  form.elements.image_name.value = selectedImageFiles.map((file) => file.name).join(", ");
   imagePreview.innerHTML = `
-    <img src="${previewUrl}" alt="선택한 이미지 미리보기">
-    <div>
-      <strong>${escapeHtml(file.name)}</strong>
-      <span>${Math.ceil(file.size / 1024)} KB</span>
+    <div class="multi-image-preview">
+      ${selectedImageFiles.map((file, index) => `
+        <article>
+          <img src="${previewUrls[index]}" alt="${escapeHtml(file.name)} 미리보기">
+          <strong>${escapeHtml(file.name)}</strong>
+          <span>${Math.ceil(file.size / 1024)} KB</span>
+        </article>
+      `).join("")}
     </div>
   `;
+  if (invalid.length) showToast(`${invalid.length}개 파일은 이미지가 아니어서 제외했습니다.`);
 });
 
 async function request(path, options = {}) {
@@ -315,22 +324,25 @@ form.addEventListener("submit", async (event) => {
   }
 
   try {
-    const created = await request("/api/posts", {
-      method: "POST",
-      body: JSON.stringify(post)
-    });
-
     const mode = form.elements.mode.value;
     const scheduledAt = form.elements.scheduled_at.value;
-    await request(`/api/posts/${created.post_id}/publish`, {
-      method: "POST",
-      body: JSON.stringify({
-        mode,
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null
-      })
-    });
+    const imageNames = selectedImageFiles.length ? selectedImageFiles.map((file) => file.name) : [post.image_name || ""];
+    for (const imageName of imageNames) {
+      const created = await request("/api/posts", {
+        method: "POST",
+        body: JSON.stringify(formData(imageName))
+      });
 
-    showToast(mode === "scheduled" ? "예약 게시를 등록했습니다." : "바로 게시를 요청했습니다.");
+      await request(`/api/posts/${created.post_id}/publish`, {
+        method: "POST",
+        body: JSON.stringify({
+          mode,
+          scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null
+        })
+      });
+    }
+
+    showToast(mode === "scheduled" ? `${imageNames.length}개 예약 게시를 등록했습니다.` : `${imageNames.length}개 바로 게시를 요청했습니다.`);
     clearImagePreview();
     await loadJobs();
   } catch (error) {
@@ -362,7 +374,7 @@ resetScheduleFields?.addEventListener("click", resetScheduleFieldsState);
 document.querySelector("#runScheduler").addEventListener("click", async () => {
   try {
     const result = await request("/api/scheduler/run", { method: "POST", body: "{}" });
-    showToast(`예약 작업 ${result.processed.length}건 처리`);
+    showToast(`예약 게시 ${result.processed.length}건 확인`);
     await loadJobs();
   } catch (error) {
     showToast(error.message);
