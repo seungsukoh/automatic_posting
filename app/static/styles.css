@@ -80,6 +80,18 @@ p {
   margin-bottom: 18px;
 }
 
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-head h2 {
+  margin-bottom: 0;
+}
+
 form {
   display: grid;
   gap: 14px;
@@ -358,6 +370,14 @@ button.secondary {
 @media (max-width: 720px) {
   .header {
     flex-direction: column;
+  }
+
+  .panel-head {
+    flex-direction: column;
+  }
+
+  .panel-head > button {
+    width: 100%;
   }
 
   .grid.two,

@@ -97,6 +97,24 @@ body {
   justify-self: end;
 }
 
+.sectionHeadActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.composePanel .sectionHead .sectionHeadActions {
+  justify-self: end;
+}
+
+.sectionHeadActions .secondaryButton {
+  min-height: 34px;
+  padding-inline: 12px;
+}
+
 .topbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2533,6 +2551,15 @@ button:focus-visible,
   .composePanel .sectionHead .formStatus,
   .batchPanel .sectionHead .formStatus {
     justify-self: start;
+  }
+
+  .composePanel .sectionHead .sectionHeadActions {
+    justify-self: start;
+  }
+
+  .sectionHeadActions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .connectionCard {

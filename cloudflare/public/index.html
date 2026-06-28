@@ -148,7 +148,10 @@
                 <h2>단건 게시 작성</h2>
                 <span class="muted">미디어 없이 Instagram을 선택하면 JPG 이미지를 자동 생성하고, Threads는 글과 선택한 미디어를 게시합니다.</span>
               </div>
-              <span id="formStatus" class="formStatus">대기 중</span>
+              <div class="sectionHeadActions">
+                <button id="resetPostForm" class="secondaryButton" type="button">작성내용 초기화</button>
+                <span id="formStatus" class="formStatus">대기 중</span>
+              </div>
             </div>
             <form id="postForm">
               <div class="setupGrid">
@@ -294,7 +297,6 @@
                     </label>
                   </div>
                   <div class="formActions">
-                    <button id="resetPostForm" class="secondaryButton" type="button">작성내용 초기화</button>
                     <button id="submitPost" type="button">게시 작업 만들기</button>
                   </div>
                 </div>

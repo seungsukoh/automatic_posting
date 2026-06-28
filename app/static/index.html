@@ -45,7 +45,10 @@
     </section>
 
     <section class="panel">
-      <h2>게시글 작성</h2>
+      <div class="panel-head">
+        <h2>게시글 작성</h2>
+        <button type="button" class="secondary" id="resetPostForm">작성내용 초기화</button>
+      </div>
       <form id="postForm">
         <label>
           제목
@@ -95,7 +98,6 @@
         </div>
 
         <div class="actions">
-          <button type="button" class="secondary" id="resetPostForm">작성내용 초기화</button>
           <button type="button" class="secondary" id="resetScheduleFields">예약내용 초기화</button>
           <button type="submit">저장 후 발행 작업 생성</button>
           <button type="button" class="secondary" id="runScheduler">예약 작업 실행 확인</button>
