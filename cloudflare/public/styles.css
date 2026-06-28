@@ -30,6 +30,11 @@
   box-sizing: border-box;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -77,14 +82,38 @@ body {
   justify-content: space-between;
 }
 
+.composePanel .sectionHead,
+.batchPanel .sectionHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.composePanel .sectionHead .formStatus,
+.batchPanel .sectionHead .formStatus {
+  justify-self: end;
+}
+
 .topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   margin-bottom: 12px;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
+  padding: 20px 22px;
+  border: 1px solid #0E2750;
   border-radius: 8px;
-  background: #FFFFFF;
-  color: var(--text);
+  background: #0E2750;
+  color: #F2F1EC;
   box-shadow: var(--shadow);
+}
+
+.topbar h1,
+.topbar p {
+  color: #F2F1EC;
+}
+
+.topbar .eyebrow {
+  color: #C9A86A;
 }
 
 .topActions {
@@ -115,7 +144,6 @@ body {
 }
 
 .topbar p {
-  color: var(--muted);
   line-height: 1.35;
 }
 
@@ -274,7 +302,9 @@ p {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   border-radius: 8px;
+  border: 1px solid #0E275033;
   background: #0E275014;
   color: #0E2750;
   font-weight: 800;
@@ -287,33 +317,19 @@ p {
 }
 
 .platformMark--instagram {
-  background: #0E2750;
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: #0E2750;
+  border-color: #C9A86A66;
 }
 
-.platformMark--instagram svg rect,
-.platformMark--instagram svg circle {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-}
-
-.platformMark--instagram svg circle:last-child {
+.platformMark--instagram svg path,
+.platformMark--threads svg path {
   fill: currentColor;
-  stroke: none;
 }
 
 .platformMark--threads {
   background: #061328;
   color: #FFFFFF;
-}
-
-.platformMark--threads svg path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .platformMark--kakao {
@@ -2447,9 +2463,14 @@ button:focus-visible,
 
 @media (max-width: 720px) {
   .shell {
-    width: calc(100% - 24px);
+    width: 100%;
     max-width: 1360px;
-    padding-top: 18px;
+    padding: 12px;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr;
+    padding: 18px 16px;
   }
 
   .topbar,
@@ -2480,6 +2501,21 @@ button:focus-visible,
     grid-template-columns: 1fr;
     display: grid;
     align-items: stretch;
+  }
+
+  .composePanel .sectionHead,
+  .batchPanel .sectionHead {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionHead > div {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .composePanel .sectionHead .formStatus,
+  .batchPanel .sectionHead .formStatus {
+    justify-self: start;
   }
 
   .connectionCard {
