@@ -20,7 +20,7 @@
       --danger: #A8853F;
       --kakao: #C9A86A;
       --threads: #061328;
-      --instagram: #C9A86A;
+      --instagram: #DD2A7B;
       --font-sans: "Pretendard Variable", "Pretendard", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       --font-serif: "Noto Serif KR", Georgia, serif;
       --font-mono: "JetBrains Mono", "D2Coding", Consolas, monospace;
@@ -264,9 +264,11 @@
     }
 
     .platform-logo.instagram {
-      border-color: #C9A86A66;
-      background: #FFFFFF;
-      color: #0E2750;
+      border-color: transparent;
+      background:
+        radial-gradient(circle at 30% 105%, #FEDA77 0 16%, #F58529 32%, #DD2A7B 56%, #8134AF 78%, #515BD4 100%);
+      color: #FFFFFF;
+      box-shadow: inset 0 0 0 1px #FFFFFF33;
     }
 
     .platform-logo.threads {

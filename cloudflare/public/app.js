@@ -45,6 +45,7 @@ const bodyCount = document.querySelector("#bodyCount");
 const scheduledAtGroup = document.querySelector("#scheduledAtGroup");
 const publishPreview = document.querySelector("#publishPreview");
 const batchScheduleForm = document.querySelector("#batchScheduleForm");
+const batchPlatformPicker = document.querySelector("#batchPlatformPicker");
 const batchFolderInput = document.querySelector("#batchFolderInput");
 const batchStartTime = document.querySelector("#batchStartTime");
 const batchInterval = document.querySelector("#batchInterval");
@@ -159,6 +160,15 @@ function setBusy(button, busy, label) {
   if (!button) return;
   button.disabled = busy;
   if (label) button.textContent = label;
+}
+
+function singlePostSubmitLabel(mode = form?.elements?.mode?.value) {
+  return mode === "scheduled" ? "예약 게시" : "작성 후 바로 게시";
+}
+
+function updateSinglePostSubmitLabel(mode = form?.elements?.mode?.value) {
+  if (!submitPost || submitPost.disabled) return;
+  submitPost.textContent = singlePostSubmitLabel(mode);
 }
 
 function platformLabel(platform) {
@@ -673,6 +683,58 @@ function formValue(name) {
   return String(form.elements[name]?.value || "").trim();
 }
 
+function batchFormValue(name) {
+  return String(batchScheduleForm?.elements?.[name]?.value || "").trim();
+}
+
+function batchCopyValue(name) {
+  return batchFormValue(`batch_${name}`) || formValue(name);
+}
+
+function batchPlatformBodyPayload(platforms) {
+  if (batchFormValue("batch_body")) {
+    return Object.fromEntries(platforms.map((platform) => [platform, ""]));
+  }
+  return platformBodyPayload(platforms);
+}
+
+function normalizeHashtagToken(token) {
+  const normalized = String(token || "").trim().replace(/#+/g, "");
+  return normalized ? `#${normalized}` : "";
+}
+
+function normalizedHashtagTokens(value) {
+  return String(value || "")
+    .split(/[\s,]+/)
+    .map(normalizeHashtagToken)
+    .filter(Boolean);
+}
+
+function normalizeHashtagInputValue(value, options = {}) {
+  const tokens = normalizedHashtagTokens(value);
+  if (!tokens.length) return "";
+  return `${tokens.join(" ")}${options.appendNext ? " #" : ""}`;
+}
+
+function commitHashtagInput(input, options = {}) {
+  const normalized = normalizeHashtagInputValue(input.value, options);
+  input.value = normalized;
+  input.setSelectionRange?.(input.value.length, input.value.length);
+  updateFormMeta();
+  resetBatchResultsForPlanChange();
+  renderBatchQueue();
+}
+
+function handleHashtagKeydown(event) {
+  if (event.key !== "Tab" || event.shiftKey) return;
+  const input = event.currentTarget;
+  const value = String(input.value || "");
+  const caretAtEnd = input.selectionStart === input.selectionEnd && input.selectionEnd === value.length;
+  if (!caretAtEnd || !value.trim() || /(?:^|\s)#$/.test(value.trim())) return;
+  event.preventDefault();
+  commitHashtagInput(input, { appendNext: true });
+}
+
 function platformBodyValue(platform) {
   return formValue(`${platform}_body`) || formValue("body");
 }
@@ -772,6 +834,16 @@ function normalizeCaptionFileName(value) {
 function captionSidecarKey(dateKey, segments, fileName) {
   const parent = segments.slice(0, -1).join("/").toLowerCase();
   return `${dateKey}::${parent}::${fileStem(fileName).toLowerCase()}`;
+}
+
+function folderCaptionKey(dateKey, segments) {
+  const parent = segments.slice(0, -1).join("/").toLowerCase();
+  return `${dateKey}::${parent}`;
+}
+
+function isFolderCaptionFile(fileName) {
+  return ["caption", "captions", "copy", "content", "body", "text", "본문", "문구", "캡션"]
+    .includes(fileStem(fileName).toLowerCase());
 }
 
 function csvCaptionKeys(dateKey, reference) {
@@ -1247,44 +1319,49 @@ function syncPlatformPicker() {
     appState.platformSelectionInitialized = true;
   }
 
-  if (platformQuickPicker) {
-    const visibleInputs = inputs.filter((input) => platformStatus(input.value).selectable);
-    platformQuickPicker.innerHTML = visibleInputs.length
-      ? `
-        <div class="quickPickerButtons" role="group" aria-label="게시 채널">
-          ${visibleInputs.map((input) => {
-            const status = platformStatus(input.value);
-            const checked = input.checked;
-            return `
-              <button
-                class="quickPlatformButton ${checked ? "selected" : ""}"
-                type="button"
-                data-platform-select="${escapeHtml(input.value)}"
-                role="checkbox"
-                aria-checked="${checked ? "true" : "false"}"
-                ${status.selectable ? "" : "disabled"}
-                title="${escapeHtml(status.detail)}"
-              >
-                ${platformIcon(input.value)}
-                <span class="quickPlatformName">${platformLabel(input.value)}</span>
-                <span class="quickPlatformState">${escapeHtml(checked ? "선택됨" : status.label)}</span>
-                <small>${escapeHtml(status.detail)}</small>
-              </button>
-            `;
-          }).join("")}
-        </div>
-      `
-      : `
-        <div class="inlineNotice pending">
-          <strong>게시 채널 대기</strong>
-          <span>연결 카드에서 사용할 채널을 먼저 연결하세요.</span>
-        </div>
-      `;
-  }
+  renderQuickPlatformPicker(platformQuickPicker, inputs, "게시 채널");
+  renderQuickPlatformPicker(batchPlatformPicker, inputs, "예약 게시 채널", ["instagram", "threads"]);
 
   renderSelectedImagePreview();
   renderPublishPreview();
   renderBatchQueue();
+}
+
+function renderQuickPlatformPicker(target, inputs, label, allowedValues = null) {
+  if (!target) return;
+  const scopedInputs = allowedValues ? inputs.filter((input) => allowedValues.includes(input.value)) : inputs;
+  const visibleInputs = scopedInputs.filter((input) => platformStatus(input.value).selectable);
+  target.innerHTML = visibleInputs.length
+    ? `
+      <div class="quickPickerButtons" role="group" aria-label="${escapeHtml(label)}">
+        ${visibleInputs.map((input) => {
+          const status = platformStatus(input.value);
+          const checked = input.checked;
+          return `
+            <button
+              class="quickPlatformButton ${checked ? "selected" : ""}"
+              type="button"
+              data-platform-select="${escapeHtml(input.value)}"
+              role="checkbox"
+              aria-checked="${checked ? "true" : "false"}"
+              ${status.selectable ? "" : "disabled"}
+              title="${escapeHtml(status.detail)}"
+            >
+              ${platformIcon(input.value)}
+              <span class="quickPlatformName">${platformLabel(input.value)}</span>
+              <span class="quickPlatformState">${escapeHtml(checked ? "선택됨" : status.label)}</span>
+              <small>${escapeHtml(status.detail)}</small>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `
+    : `
+      <div class="inlineNotice pending">
+        <strong>게시 채널 대기</strong>
+        <span>연결 카드에서 사용할 채널을 먼저 연결하세요.</span>
+      </div>
+    `;
 }
 
 function formatPublishTextForPlatform(platform, platforms = selectedPlatforms()) {
@@ -1314,6 +1391,29 @@ function previewMediaLabel(platform) {
     return selectedMediaKind === "video" ? "영상 첨부" : "이미지 첨부";
   }
   return "발송 경로 확인 필요";
+}
+
+function publishPreviewMediaMarkup(platform, text) {
+  const file = imageFile.files?.[0];
+  if (file && previewUrl) {
+    const media = selectedMediaKind === "video"
+      ? `<video src="${previewUrl}" controls muted playsinline></video>`
+      : `<img src="${previewUrl}" alt="${platformLabel(platform)} 미디어 미리보기" />`;
+    return `<div class="previewMedia">${media}</div>`;
+  }
+
+  if (platform !== "instagram") return "";
+  const title = formValue("title") || "Social Publisher";
+  const copy = platformBodyValue(platform) || text || formValue("hashtags") || "입력한 문구로 게시 이미지가 자동 생성됩니다.";
+  const tags = formValue("hashtags") || "#preview";
+  return `
+    <div class="previewGeneratedImage" aria-label="자동 생성 이미지 미리보기">
+      <em>Instagram Preview</em>
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(copy)}</span>
+      <span>${escapeHtml(tags)}</span>
+    </div>
+  `;
 }
 
 function previewStatusFor(platform) {
@@ -1385,6 +1485,7 @@ function renderPublishPreview() {
           <span>${override ? "플랫폼별 문구 적용" : "기본 문구 사용"}</span>
           ${campaign ? `<span>${escapeHtml(campaign)}</span>` : ""}
         </div>
+        ${publishPreviewMediaMarkup(platform, text)}
         <pre class="previewText">${previewBody}</pre>
       </article>
     `;
@@ -1675,6 +1776,7 @@ function updateFormMeta() {
   bodyCount.textContent = `${body.length}자`;
   scheduledAtGroup.classList.toggle("isHidden", mode !== "scheduled");
   form.elements.scheduled_at.required = mode === "scheduled";
+  updateSinglePostSubmitLabel(mode);
   renderMediaChecklist();
   renderPublishPreview();
   renderUtmPreview();
@@ -1684,6 +1786,7 @@ async function buildBatchItems(fileList) {
   const groups = new Map();
   const skipped = [];
   const textCaptions = new Map();
+  const folderCaptions = new Map();
   const csvFiles = [];
   const imageFiles = [];
 
@@ -1698,7 +1801,12 @@ async function buildBatchItems(fileList) {
       if (!dateFolder) continue;
       try {
         const caption = parseTextCaption(await file.text(), relativePath);
-        if (caption) textCaptions.set(captionSidecarKey(dateFolder.key, segments, file.name), caption);
+        if (caption) {
+          textCaptions.set(captionSidecarKey(dateFolder.key, segments, file.name), caption);
+          if (isFolderCaptionFile(file.name)) {
+            folderCaptions.set(folderCaptionKey(dateFolder.key, segments), caption);
+          }
+        }
       } catch {
         skipped.push({ name: relativePath, reason: "캡션 파일 읽기 실패" });
       }
@@ -1758,13 +1866,14 @@ async function buildBatchItems(fileList) {
 
   for (const entry of imageFiles) {
     const { file, relativePath, segments, dateFolder, detectedType, imageInfo } = entry;
+    const folderCaption = folderCaptions.get(folderCaptionKey(dateFolder.key, segments));
     const sidecarCaption = textCaptions.get(captionSidecarKey(dateFolder.key, segments, file.name));
     const csvCaption = csvLookupKeys({
       dateKey: dateFolder.key,
       fileName: file.name,
       relativePath,
     }).map((key) => csvCaptions.get(key)).find(Boolean);
-    const caption = mergeCaptionData(csvCaption, sidecarCaption);
+    const caption = mergeCaptionData(folderCaption, csvCaption, sidecarCaption);
     const group = groups.get(dateFolder.key) || [];
     group.push({
       file,
@@ -1795,7 +1904,7 @@ async function buildBatchItems(fileList) {
 }
 
 function batchValidationState(items, platforms) {
-  const defaultBody = formValue("body");
+  const defaultBody = batchCopyValue("body");
   const missingCaptionItems = items.filter((item) => !item.captionSource);
   const missingCopyItems = items.filter((item) => !item.captionSource && !defaultBody);
   const scheduledDates = items
@@ -1908,7 +2017,7 @@ function renderBatchPlan() {
       <div class="batchPlanEmpty">
         <strong>폴더 구조</strong>
         <span>상위폴더 / 20260621 / 001.jpg</span>
-        <span>날짜 폴더는 YYYYMMDD 형식입니다. 001.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
+        <span>날짜 폴더는 YYYYMMDD 형식입니다. 001.txt, caption.txt 또는 captions.csv가 있으면 문구를 자동 매칭합니다.</span>
       </div>
     `;
     return;
@@ -1928,10 +2037,10 @@ function renderBatchPlan() {
     state.missingCopyCount ? `본문 없이 예약될 이미지 ${state.missingCopyCount}개가 있습니다. 캡션 파일이나 기본 본문을 입력하세요.` : "",
   ].filter(Boolean);
 
-  const titleTemplate = String(form.elements.title.value || "").trim();
-  const body = String(form.elements.body.value || "").trim();
-  const link = String(form.elements.link_url.value || "").trim();
-  const hashtags = String(form.elements.hashtags.value || "").trim();
+  const titleTemplate = batchCopyValue("title");
+  const body = batchCopyValue("body");
+  const link = batchCopyValue("link_url");
+  const hashtags = batchCopyValue("hashtags");
 
   batchPlan.innerHTML = `
     <div class="batchMetricGrid">
@@ -1944,7 +2053,7 @@ function renderBatchPlan() {
         <strong>${state.dateCount}일</strong>
       </article>
       <article>
-        <span>예약 작업</span>
+        <span>예약 게시</span>
         <strong>${state.taskCount}개</strong>
       </article>
       <article>
@@ -1966,7 +2075,7 @@ function renderBatchPlan() {
       </div>
     ` : `
       <div class="batchChecks ok">
-        <span>${state.taskCount}개 예약 작업을 만들 준비가 됐습니다.</span>
+        <span>${state.taskCount}개 예약 게시를 만들 준비가 됐습니다.</span>
       </div>
     `}
   `;
@@ -2080,14 +2189,14 @@ function renderBatchQueue() {
   if (submitBatch) {
     submitBatch.disabled = appState.batchSubmitting || allSucceeded || items.length === 0 || platforms.length === 0 || hasBlockingIssue;
     submitBatch.textContent = appState.batchSubmitting
-      ? "예약 생성 중"
+      ? "예약 게시 생성 중"
       : allSucceeded
       ? "예약 완료"
       : hasBlockingIssue
       ? "예약 조건 확인 필요"
       : items.length && platforms.length
-      ? `${remainingTaskCount || state.taskCount}개 예약 작업 만들기`
-      : "예약 작업 만들기";
+      ? `${remainingTaskCount || state.taskCount}개 예약 게시`
+      : "예약 게시";
   }
   if (clearBatch) clearBatch.disabled = items.length === 0 && skipped.length === 0 && !isBatchScheduleDirty();
 
@@ -2461,6 +2570,7 @@ async function uploadSelectedImage(platforms = selectedPlatforms()) {
   form.elements.image_url.value = result.media_url || result.image_url;
   form.elements.media_type.value = result.media_type || result.content_type || uploadSource.type || "";
   imagePreview.classList.remove("hasError");
+  imagePreview.classList.add("hasMedia");
   const uploadedPreviewUrl = uploadKind === "video" ? result.media_url || result.image_url : shouldGenerateTextImage ? result.image_url : previewUrl;
   const uploadedPreview = uploadKind === "video"
     ? `<video src="${uploadedPreviewUrl}" controls muted playsinline></video>`
@@ -2626,11 +2736,11 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
     : item.file;
   const uploadedImage = await uploadImageFileToAssets(uploadSource, { forceJpeg: platforms.includes("instagram") || platforms.includes("threads") });
   const fallbackTitle = fileStem(item.fileName);
-  const titleTemplate = item.captionTitle || formValue("title");
+  const titleTemplate = item.captionTitle || batchCopyValue("title");
   const title = truncateText(titleTemplate || fallbackTitle, 120) || "image";
-  const body = item.captionBody || formValue("body");
-  const linkUrl = applyAutoUtm(item.captionLink || formValue("link_url"), platforms, fallbackTitle);
-  const hashtags = item.captionHashtags || formValue("hashtags");
+  const body = item.captionBody || batchCopyValue("body");
+  const linkUrl = applyAutoUtm(item.captionLink || batchCopyValue("link_url"), platforms, fallbackTitle);
+  const hashtags = item.captionHashtags || batchCopyValue("hashtags");
   onStage("creating", "게시글 생성 중");
   const post = await request("/api/posts", {
     method: "POST",
@@ -2643,7 +2753,7 @@ async function createScheduledBatchItem(item, platforms, onStage = () => {}) {
       image_url: uploadedImage.media_url || uploadedImage.image_url,
       media_type: uploadedImage.media_type || uploadedImage.content_type || uploadSource.type || "",
       platforms,
-      platform_bodies: item.captionBody ? {} : platformBodyPayload(platforms),
+      platform_bodies: item.captionBody ? {} : batchPlatformBodyPayload(platforms),
       ...campaignMetadata(item.relativePath),
     }),
   });
@@ -2678,7 +2788,7 @@ function requestBatchSubmit() {
 function singlePostConfirmationMessage(data, platforms) {
   const mode = data.get("mode");
   const lines = [
-    "게시 작업을 만들까요?",
+    mode === "scheduled" ? "예약 게시할까요?" : "작성 후 바로 게시할까요?",
     "",
     `채널: ${platforms.map(platformLabel).join(", ")}`,
     `제목: ${String(data.get("title") || "제목 없음").trim()}`,
@@ -2709,7 +2819,23 @@ form.addEventListener("change", (event) => {
   renderBatchQueue();
 });
 
-platformQuickPicker?.addEventListener("click", (event) => {
+form.elements.hashtags?.addEventListener("keydown", handleHashtagKeydown);
+form.elements.hashtags?.addEventListener("blur", (event) => {
+  if (!String(event.currentTarget.value || "").trim()) return;
+  commitHashtagInput(event.currentTarget);
+});
+batchScheduleForm?.elements?.batch_hashtags?.addEventListener("keydown", handleHashtagKeydown);
+batchScheduleForm?.elements?.batch_hashtags?.addEventListener("blur", (event) => {
+  if (!String(event.currentTarget.value || "").trim()) return;
+  commitHashtagInput(event.currentTarget);
+});
+batchScheduleForm?.addEventListener("input", (event) => {
+  if (!event.target?.matches?.("[data-batch-copy]")) return;
+  resetBatchResultsForPlanChange();
+  renderBatchQueue();
+});
+
+function handlePlatformPickerClick(event) {
   const button = event.target.closest("[data-platform-select]");
   if (!button || button.disabled) return;
   const input = form.querySelector(`input[name="platforms"][value="${button.dataset.platformSelect}"]`);
@@ -2720,7 +2846,10 @@ platformQuickPicker?.addEventListener("click", (event) => {
   resetBatchResultsForPlanChange();
   syncPlatformPicker();
   announceSelectedImageIssue();
-});
+}
+
+platformQuickPicker?.addEventListener("click", handlePlatformPickerClick);
+batchPlatformPicker?.addEventListener("click", handlePlatformPickerClick);
 
 workspaceTabs.forEach((button) => {
   button.addEventListener("click", () => {
@@ -2849,13 +2978,13 @@ form.addEventListener("submit", async (event) => {
     clearImagePreview();
     updateFormMeta();
     formStatus.textContent = "완료";
-    showToast(mode === "scheduled" ? "예약 작업을 만들었습니다." : "발행 작업을 만들었습니다.");
+    showToast(mode === "scheduled" ? "예약 게시를 등록했습니다." : "바로 게시를 요청했습니다.");
     await loadJobs();
   } catch (error) {
     formStatus.textContent = "실패";
     showToast(error.message, "error");
   } finally {
-    setBusy(submitPost, false, "게시 작업 만들기");
+    setBusy(submitPost, false, singlePostSubmitLabel(form.elements.mode.value));
   }
 });
 
@@ -2905,7 +3034,7 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   const explicitBatchSubmit = batchSubmitRequested;
   batchSubmitRequested = false;
   if (!explicitBatchSubmit) {
-    showToast("예약 작업 만들기 버튼을 눌러야 대량 예약이 생성됩니다.", "error");
+    showToast("예약 게시 버튼을 눌러야 대량 예약이 생성됩니다.", "error");
     return;
   }
   const items = appState.batchItems;
@@ -2953,13 +3082,13 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
 
   const pendingItems = items.filter((item) => batchResultFor(item)?.status !== "success");
   if (pendingItems.length === 0) {
-    showToast("이미 모든 예약 작업이 완료되었습니다.");
+    showToast("이미 모든 예약 게시가 완료되었습니다.");
     renderBatchQueue();
     return;
   }
   const taskCount = pendingItems.length * platforms.length;
   const confirmed = window.confirm([
-    `${taskCount}개 예약 작업을 만들까요?`,
+    `${taskCount}개 예약 게시를 만들까요?`,
     `기간: ${state.firstDate ? formatFullDateTime(state.firstDate) : "-"} ~ ${state.lastDate ? formatFullDateTime(state.lastDate) : "-"}`,
     `채널: ${platforms.map(platformLabel).join(", ")}`,
     `캠페인: ${formValue("campaign_name") || "미지정"}`,
@@ -2967,7 +3096,7 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
   if (!confirmed) return;
 
   appState.batchSubmitting = true;
-  setBusy(submitBatch, true, "예약 생성 중");
+  setBusy(submitBatch, true, "예약 게시 생성 중");
   if (clearBatch) clearBatch.disabled = true;
   let created = 0;
   const failed = [];
@@ -3003,11 +3132,11 @@ batchScheduleForm?.addEventListener("submit", async (event) => {
       showToast(`${failed.length}개 예약 실패: ${failed[0].message}`, "error");
     } else {
       if (batchStatus) batchStatus.textContent = "완료";
-      showToast(`${created}개 예약 작업을 만들었습니다.`);
+      showToast(`${created}개 예약 게시를 만들었습니다.`);
     }
   } finally {
     appState.batchSubmitting = false;
-    setBusy(submitBatch, false, "예약 작업 만들기");
+    setBusy(submitBatch, false, "예약 게시");
     renderBatchQueue();
   }
 });
