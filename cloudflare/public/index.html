@@ -322,7 +322,10 @@
                 <h2>예약 게시</h2>
                 <span class="muted">YYYYMMDD 폴더명을 예약일로 읽고, 폴더 안 이미지를 파일명 순서대로 예약 게시합니다.</span>
               </div>
-              <span id="batchStatus" class="formStatus">대기 중</span>
+              <div class="sectionHeadActions">
+                <button id="clearBatch" class="secondaryButton" type="button" disabled>예약내용 전체 초기화</button>
+                <span id="batchStatus" class="formStatus">대기 중</span>
+              </div>
             </div>
             <form id="batchScheduleForm">
               <div class="batchWorkspace">
@@ -378,6 +381,23 @@
                     <span>상위 폴더 선택</span>
                     <small>예: campaign / 20260621 / 001.jpg + 001.txt, caption.txt, captions.csv</small>
                   </label>
+                  <div class="manualBatchAdd">
+                    <div class="fieldLabelRow">
+                      <strong>개별 등록</strong>
+                      <span class="fieldHint">폴더 외 이미지를 선택 날짜에 추가합니다.</span>
+                    </div>
+                    <div class="grid batchManualAddGrid">
+                      <label>
+                        예약 날짜
+                        <input id="batchSingleDate" type="date" />
+                      </label>
+                      <label class="fileDrop compactFileDrop">
+                        <input id="batchSingleFileInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+                        <span>개별 파일 선택</span>
+                        <small>선택 즉시 예약 후보 목록에 추가됩니다.</small>
+                      </label>
+                    </div>
+                  </div>
                   <div id="batchFolderFeedback" class="batchFolderFeedback"></div>
                   <div class="batchGuide" aria-label="폴더 예약 규칙">
                     <article>
@@ -413,7 +433,6 @@
               </div>
               <div id="batchQueue" class="batchQueue emptyState compact">선택된 폴더가 없습니다.</div>
               <div class="formActions">
-                <button id="clearBatch" class="secondaryButton" type="button" disabled>예약내용 초기화</button>
                 <button id="submitBatch" type="button" disabled>예약 게시</button>
               </div>
                 </div>

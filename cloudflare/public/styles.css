@@ -1060,6 +1060,24 @@ button:focus-visible,
   background: #FFFFFF;
 }
 
+.manualBatchAdd {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #FBFAF6;
+}
+
+.batchManualAddGrid {
+  grid-template-columns: minmax(180px, 0.42fr) minmax(240px, 1fr);
+}
+
+.compactFileDrop {
+  min-height: 96px;
+  background: #FFFFFF;
+}
+
 .batchFolderFeedback {
   display: none;
   gap: 4px;
@@ -1405,6 +1423,12 @@ button:focus-visible,
 .batchProgress.scheduling {
   background: var(--warning-bg);
   color: var(--warning);
+}
+
+.batchRemoveButton {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 16px;
 }
 
 .batchBadge.warning,

@@ -47,6 +47,8 @@ const publishPreview = document.querySelector("#publishPreview");
 const batchScheduleForm = document.querySelector("#batchScheduleForm");
 const batchPlatformPicker = document.querySelector("#batchPlatformPicker");
 const batchFolderInput = document.querySelector("#batchFolderInput");
+const batchSingleDate = document.querySelector("#batchSingleDate");
+const batchSingleFileInput = document.querySelector("#batchSingleFileInput");
 const batchStartTime = document.querySelector("#batchStartTime");
 const batchInterval = document.querySelector("#batchInterval");
 const batchFolderFeedback = document.querySelector("#batchFolderFeedback");
@@ -1131,6 +1133,29 @@ function findDateFolder(segments) {
   return null;
 }
 
+function dateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function defaultBatchSingleDateValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return dateInputValue(date);
+}
+
+function ensureBatchSingleDateValue() {
+  if (batchSingleDate && !batchSingleDate.value) batchSingleDate.value = defaultBatchSingleDateValue();
+}
+
+function dateKeyFromInputValue(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "";
+  return parseDateFolderName(`${match[1]}${match[2]}${match[3]}`)?.key || "";
+}
+
 function batchIntervalMinutes() {
   const value = Number(batchInterval?.value);
   if (!Number.isFinite(value) || value < 1) return 30;
@@ -1209,6 +1234,28 @@ function batchItemTypeLabel(item) {
 
 function batchResultFor(item) {
   return appState.batchResults[item.relativePath] || null;
+}
+
+function sortAndReindexBatchItems(items) {
+  const sorted = [...items].sort((a, b) => {
+    const dateOrder = String(a.dateKey).localeCompare(String(b.dateKey));
+    if (dateOrder) return dateOrder;
+    const indexOrder = Number(a.indexWithinDate || 0) - Number(b.indexWithinDate || 0);
+    if (indexOrder) return indexOrder;
+    return fileNameCollator.compare(a.fileName || "", b.fileName || "");
+  });
+  const counts = new Map();
+  return sorted.map((item) => {
+    const indexWithinDate = counts.get(item.dateKey) || 0;
+    counts.set(item.dateKey, indexWithinDate + 1);
+    return { ...item, indexWithinDate };
+  });
+}
+
+function setBatchItems(items, activeKey = appState.activeBatchPreviewKey) {
+  appState.batchItems = sortAndReindexBatchItems(items);
+  const activeItem = appState.batchItems.find((item) => batchItemKey(item) === activeKey);
+  appState.activeBatchPreviewKey = activeItem ? batchItemKey(activeItem) : batchItemKey(appState.batchItems[0]);
 }
 
 function batchItemKey(item) {
@@ -2166,6 +2213,70 @@ async function buildBatchItems(fileList) {
   return { items, skipped };
 }
 
+function uniqueIndividualBatchPath(dateKey, fileName, reserved = new Set()) {
+  const existing = new Set([...appState.batchItems.map((item) => item.relativePath), ...reserved]);
+  const safeDate = String(dateKey || "").replaceAll("-", "");
+  let candidate = `individual/${safeDate}/${fileName}`;
+  let counter = 0;
+  while (existing.has(candidate)) {
+    counter += 1;
+    candidate = `individual/${safeDate}/${counter}-${fileName}`;
+  }
+  reserved.add(candidate);
+  return candidate;
+}
+
+async function buildIndividualBatchItems(fileList, dateKey) {
+  const accepted = [];
+  const skipped = [];
+  const files = [...(fileList || [])];
+  const currentCount = appState.batchItems.filter((item) => item.dateKey === dateKey).length;
+  const reservedPaths = new Set();
+
+  for (const file of files) {
+    const detectedType = imageTypeForFile(file);
+    if (!ALLOWED_IMAGE_TYPES.has(detectedType)) {
+      skipped.push({ name: file.name, reason: "이미지 형식 제외" });
+      continue;
+    }
+    if (file.size <= 0) {
+      skipped.push({ name: file.name, reason: "빈 파일" });
+      continue;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      skipped.push({ name: file.name, reason: "8MB 초과" });
+      continue;
+    }
+
+    let imageInfo;
+    try {
+      imageInfo = await readImageDimensions(file);
+    } catch {
+      skipped.push({ name: file.name, reason: "이미지 크기 확인 실패" });
+      continue;
+    }
+
+    accepted.push({
+      file,
+      fileName: file.name,
+      relativePath: uniqueIndividualBatchPath(dateKey, file.name, reservedPaths),
+      dateKey,
+      dateLabel: dateKey.replaceAll("-", ""),
+      detectedType,
+      imageInfo,
+      previewUrl: URL.createObjectURL(file),
+      captionTitle: "",
+      captionBody: "",
+      captionHashtags: "",
+      captionLink: "",
+      captionSource: "",
+      indexWithinDate: currentCount + accepted.length,
+    });
+  }
+
+  return { items: accepted, skipped };
+}
+
 function batchValidationState(items, platforms) {
   const defaultBody = batchCopyValue("body");
   const missingCaptionItems = items.filter((item) => !item.captionSource);
@@ -2523,7 +2634,7 @@ function renderBatchQueue() {
     batchQueue.className = "batchQueue emptyState compact";
     batchQueue.innerHTML = skipped.length
       ? `<strong>폴더를 받지 않았습니다.</strong><span>${skipped.length}개 파일의 위치나 형식이 맞지 않습니다. 아래 항목을 고친 뒤 다시 선택하세요.</span>${renderSkippedDetails(skipped)}`
-      : `<strong>상위 폴더를 선택하세요.</strong><span>예: campaign / 20260621 / 001.jpg</span>`;
+      : `<strong>상위 폴더를 선택하거나 개별 파일을 등록하세요.</strong><span>예: campaign / 20260621 / 001.jpg 또는 개별 등록 날짜 + 파일 선택</span>`;
     return;
   }
 
@@ -2613,6 +2724,7 @@ function renderBatchQueue() {
               96,
             );
             const isSelected = batchItemKey(item) === appState.activeBatchPreviewKey;
+            const deleteDisabled = appState.batchSubmitting || batchHasCreatedJobs() || result?.status === "success";
             return `
               <div class="batchFile ${isSelected ? "isSelected" : ""}" role="button" tabindex="0" data-batch-preview-key="${escapeHtml(batchItemKey(item))}" aria-pressed="${isSelected ? "true" : "false"}">
                 <span class="batchSequence">${item.indexWithinDate + 1}</span>
@@ -2635,6 +2747,7 @@ function renderBatchQueue() {
                     ${badgeLabel}
                   </span>
                   ${result ? `<span class="batchProgress ${result.status}">${escapeHtml(result.label)}</span>` : ""}
+                  <button class="ghostButton batchRemoveButton" type="button" data-remove-batch-key="${escapeHtml(batchItemKey(item))}" ${deleteDisabled ? "disabled" : ""}>삭제</button>
                 </div>
               </div>
             `;
@@ -2654,6 +2767,7 @@ function clearBatchQueue() {
   appState.batchDateGroups = {};
   appState.activeBatchPreviewKey = "";
   if (batchFolderInput) batchFolderInput.value = "";
+  if (batchSingleFileInput) batchSingleFileInput.value = "";
   if (batchStatus) batchStatus.textContent = "대기 중";
   renderBatchQueue();
 }
@@ -2665,12 +2779,71 @@ function revokeBatchPreviewUrls(items = appState.batchItems) {
   });
 }
 
+function batchHasCreatedJobs() {
+  return Object.values(appState.batchResults).some((result) => result?.status === "success");
+}
+
+function removeBatchItem(key) {
+  const item = appState.batchItems.find((candidate) => batchItemKey(candidate) === key);
+  if (!item) return;
+  if (batchHasCreatedJobs()) {
+    showToast("이미 예약 생성된 항목이 있으면 작업 현황에서 취소하세요.", "error");
+    return;
+  }
+  if (!window.confirm(`${item.fileName} 예약 후보를 삭제할까요?`)) return;
+  resetBatchResultsForPlanChange();
+  if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  delete appState.batchResults[key];
+  const remaining = appState.batchItems.filter((candidate) => batchItemKey(candidate) !== key);
+  setBatchItems(remaining, appState.activeBatchPreviewKey === key ? "" : appState.activeBatchPreviewKey);
+  if (batchStatus) batchStatus.textContent = appState.batchItems.length ? `${appState.batchItems.length}개 준비` : "대기 중";
+  renderBatchQueue();
+  showToast("예약 후보를 삭제했습니다.");
+}
+
+async function addIndividualBatchFiles() {
+  ensureBatchSingleDateValue();
+  const dateKey = dateKeyFromInputValue(batchSingleDate?.value);
+  const files = [...(batchSingleFileInput?.files || [])];
+  if (!files.length) return;
+  if (batchHasCreatedJobs()) {
+    showToast("이미 예약 생성된 항목이 있으면 새 후보는 전체 초기화 후 추가하세요.", "error");
+    if (batchSingleFileInput) batchSingleFileInput.value = "";
+    return;
+  }
+  if (!dateKey) {
+    showToast("개별 등록 날짜를 먼저 선택하세요.", "error");
+    if (batchSingleFileInput) batchSingleFileInput.value = "";
+    return;
+  }
+
+  if (batchStatus) batchStatus.textContent = "개별 파일 확인 중";
+  const { items, skipped } = await buildIndividualBatchItems(files, dateKey);
+  if (batchSingleFileInput) batchSingleFileInput.value = "";
+  if (!items.length) {
+    if (skipped.length) appState.batchSkipped = [...appState.batchSkipped, ...skipped];
+    if (batchStatus) batchStatus.textContent = appState.batchItems.length ? `${appState.batchItems.length}개 준비` : "대기 중";
+    renderBatchQueue();
+    showToast(skipped[0]?.reason ? `개별 등록 실패: ${skipped[0].reason}` : "등록할 수 있는 이미지가 없습니다.", "error");
+    return;
+  }
+
+  resetBatchResultsForPlanChange();
+  appState.batchSkipped = [...appState.batchSkipped, ...skipped];
+  setBatchItems([...appState.batchItems, ...items], batchItemKey(items[0]));
+  if (batchStatus) batchStatus.textContent = `${appState.batchItems.length}개 준비`;
+  renderBatchQueue();
+  showToast(skipped.length ? `${items.length}개 추가, ${skipped.length}개 제외했습니다.` : `${items.length}개 개별 예약 후보를 추가했습니다.`);
+}
+
 function isBatchScheduleDirty() {
   const copyDirty = ["batch_title", "batch_body", "batch_link_url", "batch_hashtags"]
     .some((name) => Boolean(batchFormValue(name)));
+  const defaultSingleDate = defaultBatchSingleDateValue();
   return Boolean(
     (batchStartTime && batchStartTime.value !== (batchStartTime.defaultValue || "09:00"))
     || (batchInterval && batchInterval.value !== (batchInterval.defaultValue || "30"))
+    || (batchSingleDate && batchSingleDate.value && batchSingleDate.value !== defaultSingleDate)
     || copyDirty,
   );
 }
@@ -2695,6 +2868,7 @@ function resetBatchScheduleState() {
   batchScheduleForm?.reset();
   if (batchStartTime) batchStartTime.value = batchStartTime.defaultValue || "09:00";
   if (batchInterval) batchInterval.value = batchInterval.defaultValue || "30";
+  if (batchSingleDate) batchSingleDate.value = defaultBatchSingleDateValue();
   appState.batchSubmitting = false;
   batchSubmitRequested = false;
   clearBatchQueue();
@@ -3448,11 +3622,10 @@ batchFolderInput?.addEventListener("change", async () => {
   if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
   revokeBatchPreviewUrls();
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
-  appState.batchItems = items;
+  setBatchItems(items, items[0]?.relativePath || "");
   appState.batchSkipped = skipped;
   appState.batchResults = {};
   appState.batchDateGroups = {};
-  appState.activeBatchPreviewKey = items[0]?.relativePath || "";
   if (batchStatus) {
     batchStatus.textContent = items.length
       ? `${items.length}개 준비`
@@ -3465,6 +3638,9 @@ batchFolderInput?.addEventListener("change", async () => {
   }
   renderBatchQueue();
 });
+
+batchSingleDate?.addEventListener("input", renderBatchQueue);
+batchSingleFileInput?.addEventListener("change", addIndividualBatchFiles);
 
 batchStartTime?.addEventListener("input", () => {
   resetBatchResultsForPlanChange();
@@ -3485,6 +3661,12 @@ batchQueue?.addEventListener("toggle", (event) => {
 }, true);
 
 batchQueue?.addEventListener("click", (event) => {
+  const removeButton = event.target.closest("[data-remove-batch-key]");
+  if (removeButton && batchQueue.contains(removeButton)) {
+    event.stopPropagation();
+    removeBatchItem(removeButton.dataset.removeBatchKey || "");
+    return;
+  }
   const item = event.target.closest("[data-batch-preview-key]");
   if (!item || !batchQueue.contains(item)) return;
   setActiveBatchPreviewKey(item.dataset.batchPreviewKey || "");
@@ -3700,6 +3882,7 @@ runScheduler.addEventListener("click", async () => {
   }
 });
 
+ensureBatchSingleDateValue();
 setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash), { resetScroll: Boolean(window.location.hash) });
 
 const oauthResult = new URLSearchParams(window.location.search);
