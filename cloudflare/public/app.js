@@ -1153,6 +1153,10 @@ function platformInputs() {
   return [...form.querySelectorAll("input[name='platforms']")];
 }
 
+function batchPlatformInputs() {
+  return [...(batchScheduleForm?.querySelectorAll("input[name='batch_platforms']") || [])];
+}
+
 function setSelectedPlatform(value) {
   const input = platformInputs().find((item) => item.value === value);
   if (!input || input.disabled) return;
@@ -1319,12 +1323,25 @@ function syncPlatformPicker() {
     appState.platformSelectionInitialized = true;
   }
 
+  syncBatchPlatformInputs();
   renderQuickPlatformPicker(platformQuickPicker, inputs, "게시 채널");
   renderQuickPlatformPicker(batchPlatformPicker, inputs, "예약 게시 채널", ["instagram", "threads"]);
 
   renderSelectedImagePreview();
   renderPublishPreview();
   renderBatchQueue();
+}
+
+function syncBatchPlatformInputs() {
+  const selected = new Set(selectedPlatforms());
+  batchPlatformInputs().forEach((input) => {
+    const status = platformStatus(input.value);
+    const label = input.closest("label");
+    input.disabled = !status.selectable;
+    input.checked = status.selectable && selected.has(input.value);
+    label?.classList.toggle("disabled", !status.selectable);
+    label?.setAttribute("title", status.detail);
+  });
 }
 
 function renderQuickPlatformPicker(target, inputs, label, allowedValues = null) {
@@ -1883,6 +1900,7 @@ async function buildBatchItems(fileList) {
       dateLabel: dateFolder.label,
       detectedType,
       imageInfo,
+      previewUrl: URL.createObjectURL(file),
       captionTitle: caption?.title || "",
       captionBody: caption?.body || "",
       captionHashtags: caption?.hashtags || "",
@@ -2282,14 +2300,28 @@ function renderBatchQueue() {
               : itemWarnings.length
               ? "중복 확인"
               : batchItemTypeLabel(item);
-            const captionPreview = truncateText(item.captionBody || item.captionTitle || item.captionHashtags || "", 96);
+            const commonCopyApplied = !item.captionSource && Boolean(batchCopyValue("body") || batchCopyValue("title") || batchCopyValue("hashtags"));
+            const captionPreview = truncateText(
+              item.captionBody
+                || item.captionTitle
+                || item.captionHashtags
+                || batchCopyValue("body")
+                || batchCopyValue("title")
+                || batchCopyValue("hashtags")
+                || "",
+              96,
+            );
             return `
               <div class="batchFile">
                 <span class="batchSequence">${item.indexWithinDate + 1}</span>
+                ${item.previewUrl
+                  ? `<img class="batchThumb" src="${item.previewUrl}" alt="${escapeHtml(item.fileName)} 미리보기" />`
+                  : `<span class="batchThumb batchThumbPlaceholder" aria-hidden="true">${escapeHtml(batchItemTypeLabel(item))}</span>`}
                 <div class="batchFileMeta">
                   <strong>${escapeHtml(item.fileName)}</strong>
                   <small>${escapeHtml(item.relativePath)}</small>
                   ${item.captionSource ? `<span class="captionBadge">캡션 매칭: ${escapeHtml(item.captionSource)}</span>` : ""}
+                  ${commonCopyApplied ? `<span class="captionBadge">공통 문구 적용</span>` : ""}
                   ${captionPreview ? `<span class="batchCaptionPreview">${escapeHtml(captionPreview)}</span>` : ""}
                   ${imageRatioIssue ? `<span class="batchCaptionPreview">${escapeHtml(imageRatioIssue)}</span>` : ""}
                   ${missingCopy ? `<span class="batchCaptionPreview">캡션 파일 또는 기본 본문이 필요합니다.</span>` : ""}
@@ -2313,6 +2345,7 @@ function renderBatchQueue() {
 }
 
 function clearBatchQueue() {
+  revokeBatchPreviewUrls();
   appState.batchItems = [];
   appState.batchSkipped = [];
   appState.batchResults = {};
@@ -2322,10 +2355,20 @@ function clearBatchQueue() {
   renderBatchQueue();
 }
 
+function revokeBatchPreviewUrls(items = appState.batchItems) {
+  items.forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    item.previewUrl = "";
+  });
+}
+
 function isBatchScheduleDirty() {
+  const copyDirty = ["batch_title", "batch_body", "batch_link_url", "batch_hashtags"]
+    .some((name) => Boolean(batchFormValue(name)));
   return Boolean(
     (batchStartTime && batchStartTime.value !== (batchStartTime.defaultValue || "09:00"))
-    || (batchInterval && batchInterval.value !== (batchInterval.defaultValue || "30")),
+    || (batchInterval && batchInterval.value !== (batchInterval.defaultValue || "30"))
+    || copyDirty,
   );
 }
 
@@ -2352,6 +2395,7 @@ function resetBatchScheduleState() {
   appState.batchSubmitting = false;
   batchSubmitRequested = false;
   clearBatchQueue();
+  syncPlatformPicker();
   showToast("예약내용을 초기화했습니다.");
 }
 
@@ -2834,6 +2878,21 @@ batchScheduleForm?.addEventListener("input", (event) => {
   resetBatchResultsForPlanChange();
   renderBatchQueue();
 });
+batchScheduleForm?.addEventListener("change", (event) => {
+  if (event.target?.name !== "batch_platforms") return;
+  const target = event.target;
+  const input = platformInputs().find((item) => item.value === target.value);
+  if (!input || input.disabled) {
+    syncBatchPlatformInputs();
+    return;
+  }
+  input.checked = target.checked;
+  appState.platformSelectionInitialized = true;
+  updateFormMeta();
+  resetBatchResultsForPlanChange();
+  syncPlatformPicker();
+  announceSelectedImageIssue();
+});
 
 function handlePlatformPickerClick(event) {
   const button = event.target.closest("[data-platform-select]");
@@ -2993,6 +3052,7 @@ submitPost?.addEventListener("click", requestSinglePostSubmit);
 
 batchFolderInput?.addEventListener("change", async () => {
   if (batchStatus) batchStatus.textContent = "폴더 읽는 중";
+  revokeBatchPreviewUrls();
   const { items, skipped } = await buildBatchItems(batchFolderInput.files);
   appState.batchItems = items;
   appState.batchSkipped = skipped;

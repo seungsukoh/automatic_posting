@@ -927,14 +927,19 @@ button:disabled {
 
 .batchSetupGrid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(240px, 0.38fr) minmax(0, 1fr);
+  grid-template-areas: "channels copy";
+  gap: 14px;
   margin-bottom: 12px;
+  align-items: start;
 }
 
-.batchChannelSection,
+.batchChannelSection {
+  grid-area: channels;
+}
+
 .batchCopySection {
-  align-content: start;
+  grid-area: copy;
 }
 
 .batchInsights {
@@ -1269,7 +1274,7 @@ button:focus-visible,
 
 .batchFile {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) minmax(190px, auto);
+  grid-template-columns: 30px 74px minmax(0, 1fr) minmax(190px, auto);
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -1287,6 +1292,26 @@ button:focus-visible,
   color: var(--ink);
   font-size: 16px;
   font-weight: 700;
+}
+
+.batchThumb {
+  display: block;
+  width: 74px;
+  height: 74px;
+  border: 1px solid #0E275033;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #061328;
+}
+
+.batchThumbPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #F2F1EC;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .batchFile strong {
@@ -2545,6 +2570,12 @@ button:focus-visible,
       "channels"
       "copy"
       "tracking";
+  }
+
+  .batchSetupGrid {
+    grid-template-areas:
+      "channels"
+      "copy";
   }
 
   .workspaceNav {
