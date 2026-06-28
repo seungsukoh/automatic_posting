@@ -1336,10 +1336,10 @@ function setSelectedPlatform(value) {
 }
 
 const workspaceHashByTab = {
-  compose: '[id="composeStep"]',
-  batch: '[id="batchStep"]',
-  account: '[id="accountStep"]',
-  jobs: '[id="jobsStep"]',
+  compose: "#composeStep",
+  batch: "#batchStep",
+  account: "#accountStep",
+  jobs: "#jobsStep",
 };
 
 function normalizeWorkspaceTab(value) {
@@ -1352,6 +1352,14 @@ function workspaceTabFromHash(hashValue) {
   if (hash === "batchStep") return "batch";
   if (hash === "jobsStep") return "jobs";
   return "compose";
+}
+
+function resetWorkspaceScroll() {
+  const scrollTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  scrollTop();
+  requestAnimationFrame(scrollTop);
+  window.setTimeout(scrollTop, 0);
+  window.setTimeout(scrollTop, 50);
 }
 
 function renderJobsLoadError(error) {
@@ -1379,6 +1387,8 @@ function setActiveWorkspaceTab(value, options = {}) {
     const nextHash = workspaceHashByTab[tab] || workspaceHashByTab.compose;
     if (window.location.hash !== nextHash) history.replaceState({}, "", nextHash);
   }
+
+  if (options.resetScroll) resetWorkspaceScroll();
 
   if ((tab === "batch" || tab === "jobs") && !appState.jobsLoaded) {
     loadJobs().catch((error) => {
@@ -3287,12 +3297,12 @@ batchPlatformPicker?.addEventListener("click", handlePlatformPickerClick);
 
 workspaceTabs.forEach((button) => {
   button.addEventListener("click", () => {
-    setActiveWorkspaceTab(button.dataset.workspaceTab, { updateHash: true });
+    setActiveWorkspaceTab(button.dataset.workspaceTab, { updateHash: true, resetScroll: true });
   });
 });
 
 window.addEventListener("hashchange", () => {
-  setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash));
+  setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash), { resetScroll: true });
 });
 
 document.addEventListener("click", (event) => {
@@ -3690,11 +3700,11 @@ runScheduler.addEventListener("click", async () => {
   }
 });
 
-setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash));
+setActiveWorkspaceTab(workspaceTabFromHash(window.location.hash), { resetScroll: Boolean(window.location.hash) });
 
 const oauthResult = new URLSearchParams(window.location.search);
 if (oauthResult.get("connected")) {
-  setActiveWorkspaceTab("account", { updateHash: true });
+  setActiveWorkspaceTab("account", { updateHash: true, resetScroll: true });
   showToast("계정 연결이 완료됐습니다.");
   history.replaceState({}, "", window.location.pathname);
 }

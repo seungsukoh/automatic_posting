@@ -950,14 +950,14 @@ button:disabled {
 
 .schedulerBoard {
   display: grid;
-  grid-template-columns: minmax(300px, 0.76fr) minmax(0, 1.24fr);
+  grid-template-columns: 1fr;
   gap: 12px;
   align-items: start;
 }
 
 .batchSetupGrid {
   display: grid;
-  grid-template-columns: minmax(240px, 0.38fr) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
   grid-template-areas: "channels copy";
   gap: 14px;
   margin-bottom: 12px;
@@ -974,6 +974,7 @@ button:disabled {
 
 .batchInsights {
   display: grid;
+  grid-template-columns: minmax(260px, 0.58fr) minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
 }
@@ -3033,6 +3034,7 @@ button:focus-visible,
   .setupGrid,
   .composeWorkspace,
   .batchWorkspace,
+  .batchInsights,
   .batchSetupGrid,
   .schedulerBoard {
     grid-template-columns: 1fr;
